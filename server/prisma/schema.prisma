@@ -1,0 +1,289 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum PlaceCategory {
+  SPECIALTY
+  LOCAL
+  INTERNATIONAL
+  INSTAGRAMABLE
+  STUDY_SPACE
+  HIDDEN_GEM
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY
+  COMPLETED
+  CANCELLED
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+model User {
+  id            String   @id @default(cuid())
+  name          String?
+  username      String?  @unique
+  email         String   @unique
+  password      String
+  role          Role     @default(USER)
+  bio           String?
+  image         String?
+  xp            Int      @default(0)
+  level         Int      @default(1)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  places         Place[]
+  ratings        Rating[]
+  comments       Comment[]
+  orders         Order[]
+  reservations   Reservation[]
+  placeViews     PlaceView[]
+  posts          Post[]
+  postComments   PostComment[]
+  postLikes      PostLike[]
+  savedPosts     SavedPost[]
+  achievements   UserAchievement[]
+
+  @@map("users")
+}
+
+model Place {
+  id          String        @id @default(cuid())
+  name        String
+  category    PlaceCategory
+  description String
+  address     String
+  city        String
+  price       String
+  openHours   String
+  imageUrl    String
+  tagsJson    String        @default("[]")
+  wifi        Boolean       @default(true)
+  cozy        Boolean       @default(true)
+  authorId    String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  author       User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  ratings      Rating[]
+  comments     Comment[]
+  menuItems    MenuItem[]
+  reservations Reservation[]
+  views        PlaceView[]
+  orders       Order[]
+  posts        Post[]
+
+  @@index([category])
+  @@map("places")
+}
+
+model Post {
+  id          String   @id @default(cuid())
+  caption     String
+  placeId     String?
+  category    String   @default("UMUM")
+  tagsJson    String   @default("[]")
+  imagesJson  String   @default("[]")
+  authorId    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  author   User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  place    Place?        @relation(fields: [placeId], references: [id], onDelete: SetNull)
+  comments PostComment[]
+  likes    PostLike[]
+  saves    SavedPost[]
+
+  @@index([authorId])
+  @@index([placeId])
+  @@map("posts")
+}
+
+model PostComment {
+  id        String   @id @default(cuid())
+  body      String
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@map("post_comments")
+}
+
+model PostLike {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@map("post_likes")
+}
+
+model SavedPost {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@map("saved_posts")
+}
+
+model Badge {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String
+  icon        String   @default("")
+  xpReward    Int      @default(0)
+
+  achievements UserAchievement[]
+
+  @@map("badges")
+}
+
+model UserAchievement {
+  id        String   @id @default(cuid())
+  userId    String
+  badgeId   String
+  earnedAt  DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge Badge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+  @@map("user_achievements")
+}
+
+model Rating {
+  id        String   @id @default(cuid())
+  value     Int
+  userId    String
+  placeId   String
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  place Place @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, placeId])
+  @@map("ratings")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  body      String
+  userId    String
+  placeId   String
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  place Place @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  @@index([placeId])
+  @@map("comments")
+}
+
+model PlaceView {
+  id        String   @id @default(cuid())
+  placeId   String
+  userId    String?
+  createdAt DateTime @default(now())
+
+  place Place  @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  user  User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([placeId])
+  @@map("place_views")
+}
+
+model MenuItem {
+  id          String   @id @default(cuid())
+  placeId     String
+  name        String
+  price       Int
+  category    String
+  imageUrl    String?
+  isAvailable Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  place      Place       @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
+
+  @@index([placeId])
+  @@map("menu_items")
+}
+
+model Order {
+  id        String      @id @default(cuid())
+  userId    String
+  placeId   String
+  status    OrderStatus @default(PENDING)
+  total     Int
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  user  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  place Place       @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  items OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id         String   @id @default(cuid())
+  orderId    String
+  menuItemId String
+  quantity   Int
+  price      Int
+
+  order    Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Restrict)
+
+  @@map("order_items")
+}
+
+model Reservation {
+  id        String             @id @default(cuid())
+  userId    String
+  placeId   String
+  date      DateTime
+  partySize Int
+  note      String?
+  status    ReservationStatus  @default(PENDING)
+  createdAt DateTime           @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  place Place @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  @@index([placeId])
+  @@map("reservations")
+}

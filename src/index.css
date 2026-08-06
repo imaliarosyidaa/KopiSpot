@@ -2,6 +2,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,300;1,9..144,700&display=swap');
 @import 'tailwindcss';
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme inline {
   --color-background: #f7f7f7;
   --color-foreground: #1a1a1a;
@@ -45,6 +47,25 @@
   --ring: #b07d3f;
 }
 
+.dark {
+  --background: #17140f;
+  --foreground: #f2ecdf;
+  --card: #211d15;
+  --card-foreground: #f2ecdf;
+  --primary: #c9974f;
+  --primary-foreground: #17140f;
+  --secondary: #2a2519;
+  --secondary-foreground: #d6cbb5;
+  --muted: #2a2519;
+  --muted-foreground: #a2957f;
+  --accent: #8a6533;
+  --accent-foreground: #f2ecdf;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: rgba(201, 151, 79, 0.28);
+  --ring: #c9974f;
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
 }
@@ -57,8 +78,8 @@ html {
 
 body {
   font-family: 'Plus Jakarta Sans', sans-serif;
-  background-color: #f7f7f7;
-  color: #1a1a1a;
+  background-color: var(--background);
+  color: var(--foreground);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -145,18 +166,18 @@ body {
 }
 
 .footer-glass-pill {
-  background: linear-gradient(145deg, rgba(140,95,40,0.10) 0%, rgba(140,95,40,0.04) 100%);
-  box-shadow: 0 10px 30px -10px rgba(90,60,30,0.15), inset 0 1px 1px rgba(140,95,40,0.15);
-  border: 1px solid rgba(140,95,40,0.22);
+  background: linear-gradient(145deg, color-mix(in oklch, var(--color-foreground) 4%, transparent) 0%, color-mix(in oklch, var(--color-foreground) 1%, transparent) 100%);
+  box-shadow: 0 10px 30px -10px color-mix(in oklch, var(--color-foreground) 15%, transparent), inset 0 1px 1px color-mix(in oklch, var(--color-foreground) 12%, transparent);
+  border: 1px solid color-mix(in oklch, var(--color-primary) 25%, transparent);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .footer-glass-pill:hover {
-  background: linear-gradient(145deg, rgba(140,95,40,0.18) 0%, rgba(140,95,40,0.06) 100%);
-  border-color: rgba(140,95,40,0.4);
-  box-shadow: 0 20px 40px -10px rgba(90,60,30,0.22), inset 0 1px 1px rgba(140,95,40,0.25);
+  background: linear-gradient(145deg, color-mix(in oklch, var(--color-foreground) 9%, transparent) 0%, color-mix(in oklch, var(--color-foreground) 3%, transparent) 100%);
+  border-color: color-mix(in oklch, var(--color-primary) 45%, transparent);
+  box-shadow: 0 20px 40px -10px color-mix(in oklch, var(--color-foreground) 22%, transparent), inset 0 1px 1px color-mix(in oklch, var(--color-foreground) 18%, transparent);
 }
 
 .footer-giant-bg-text {
@@ -173,16 +194,16 @@ body {
 }
 
 .footer-text-glow {
-  background: linear-gradient(180deg, #1a1a1a 0%, rgba(26,26,26,0.4) 100%);
+  background: linear-gradient(180deg, var(--foreground) 0%, color-mix(in oklch, var(--foreground) 40%, transparent) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  filter: drop-shadow(0px 0px 20px rgba(140,95,40,0.3));
+  filter: drop-shadow(0px 0px 20px color-mix(in oklch, var(--primary) 30%, transparent));
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.75);
-  border: 1px solid rgba(140,95,40,0.18);
+  background: color-mix(in oklch, var(--color-card) 85%, transparent);
+  border: 1px solid color-mix(in oklch, var(--color-primary) 20%, transparent);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
