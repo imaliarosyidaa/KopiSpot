@@ -105,6 +105,11 @@ body {
   to { transform: translateX(-50%); }
 }
 
+@keyframes marquee-right {
+  from { transform: translateX(0); }
+  to { transform: translateX(50%); }
+}
+
 .animate-footer-breathe {
   animation: footer-breathe 8s ease-in-out infinite alternate;
 }
@@ -116,6 +121,9 @@ body {
 }
 .animate-marquee {
   animation: marquee-left 30s linear infinite;
+}
+.animate-marquee-reverse {
+  animation: marquee-right 30s linear infinite;
 }
 
 .footer-bg-grid {

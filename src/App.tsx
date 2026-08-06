@@ -324,7 +324,7 @@ function CinematicHero() {
   }, []);
 
   return (
-    <section className="relative w-full flex flex-col bg-[#f7f7f7] text-[#1a1a1a] cinematic-footer-wrapper overflow-x-hidden" style={{ minHeight: "100svh" }}>
+    <section className="relative w-full flex flex-col bg-[#f7f7f7] text-[#1a1a1a] cinematic-footer-wrapper overflow-x-hidden overflow-y-hidden" style={{ minHeight: "100svh" }}>
       {/* Ambient glow */}
       <div className="footer-aurora absolute left-1/2 top-1/2 h-[60vh] w-[80vw] -translate-x-1/2 -translate-y-1/2 animate-footer-breathe rounded-[50%] blur-[80px] pointer-events-none z-0" />
       <div className="footer-bg-grid absolute inset-0 z-0 pointer-events-none" />
@@ -443,24 +443,43 @@ export default function App() {
       {/* ── CINEMATIC HERO ── */}
       <CinematicHero />
 
-      {/* ── MARQUEE DIVIDER ── */}
-      <div className="w-full overflow-hidden border-y border-[rgba(140,95,40,0.18)] bg-[rgba(247,247,247,0.9)] py-3">
-        <div className="flex w-max animate-marquee text-xs font-bold tracking-[0.25em] text-[#6b6b6b] uppercase">
-          {[1, 2].map((i) => (
-            <div key={i} className="flex items-center gap-10 px-10">
-              <span>Kopi Specialty</span><span className="text-[#b07d3f]">✦</span>
-              <span>Latte Art</span><span className="text-[#b07d3f]">✦</span>
-              <span>Aesthetic Interior</span><span className="text-[#b07d3f]">✦</span>
-              <span>Work From Cafe</span><span className="text-[#b07d3f]">✦</span>
-              <span>Hidden Gems</span><span className="text-[#b07d3f]">✦</span>
-              <span>Instagramable Spots</span><span className="text-[#b07d3f]">✦</span>
+        {/* ── MARQUEE DIVIDER (X) ── */}
+        <div className="relative w-full overflow-hidden bg-[rgba(247,247,247,0.9)] py-24 -top-24 md:py-36">
+          {/* Marquee 1 — Kanan ke Kiri (Default) */}
+          <div className="absolute left-1/2 top-1/2 w-[160vw] -translate-x-1/2 -translate-y-1/2 rotate-5 border-y border-[rgba(140,95,40,0.18)] bg-white/90 py-3 shadow-lg">
+            <div className="flex w-max animate-marquee text-xs font-bold tracking-[0.25em] text-[#6b6b6b] uppercase">
+              {[1, 2].map((i) => (
+                <div key={i} className="flex items-center gap-10 px-10">
+                  <span>Kopi Specialty</span><span className="text-[#b07d3f]">✦</span>
+                  <span>Latte Art</span><span className="text-[#b07d3f]">✦</span>
+                  <span>Aesthetic Interior</span><span className="text-[#b07d3f]">✦</span>
+                  <span>Work From Cafe</span><span className="text-[#b07d3f]">✦</span>
+                  <span>Hidden Gems</span><span className="text-[#b07d3f]">✦</span>
+                  <span>Instagramable Spots</span><span className="text-[#b07d3f]">✦</span>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+
+          {/* Marquee 2 — Kiri ke Kanan (Reverse) */}
+          <div className="absolute left-1/2 top-1/2 w-[160vw] -translate-x-1/2 -translate-y-1/2 -rotate-5 border-y border-[rgba(140,95,40,0.18)] bg-white/90 py-3 shadow-lg">
+            <div className="flex w-max animate-marquee-reverse text-xs font-bold tracking-[0.25em] text-[#6b6b6b] uppercase">
+              {[1, 2].map((i) => (
+                <div key={i} className="flex items-center gap-10 px-10">
+                  <span>Kopi Specialty</span><span className="text-[#b07d3f]">✦</span>
+                  <span>Latte Art</span><span className="text-[#b07d3f]">✦</span>
+                  <span>Aesthetic Interior</span><span className="text-[#b07d3f]">✦</span>
+                  <span>Work From Cafe</span><span className="text-[#b07d3f]">✦</span>
+                  <span>Hidden Gems</span><span className="text-[#b07d3f]">✦</span>
+                  <span>Instagramable Spots</span><span className="text-[#b07d3f]">✦</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
-      </div>
 
       {/* ── PLACES GRID ── */}
-      <section id="places" className="px-6 md:px-12 py-20 max-w-7xl mx-auto">
+        <section id="places" className="px-6 md:px-12 pb-20 max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
           <div>
             <span className="tag-pill mb-3 inline-block">Pilihan Editor</span>
