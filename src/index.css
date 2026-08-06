@@ -3,23 +3,46 @@
 @import 'tailwindcss';
 
 @theme inline {
-  --color-background: #0a0805;
-  --color-foreground: #f5f0e8;
-  --color-card: #13110d;
-  --color-card-foreground: #f5f0e8;
-  --color-primary: #c8965a;
-  --color-primary-foreground: #0a0805;
-  --color-secondary: #1e1a14;
-  --color-secondary-foreground: #c8b89a;
-  --color-muted: #1a1610;
-  --color-muted-foreground: #8a7d6b;
-  --color-accent: #e8c48a;
-  --color-accent-foreground: #0a0805;
-  --color-border: rgba(200, 150, 90, 0.15);
-  --color-ring: #c8965a;
+  --color-background: #f7f7f7;
+  --color-foreground: #1a1a1a;
+  --color-card: #ffffff;
+  --color-card-foreground: #1a1a1a;
+  --color-primary: #b07d3f;
+  --color-primary-foreground: #1a1a1a;
+  --color-secondary: #ececec;
+  --color-secondary-foreground: #3f3f3f;
+  --color-muted: #ececec;
+  --color-muted-foreground: #6b6b6b;
+  --color-accent: #d9b07a;
+  --color-accent-foreground: #333333;
+  --color-destructive: #dc2626;
+  --color-destructive-foreground: #ffffff;
+  --color-border: rgba(140, 95, 40, 0.22);
+  --color-ring: #b07d3f;
   --radius: 0.75rem;
   --font-sans: 'Plus Jakarta Sans', sans-serif;
   --font-display: 'Fraunces', serif;
+}
+
+/* shadcn-style raw variables (used by component inline styles that read
+   var(--foreground), var(--background), var(--primary), etc.) */
+:root {
+  --background: #f7f7f7;
+  --foreground: #1a1a1a;
+  --card: #ffffff;
+  --card-foreground: #1a1a1a;
+  --primary: #b07d3f;
+  --primary-foreground: #1a1a1a;
+  --secondary: #ececec;
+  --secondary-foreground: #3f3f3f;
+  --muted: #ececec;
+  --muted-foreground: #6b6b6b;
+  --accent: #d9b07a;
+  --accent-foreground: #333333;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --border: rgba(140, 95, 40, 0.22);
+  --ring: #b07d3f;
 }
 
 *, *::before, *::after {
@@ -29,19 +52,19 @@
 html {
   scroll-behavior: smooth;
   scrollbar-width: thin;
-  scrollbar-color: #c8965a33 transparent;
+  scrollbar-color: #b07d3f66 transparent;
 }
 
 body {
   font-family: 'Plus Jakarta Sans', sans-serif;
-  background-color: #0a0805;
-  color: #f5f0e8;
+  background-color: #f7f7f7;
+  color: #1a1a1a;
   -webkit-font-smoothing: antialiased;
 }
 
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #c8965a33; border-radius: 2px; }
+::-webkit-scrollbar-thumb { background: #b07d3f80; border-radius: 2px; }
 
 /* ---- Cinematic footer CSS from motion-footer ---- */
 
@@ -98,8 +121,8 @@ body {
 .footer-bg-grid {
   background-size: 60px 60px;
   background-image:
-    linear-gradient(to right, rgba(200,150,90,0.06) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(200,150,90,0.06) 1px, transparent 1px);
+    linear-gradient(to right, rgba(140,95,40,0.12) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(140,95,40,0.12) 1px, transparent 1px);
   mask-image: linear-gradient(to bottom, transparent, black 30%, black 70%, transparent);
   -webkit-mask-image: linear-gradient(to bottom, transparent, black 30%, black 70%, transparent);
 }
@@ -107,25 +130,25 @@ body {
 .footer-aurora {
   background: radial-gradient(
     circle at 50% 50%,
-    rgba(200,150,90,0.15) 0%,
-    rgba(140,100,60,0.10) 40%,
+    rgba(176,125,63,0.14) 0%,
+    rgba(150,110,60,0.06) 40%,
     transparent 70%
   );
 }
 
 .footer-glass-pill {
-  background: linear-gradient(145deg, rgba(200,150,90,0.06) 0%, rgba(200,150,90,0.02) 100%);
-  box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5), inset 0 1px 1px rgba(200,150,90,0.1);
-  border: 1px solid rgba(200,150,90,0.15);
+  background: linear-gradient(145deg, rgba(140,95,40,0.10) 0%, rgba(140,95,40,0.04) 100%);
+  box-shadow: 0 10px 30px -10px rgba(90,60,30,0.15), inset 0 1px 1px rgba(140,95,40,0.15);
+  border: 1px solid rgba(140,95,40,0.22);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .footer-glass-pill:hover {
-  background: linear-gradient(145deg, rgba(200,150,90,0.12) 0%, rgba(200,150,90,0.04) 100%);
-  border-color: rgba(200,150,90,0.35);
-  box-shadow: 0 20px 40px -10px rgba(0,0,0,0.6), inset 0 1px 1px rgba(200,150,90,0.2);
+  background: linear-gradient(145deg, rgba(140,95,40,0.18) 0%, rgba(140,95,40,0.06) 100%);
+  border-color: rgba(140,95,40,0.4);
+  box-shadow: 0 20px 40px -10px rgba(90,60,30,0.22), inset 0 1px 1px rgba(140,95,40,0.25);
 }
 
 .footer-giant-bg-text {
@@ -134,35 +157,35 @@ body {
   font-weight: 900;
   letter-spacing: -0.05em;
   color: transparent;
-  -webkit-text-stroke: 1px rgba(200,150,90,0.08);
-  background: linear-gradient(180deg, rgba(200,150,90,0.12) 0%, transparent 60%);
+  -webkit-text-stroke: 1px rgba(140,95,40,0.16);
+  background: linear-gradient(180deg, rgba(140,95,40,0.14) 0%, transparent 60%);
   -webkit-background-clip: text;
   background-clip: text;
   font-family: 'Fraunces', serif;
 }
 
 .footer-text-glow {
-  background: linear-gradient(180deg, #f5f0e8 0%, rgba(245,240,232,0.4) 100%);
+  background: linear-gradient(180deg, #1a1a1a 0%, rgba(26,26,26,0.4) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  filter: drop-shadow(0px 0px 20px rgba(200,150,90,0.2));
+  filter: drop-shadow(0px 0px 20px rgba(140,95,40,0.3));
 }
 
 .glass-card {
-  background: rgba(19, 17, 13, 0.7);
-  border: 1px solid rgba(200,150,90,0.12);
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(140,95,40,0.18);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
 
-.star-filled { color: #c8965a; }
-.star-empty { color: rgba(200,150,90,0.2); }
+.star-filled { color: #b07d3f; }
+.star-empty { color: rgba(176,125,63,0.25); }
 
 .tag-pill {
-  background: rgba(200,150,90,0.1);
-  border: 1px solid rgba(200,150,90,0.2);
-  color: #c8965a;
+  background: rgba(176,125,63,0.12);
+  border: 1px solid rgba(176,125,63,0.3);
+  color: #b07d3f;
   font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -172,5 +195,5 @@ body {
 }
 
 .hero-gradient {
-  background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(200,150,90,0.18) 0%, transparent 70%);
+  background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(176,125,63,0.12) 0%, transparent 70%);
 }

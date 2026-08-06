@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { CinematicFooter } from "@/components/ui/motion-footer";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -188,7 +189,7 @@ function PlaceCard({ place, index }: { place: typeof places[0]; index: number })
       onMouseLeave={() => setHovered(false)}
     >
       {/* Image */}
-      <div className="relative h-56 overflow-hidden bg-[#1a1610]">
+      <div className="relative h-56 overflow-hidden bg-[#eaeaea]">
         <img
           src={place.image}
           alt={place.name}
@@ -201,7 +202,7 @@ function PlaceCard({ place, index }: { place: typeof places[0]; index: number })
           ))}
         </div>
         <div className="absolute bottom-3 right-3">
-          <span className="bg-black/60 backdrop-blur-sm border border-[rgba(200,150,90,0.2)] text-[#c8965a] text-xs font-bold px-3 py-1 rounded-full">
+          <span className="bg-black/60 backdrop-blur-sm border border-[rgba(140,95,40,0.3)] text-[#b07d3f] text-xs font-bold px-3 py-1 rounded-full">
             {place.openHour}
           </span>
         </div>
@@ -210,26 +211,26 @@ function PlaceCard({ place, index }: { place: typeof places[0]; index: number })
       {/* Content */}
       <div className="p-5">
         <div className="flex items-start justify-between mb-1">
-          <h3 className="text-lg font-bold text-[#f5f0e8] leading-tight">{place.name}</h3>
+          <h3 className="text-lg font-bold text-[#1a1a1a] leading-tight">{place.name}</h3>
           <div className="flex items-center gap-1.5 shrink-0 ml-2">
-            <span className="text-[#c8965a] font-black text-lg leading-none">{place.rating}</span>
+            <span className="text-[#b07d3f] font-black text-lg leading-none">{place.rating}</span>
           </div>
         </div>
 
         <div className="flex items-center gap-2 mb-3">
           <StarRating rating={place.rating} />
-          <span className="text-[#8a7d6b] text-xs">({place.reviewCount.toLocaleString()} ulasan)</span>
+          <span className="text-[#6b6b6b] text-xs">({place.reviewCount.toLocaleString()} ulasan)</span>
         </div>
 
         <div className="flex items-center gap-1.5 mb-3">
-          <svg className="w-3.5 h-3.5 text-[#8a7d6b] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-3.5 h-3.5 text-[#6b6b6b] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
-          <span className="text-[#8a7d6b] text-xs">{place.location}</span>
+          <span className="text-[#6b6b6b] text-xs">{place.location}</span>
         </div>
 
-        <p className="text-[#c8b89a] text-sm leading-relaxed mb-4 line-clamp-3">{place.reviewText}</p>
+        <p className="text-[#6b6b6b] text-sm leading-relaxed mb-4 line-clamp-3">{place.reviewText}</p>
 
         <div className="flex flex-wrap gap-1.5 mb-4">
           {place.tags.map((t) => (
@@ -237,18 +238,18 @@ function PlaceCard({ place, index }: { place: typeof places[0]; index: number })
           ))}
         </div>
 
-        <div className="flex items-center justify-between pt-3 border-t border-[rgba(200,150,90,0.1)]">
-          <span className="text-[#c8965a] font-semibold text-sm">{place.price}</span>
+        <div className="flex items-center justify-between pt-3 border-t border-[rgba(140,95,40,0.18)]">
+          <span className="text-[#b07d3f] font-semibold text-sm">{place.price}</span>
           <div className="flex items-center gap-2">
             {place.wifi && (
-              <span title="WiFi tersedia" className="text-[#8a7d6b]">
+              <span title="WiFi tersedia" className="text-[#6b6b6b]">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.14 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
                 </svg>
               </span>
             )}
             {place.cozy && (
-              <span title="Cozy & nyaman" className="text-[#8a7d6b]">
+              <span title="Cozy & nyaman" className="text-[#6b6b6b]">
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
                 </svg>
@@ -267,18 +268,18 @@ function ReviewCard({ review }: { review: typeof reviews[0] }) {
   return (
     <div className="glass-card rounded-2xl p-5 flex flex-col gap-3">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-[rgba(200,150,90,0.15)] border border-[rgba(200,150,90,0.25)] flex items-center justify-center text-[#c8965a] font-bold text-sm shrink-0">
+        <div className="w-10 h-10 rounded-full bg-[rgba(140,95,40,0.22)] border border-[rgba(140,95,40,0.35)] flex items-center justify-center text-[#b07d3f] font-bold text-sm shrink-0">
           {review.avatar}
         </div>
         <div>
-          <div className="font-semibold text-[#f5f0e8] text-sm">{review.name}</div>
-          <div className="text-[#8a7d6b] text-xs">{review.date}</div>
+          <div className="font-semibold text-[#1a1a1a] text-sm">{review.name}</div>
+          <div className="text-[#6b6b6b] text-xs">{review.date}</div>
         </div>
         <div className="ml-auto">
           <StarRating rating={review.rating} />
         </div>
       </div>
-      <p className="text-[#c8b89a] text-sm leading-relaxed">{review.text}</p>
+      <p className="text-[#6b6b6b] text-sm leading-relaxed">{review.text}</p>
     </div>
   );
 }
@@ -288,11 +289,11 @@ function ReviewCard({ review }: { review: typeof reviews[0] }) {
 function HeroMarqueeItem() {
   return (
     <div className="flex items-center space-x-12 px-6">
-      <span>Kopi Terbaik Indonesia</span> <span className="text-[#c8965a]">✦</span>
-      <span>Tempat Aesthetic & Viral</span> <span className="text-[#8a7d6b]">✦</span>
-      <span>Review Jujur & Terpercaya</span> <span className="text-[#c8965a]">✦</span>
-      <span>Foto-worthy Spots</span> <span className="text-[#8a7d6b]">✦</span>
-      <span>Work-Friendly Cafes</span> <span className="text-[#c8965a]">✦</span>
+      <span>Kopi Terbaik Indonesia</span> <span className="text-[#b07d3f]">✦</span>
+      <span>Tempat Aesthetic & Viral</span> <span className="text-[#6b6b6b]">✦</span>
+      <span>Review Jujur & Terpercaya</span> <span className="text-[#b07d3f]">✦</span>
+      <span>Foto-worthy Spots</span> <span className="text-[#6b6b6b]">✦</span>
+      <span>Work-Friendly Cafes</span> <span className="text-[#b07d3f]">✦</span>
     </div>
   );
 }
@@ -323,7 +324,7 @@ function CinematicHero() {
   }, []);
 
   return (
-    <section className="relative w-full flex flex-col bg-[#0a0805] text-[#f5f0e8] cinematic-footer-wrapper overflow-x-hidden" style={{ minHeight: "100svh" }}>
+    <section className="relative w-full flex flex-col bg-[#f7f7f7] text-[#1a1a1a] cinematic-footer-wrapper overflow-x-hidden" style={{ minHeight: "100svh" }}>
       {/* Ambient glow */}
       <div className="footer-aurora absolute left-1/2 top-1/2 h-[60vh] w-[80vw] -translate-x-1/2 -translate-y-1/2 animate-footer-breathe rounded-[50%] blur-[80px] pointer-events-none z-0" />
       <div className="footer-bg-grid absolute inset-0 z-0 pointer-events-none" />
@@ -334,8 +335,8 @@ function CinematicHero() {
       </div>
 
       {/* Diagonal marquee — sits just below navbar */}
-      <div className="relative w-full overflow-hidden border-b border-[rgba(200,150,90,0.15)] bg-[rgba(10,8,5,0.6)] backdrop-blur-md py-3.5 z-10 -rotate-2 scale-110 shadow-2xl mt-16">
-        <div className="flex w-max animate-footer-scroll-marquee text-xs font-bold tracking-[0.3em] text-[#8a7d6b] uppercase">
+      <div className="relative w-full overflow-hidden border-b border-[rgba(140,95,40,0.22)] bg-[rgba(247,247,247,0.7)] backdrop-blur-md py-3.5 z-10 -rotate-2 scale-110 shadow-2xl mt-16">
+        <div className="flex w-max animate-footer-scroll-marquee text-xs font-bold tracking-[0.3em] text-[#6b6b6b] uppercase">
           <HeroMarqueeItem /><HeroMarqueeItem />
         </div>
       </div>
@@ -350,7 +351,7 @@ function CinematicHero() {
         >
           Temukan Spot<br />Favoritmu.
         </h1>
-        <p ref={subRef} className="text-[#8a7d6b] text-sm md:text-base mb-10 max-w-md leading-relaxed">
+        <p ref={subRef} className="text-[#6b6b6b] text-sm md:text-base mb-10 max-w-md leading-relaxed">
           Ratusan tempat ngopi terbaik, tersaring khusus untuk kamu yang suka kopi, kerja dari cafe, atau sekadar foto-foto.
         </p>
 
@@ -358,14 +359,14 @@ function CinematicHero() {
           <div className="flex flex-wrap justify-center gap-4">
             <MagneticButton
               onClick={() => document.getElementById("places")?.scrollIntoView({ behavior: "smooth" })}
-              className="bg-[#c8965a] text-[#0a0805] font-black px-10 py-4 rounded-full text-sm hover:bg-[#e8c48a] transition-colors duration-300 flex items-center gap-2"
+              className="bg-[#b07d3f] text-[#1a1a1a] font-black px-10 py-4 rounded-full text-sm hover:bg-[#c9974f] transition-colors duration-300 flex items-center gap-2"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
               </svg>
               Jelajahi Sekarang
             </MagneticButton>
-            <MagneticButton className="footer-glass-pill px-10 py-4 rounded-full text-[#c8965a] font-bold text-sm flex items-center gap-2">
+            <MagneticButton className="footer-glass-pill px-10 py-4 rounded-full text-[#b07d3f] font-bold text-sm flex items-center gap-2">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
@@ -374,7 +375,7 @@ function CinematicHero() {
           </div>
           <div className="flex flex-wrap justify-center gap-3 mt-2">
             {["Jakarta", "Bali", "Bandung", "Yogyakarta", "Surabaya"].map((city) => (
-              <MagneticButton key={city} className="footer-glass-pill px-5 py-2 rounded-full text-[#8a7d6b] font-medium text-xs hover:text-[#f5f0e8]">
+              <MagneticButton key={city} className="footer-glass-pill px-5 py-2 rounded-full text-[#6b6b6b] font-medium text-xs hover:text-[#1a1a1a]">
                 {city}
               </MagneticButton>
             ))}
@@ -390,59 +391,12 @@ function CinematicHero() {
           { num: "48", label: "Kota di Indonesia" },
         ].map((s) => (
           <div key={s.label} className="text-center">
-            <div className="text-2xl md:text-3xl font-black text-[#c8965a]" style={{ fontFamily: "'Fraunces', serif" }}>{s.num}</div>
-            <div className="text-[#8a7d6b] text-xs mt-1">{s.label}</div>
+            <div className="text-2xl md:text-3xl font-black text-[#b07d3f]" style={{ fontFamily: "'Fraunces', serif" }}>{s.num}</div>
+            <div className="text-[#6b6b6b] text-xs mt-1">{s.label}</div>
           </div>
         ))}
       </div>
     </section>
-  );
-}
-
-// ─── SIMPLE FOOTER ───────────────────────────────────────────────────────────
-
-function SimpleFooter() {
-  return (
-    <footer className="w-full border-t border-[rgba(200,150,90,0.1)] bg-[#0a0805] cinematic-footer-wrapper">
-      <div className="max-w-7xl mx-auto px-6 md:px-12 py-10 flex flex-col md:flex-row items-center justify-between gap-6">
-        {/* Brand */}
-        <div className="flex items-center gap-2">
-          <span className="text-[#c8965a]">
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M2 21v-2h2V5H2V3h13v2h-2v3h4l3 4v6h-2v2h-2v-2H6v2H2zm4-4h12v-4l-2-3h-4V5H6v12zm3-4h2v-2H9v2zm4 0h2v-2h-2v2z"/>
-            </svg>
-          </span>
-          <span className="text-[#f5f0e8] font-black text-base" style={{ fontFamily: "'Fraunces', serif" }}>KopiSpot</span>
-        </div>
-
-        {/* Links */}
-        <div className="flex flex-wrap justify-center gap-5">
-          {["Tentang Kami", "Tambah Tempat", "Kebijakan Privasi", "Syarat & Ketentuan"].map((l) => (
-            <a key={l} href="#" className="text-[#8a7d6b] hover:text-[#f5f0e8] text-xs font-medium transition-colors">{l}</a>
-          ))}
-        </div>
-
-        {/* Right side */}
-        <div className="flex items-center gap-4">
-          <div className="footer-glass-pill px-4 py-2 rounded-full flex items-center gap-1.5">
-            <span className="text-[#8a7d6b] text-[10px] font-bold uppercase tracking-widest">Dibuat dengan</span>
-            <span className="animate-footer-heartbeat text-xs text-red-400">❤</span>
-            <span className="text-[#c8965a] font-black text-[10px] ml-0.5">untuk Pecinta Kopi</span>
-          </div>
-          <button
-            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="w-9 h-9 rounded-full footer-glass-pill flex items-center justify-center text-[#8a7d6b] hover:text-[#f5f0e8] transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-            </svg>
-          </button>
-        </div>
-      </div>
-      <div className="border-t border-[rgba(200,150,90,0.06)] py-4 text-center">
-        <span className="text-[#8a7d6b] text-[10px] font-semibold tracking-widest uppercase">© 2026 KopiSpot. Semua hak dilindungi.</span>
-      </div>
-    </footer>
   );
 }
 
@@ -460,24 +414,28 @@ export default function App() {
     : places.filter((p) => p.category.includes(activeFilter));
 
   return (
-    <div className="relative w-full bg-[#0a0805] min-h-screen overflow-x-hidden">
+    <div className="relative w-full min-h-screen overflow-x-hidden">
+
+      {/* Content layer — sits above the fixed cinematic footer so it is only
+          revealed once the user scrolls to the bottom. */}
+      <div className="relative z-10 bg-[#f7f7f7]">
 
       {/* ── NAV ── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-12 h-16 bg-[rgba(10,8,5,0.8)] backdrop-blur-md border-b border-[rgba(200,150,90,0.1)]">
+      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-12 h-16 bg-[rgba(247,247,247,0.85)] backdrop-blur-md border-b border-[rgba(140,95,40,0.18)]">
         <div className="flex items-center gap-2">
-          <span className="text-[#c8965a]">
+          <span className="text-[#b07d3f]">
             <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
               <path d="M2 21v-2h2V5H2V3h13v2h-2v3h4l3 4v6h-2v2h-2v-2H6v2H2zm4-4h12v-4l-2-3h-4V5H6v12zm3-4h2v-2H9v2zm4 0h2v-2h-2v2z"/>
             </svg>
           </span>
-          <span className="text-[#f5f0e8] font-black text-lg tracking-tight" style={{ fontFamily: "'Fraunces', serif" }}>KopiSpot</span>
+          <span className="text-[#1a1a1a] font-black text-lg tracking-tight" style={{ fontFamily: "'Fraunces', serif" }}>KopiSpot</span>
         </div>
         <div className="hidden md:flex items-center gap-6">
           {["Explore", "Kota", "Top Picks", "Review"].map((item) => (
-            <a key={item} href="#" className="text-[#8a7d6b] hover:text-[#f5f0e8] text-sm font-medium transition-colors">{item}</a>
+            <a key={item} href="#" className="text-[#6b6b6b] hover:text-[#1a1a1a] text-sm font-medium transition-colors">{item}</a>
           ))}
         </div>
-        <button className="footer-glass-pill px-5 py-2 rounded-full text-[#c8965a] font-semibold text-sm">
+        <button className="footer-glass-pill px-5 py-2 rounded-full text-[#b07d3f] font-semibold text-sm">
           Tambah Tempat
         </button>
       </nav>
@@ -486,16 +444,16 @@ export default function App() {
       <CinematicHero />
 
       {/* ── MARQUEE DIVIDER ── */}
-      <div className="w-full overflow-hidden border-y border-[rgba(200,150,90,0.1)] bg-[rgba(10,8,5,0.9)] py-3">
-        <div className="flex w-max animate-marquee text-xs font-bold tracking-[0.25em] text-[#8a7d6b] uppercase">
+      <div className="w-full overflow-hidden border-y border-[rgba(140,95,40,0.18)] bg-[rgba(247,247,247,0.9)] py-3">
+        <div className="flex w-max animate-marquee text-xs font-bold tracking-[0.25em] text-[#6b6b6b] uppercase">
           {[1, 2].map((i) => (
             <div key={i} className="flex items-center gap-10 px-10">
-              <span>Kopi Specialty</span><span className="text-[#c8965a]">✦</span>
-              <span>Latte Art</span><span className="text-[#c8965a]">✦</span>
-              <span>Aesthetic Interior</span><span className="text-[#c8965a]">✦</span>
-              <span>Work From Cafe</span><span className="text-[#c8965a]">✦</span>
-              <span>Hidden Gems</span><span className="text-[#c8965a]">✦</span>
-              <span>Instagramable Spots</span><span className="text-[#c8965a]">✦</span>
+              <span>Kopi Specialty</span><span className="text-[#b07d3f]">✦</span>
+              <span>Latte Art</span><span className="text-[#b07d3f]">✦</span>
+              <span>Aesthetic Interior</span><span className="text-[#b07d3f]">✦</span>
+              <span>Work From Cafe</span><span className="text-[#b07d3f]">✦</span>
+              <span>Hidden Gems</span><span className="text-[#b07d3f]">✦</span>
+              <span>Instagramable Spots</span><span className="text-[#b07d3f]">✦</span>
             </div>
           ))}
         </div>
@@ -506,7 +464,7 @@ export default function App() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
           <div>
             <span className="tag-pill mb-3 inline-block">Pilihan Editor</span>
-            <h2 className="text-4xl md:text-6xl font-black text-[#f5f0e8] leading-tight" style={{ fontFamily: "'Fraunces', serif" }}>
+            <h2 className="text-4xl md:text-6xl font-black text-[#1a1a1a] leading-tight" style={{ fontFamily: "'Fraunces', serif" }}>
               Spot Paling<br/>Dicari
             </h2>
           </div>
@@ -517,8 +475,8 @@ export default function App() {
                 onClick={() => setActiveFilter(f)}
                 className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${
                   activeFilter === f
-                    ? "bg-[#c8965a] text-[#0a0805]"
-                    : "footer-glass-pill text-[#8a7d6b] hover:text-[#f5f0e8]"
+                    ? "bg-[#b07d3f] text-[#1a1a1a]"
+                    : "footer-glass-pill text-[#6b6b6b] hover:text-[#1a1a1a]"
                 }`}
               >
                 {f}
@@ -537,32 +495,32 @@ export default function App() {
       {/* ── FEATURED SPOT (big card) ── */}
       <section className="px-6 md:px-12 py-10 max-w-7xl mx-auto">
         <div className="glass-card rounded-3xl overflow-hidden grid md:grid-cols-2 gap-0">
-          <div className="relative h-72 md:h-auto bg-[#1a1610]">
+          <div className="relative h-72 md:h-auto bg-[#eaeaea]">
             <img
               src="https://images.unsplash.com/photo-1759314710754-bb3e11fbaa7b?w=900&h=700&fit=crop&auto=format"
               alt="Latte art kopi aesthetic"
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#13110d]/50" />
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#ffffff]/60" />
           </div>
           <div className="p-8 md:p-12 flex flex-col justify-center">
             <span className="tag-pill mb-4 inline-block w-fit">⭐ Spot Terfavorit</span>
-            <h3 className="text-3xl md:text-5xl font-black text-[#f5f0e8] leading-tight mb-4" style={{ fontFamily: "'Fraunces', serif" }}>
+            <h3 className="text-3xl md:text-5xl font-black text-[#1a1a1a] leading-tight mb-4" style={{ fontFamily: "'Fraunces', serif" }}>
               Pengalaman<br/>Ngopi yang<br/>Tak Terlupakan
             </h3>
-            <p className="text-[#8a7d6b] leading-relaxed mb-6 text-sm md:text-base">
+            <p className="text-[#6b6b6b] leading-relaxed mb-6 text-sm md:text-base">
               Setiap tegukan adalah cerita. Dari biji kopi single origin Flores hingga Kintamani Bali — Indonesia punya kopi terbaik dunia, dan kami tahu di mana menemukannya.
             </p>
             <div className="flex items-center gap-6">
               <div className="text-center">
-                <div className="text-2xl font-black text-[#c8965a]" style={{ fontFamily: "'Fraunces', serif" }}>4.8</div>
+                <div className="text-2xl font-black text-[#b07d3f]" style={{ fontFamily: "'Fraunces', serif" }}>4.8</div>
                 <StarRating rating={4.8} />
-                <div className="text-[#8a7d6b] text-xs mt-1">Rata-rata rating</div>
+                <div className="text-[#6b6b6b] text-xs mt-1">Rata-rata rating</div>
               </div>
-              <div className="w-px h-12 bg-[rgba(200,150,90,0.2)]" />
+              <div className="w-px h-12 bg-[rgba(140,95,40,0.3)]" />
               <div className="text-center">
-                <div className="text-2xl font-black text-[#c8965a]" style={{ fontFamily: "'Fraunces', serif" }}>12K+</div>
-                <div className="text-[#8a7d6b] text-xs mt-1">Total ulasan</div>
+                <div className="text-2xl font-black text-[#b07d3f]" style={{ fontFamily: "'Fraunces', serif" }}>12K+</div>
+                <div className="text-[#6b6b6b] text-xs mt-1">Total ulasan</div>
               </div>
             </div>
           </div>
@@ -573,7 +531,7 @@ export default function App() {
       <section className="py-16 overflow-hidden">
         <div className="px-6 md:px-12 max-w-7xl mx-auto mb-8">
           <span className="tag-pill mb-3 inline-block">Galeri Foto</span>
-          <h2 className="text-4xl md:text-5xl font-black text-[#f5f0e8]" style={{ fontFamily: "'Fraunces', serif" }}>Momen dari Cafe</h2>
+          <h2 className="text-4xl md:text-5xl font-black text-[#1a1a1a]" style={{ fontFamily: "'Fraunces', serif" }}>Momen dari Cafe</h2>
         </div>
         <div className="flex gap-4 px-6 md:px-12 overflow-x-auto pb-4" style={{ scrollbarWidth: "none" }}>
           {[
@@ -584,7 +542,7 @@ export default function App() {
             { url: "https://images.unsplash.com/photo-1695824431539-873b615cf220?w=400&h=500&fit=crop&auto=format", label: "Morning Cup" },
             { url: "https://images.unsplash.com/photo-1782209345407-5a0f45912a9e?w=400&h=500&fit=crop&auto=format", label: "Latte Foam" },
           ].map((photo, i) => (
-            <div key={i} className="relative shrink-0 w-44 md:w-56 h-64 md:h-72 rounded-2xl overflow-hidden bg-[#1a1610] group">
+            <div key={i} className="relative shrink-0 w-44 md:w-56 h-64 md:h-72 rounded-2xl overflow-hidden bg-[#eaeaea] group">
               <img src={photo.url} alt={photo.label} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
               <span className="absolute bottom-3 left-3 tag-pill">{photo.label}</span>
@@ -597,15 +555,17 @@ export default function App() {
       <section className="px-6 md:px-12 py-16 max-w-7xl mx-auto">
         <div className="mb-10">
           <span className="tag-pill mb-3 inline-block">Kata Mereka</span>
-          <h2 className="text-4xl md:text-5xl font-black text-[#f5f0e8]" style={{ fontFamily: "'Fraunces', serif" }}>Review<br/>Pengguna</h2>
+          <h2 className="text-4xl md:text-5xl font-black text-[#1a1a1a]" style={{ fontFamily: "'Fraunces', serif" }}>Review<br/>Pengguna</h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           {reviews.map((r, i) => <ReviewCard key={i} review={r} />)}
         </div>
       </section>
 
-      {/* ── FOOTER ── */}
-      <SimpleFooter />
+      </div>
+
+      {/* ── CINEMATIC FOOTER ── */}
+      <CinematicFooter />
     </div>
   );
 }
