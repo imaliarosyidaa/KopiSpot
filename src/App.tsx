@@ -283,9 +283,9 @@ function ReviewCard({ review }: { review: typeof reviews[0] }) {
   );
 }
 
-// ─── CINEMATIC FOOTER ────────────────────────────────────────────────────────
+// ─── CINEMATIC HERO ──────────────────────────────────────────────────────────
 
-function MarqueeItem() {
+function HeroMarqueeItem() {
   return (
     <div className="flex items-center space-x-12 px-6">
       <span>Kopi Terbaik Indonesia</span> <span className="text-[#c8965a]">✦</span>
@@ -297,97 +297,152 @@ function MarqueeItem() {
   );
 }
 
-function CinematicFooter() {
-  const wrapperRef = useRef<HTMLDivElement>(null);
+function CinematicHero() {
   const giantTextRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const subRef = useRef<HTMLParagraphElement>(null);
   const linksRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!wrapperRef.current) return;
+    const targets = [headingRef.current, subRef.current, linksRef.current].filter(Boolean);
     const ctx = gsap.context(() => {
-      gsap.fromTo(giantTextRef.current,
-        { y: "10vh", scale: 0.8, opacity: 0 },
-        { y: "0vh", scale: 1, opacity: 1, ease: "power1.out",
-          scrollTrigger: { trigger: wrapperRef.current, start: "top 80%", end: "bottom bottom", scrub: 1 } }
-      );
-      gsap.fromTo([headingRef.current, linksRef.current],
-        { y: 50, opacity: 0 },
-        { y: 0, opacity: 1, stagger: 0.15, ease: "power3.out",
-          scrollTrigger: { trigger: wrapperRef.current, start: "top 40%", end: "bottom bottom", scrub: 1 } }
-      );
-    }, wrapperRef);
+      if (giantTextRef.current) {
+        gsap.fromTo(giantTextRef.current,
+          { y: 40, scale: 0.9, opacity: 0 },
+          { y: 0, scale: 1, opacity: 1, duration: 1.4, ease: "power3.out", delay: 0.1 }
+        );
+      }
+      if (targets.length) {
+        gsap.fromTo(targets,
+          { y: 40, opacity: 0 },
+          { y: 0, opacity: 1, stagger: 0.15, duration: 1, ease: "power3.out", delay: 0.3 }
+        );
+      }
+    });
     return () => ctx.revert();
   }, []);
 
   return (
-    <div ref={wrapperRef} className="relative h-screen w-full" style={{ clipPath: "polygon(0% 0, 100% 0%, 100% 100%, 0 100%)" }}>
-      <footer className="fixed bottom-0 left-0 flex h-screen w-full flex-col justify-between overflow-hidden bg-[#0a0805] text-[#f5f0e8] cinematic-footer-wrapper">
-        <div className="footer-aurora absolute left-1/2 top-1/2 h-[60vh] w-[80vw] -translate-x-1/2 -translate-y-1/2 animate-footer-breathe rounded-[50%] blur-[80px] pointer-events-none z-0" />
-        <div className="footer-bg-grid absolute inset-0 z-0 pointer-events-none" />
+    <section className="relative w-full flex flex-col bg-[#0a0805] text-[#f5f0e8] cinematic-footer-wrapper overflow-x-hidden" style={{ minHeight: "100svh" }}>
+      {/* Ambient glow */}
+      <div className="footer-aurora absolute left-1/2 top-1/2 h-[60vh] w-[80vw] -translate-x-1/2 -translate-y-1/2 animate-footer-breathe rounded-[50%] blur-[80px] pointer-events-none z-0" />
+      <div className="footer-bg-grid absolute inset-0 z-0 pointer-events-none" />
 
-        <div ref={giantTextRef} className="footer-giant-bg-text absolute -bottom-[5vh] left-1/2 -translate-x-1/2 whitespace-nowrap z-0 pointer-events-none select-none">
-          NGOPI
+      {/* Giant background text — pinned near bottom */}
+      <div ref={giantTextRef} className="footer-giant-bg-text absolute bottom-0 left-1/2 -translate-x-1/2 whitespace-nowrap z-0 pointer-events-none select-none">
+        NGOPI
+      </div>
+
+      {/* Diagonal marquee — sits just below navbar */}
+      <div className="relative w-full overflow-hidden border-b border-[rgba(200,150,90,0.15)] bg-[rgba(10,8,5,0.6)] backdrop-blur-md py-3.5 z-10 -rotate-2 scale-110 shadow-2xl mt-16">
+        <div className="flex w-max animate-footer-scroll-marquee text-xs font-bold tracking-[0.3em] text-[#8a7d6b] uppercase">
+          <HeroMarqueeItem /><HeroMarqueeItem />
         </div>
+      </div>
 
-        <div className="absolute top-12 left-0 w-full overflow-hidden border-y border-[rgba(200,150,90,0.15)] bg-[rgba(10,8,5,0.6)] backdrop-blur-md py-4 z-10 -rotate-2 scale-110 shadow-2xl">
-          <div className="flex w-max animate-footer-scroll-marquee text-xs font-bold tracking-[0.3em] text-[#8a7d6b] uppercase">
-            <MarqueeItem /><MarqueeItem />
+      {/* Main content — centered vertically in remaining space */}
+      <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 py-16 w-full max-w-4xl mx-auto text-center">
+        <span className="tag-pill mb-6 inline-block">✦ Rekomendasi Terkurasi 2026</span>
+        <h1
+          ref={headingRef}
+          className="text-5xl md:text-8xl font-black footer-text-glow tracking-tighter mb-5"
+          style={{ fontFamily: "'Fraunces', serif" }}
+        >
+          Temukan Spot<br />Favoritmu.
+        </h1>
+        <p ref={subRef} className="text-[#8a7d6b] text-sm md:text-base mb-10 max-w-md leading-relaxed">
+          Ratusan tempat ngopi terbaik, tersaring khusus untuk kamu yang suka kopi, kerja dari cafe, atau sekadar foto-foto.
+        </p>
+
+        <div ref={linksRef} className="flex flex-col items-center gap-4 w-full">
+          <div className="flex flex-wrap justify-center gap-4">
+            <MagneticButton
+              onClick={() => document.getElementById("places")?.scrollIntoView({ behavior: "smooth" })}
+              className="bg-[#c8965a] text-[#0a0805] font-black px-10 py-4 rounded-full text-sm hover:bg-[#e8c48a] transition-colors duration-300 flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              </svg>
+              Jelajahi Sekarang
+            </MagneticButton>
+            <MagneticButton className="footer-glass-pill px-10 py-4 rounded-full text-[#c8965a] font-bold text-sm flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+              Simpan Wishlist
+            </MagneticButton>
           </div>
-        </div>
-
-        <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 mt-20 w-full max-w-4xl mx-auto">
-          <h2 ref={headingRef} className="text-5xl md:text-8xl font-black footer-text-glow tracking-tighter mb-4 text-center" style={{ fontFamily: "'Fraunces', serif" }}>
-            Temukan Spot<br/>Favoritmu.
-          </h2>
-          <p className="text-[#8a7d6b] text-center text-sm md:text-base mb-10 max-w-md">Ratusan tempat ngopi terbaik, tersaring khusus untuk kamu yang suka kopi, kerja dari cafe, atau sekadar foto-foto.</p>
-
-          <div ref={linksRef} className="flex flex-col items-center gap-4 w-full">
-            <div className="flex flex-wrap justify-center gap-4">
-              <MagneticButton className="footer-glass-pill px-10 py-4 rounded-full text-[#f5f0e8] font-bold text-sm flex items-center gap-2">
-                <svg className="w-5 h-5 text-[#c8965a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                </svg>
-                Temukan Dekat Saya
+          <div className="flex flex-wrap justify-center gap-3 mt-2">
+            {["Jakarta", "Bali", "Bandung", "Yogyakarta", "Surabaya"].map((city) => (
+              <MagneticButton key={city} className="footer-glass-pill px-5 py-2 rounded-full text-[#8a7d6b] font-medium text-xs hover:text-[#f5f0e8]">
+                {city}
               </MagneticButton>
-              <MagneticButton className="footer-glass-pill px-10 py-4 rounded-full text-[#c8965a] font-bold text-sm flex items-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                </svg>
-                Simpan Wishlist
-              </MagneticButton>
-            </div>
-            <div className="flex flex-wrap justify-center gap-3 mt-2">
-              {["Jakarta", "Bali", "Bandung", "Yogyakarta", "Surabaya"].map((city) => (
-                <MagneticButton key={city} className="footer-glass-pill px-5 py-2 rounded-full text-[#8a7d6b] font-medium text-xs hover:text-[#f5f0e8]">
-                  {city}
-                </MagneticButton>
-              ))}
-            </div>
+            ))}
           </div>
         </div>
+      </div>
 
-        <div className="relative z-20 w-full pb-8 px-6 md:px-12 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="text-[#8a7d6b] text-[10px] font-semibold tracking-widest uppercase order-2 md:order-1">
-            © 2026 KopiSpot. Semua hak dilindungi.
+      {/* Stats row — anchored to bottom */}
+      <div className="relative z-10 w-full max-w-2xl mx-auto px-6 pb-12 grid grid-cols-3 gap-6">
+        {[
+          { num: "500+", label: "Cafe Terdaftar" },
+          { num: "12K+", label: "Ulasan Pengguna" },
+          { num: "48", label: "Kota di Indonesia" },
+        ].map((s) => (
+          <div key={s.label} className="text-center">
+            <div className="text-2xl md:text-3xl font-black text-[#c8965a]" style={{ fontFamily: "'Fraunces', serif" }}>{s.num}</div>
+            <div className="text-[#8a7d6b] text-xs mt-1">{s.label}</div>
           </div>
-          <div className="footer-glass-pill px-5 py-2.5 rounded-full flex items-center gap-2 order-1 md:order-2">
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ─── SIMPLE FOOTER ───────────────────────────────────────────────────────────
+
+function SimpleFooter() {
+  return (
+    <footer className="w-full border-t border-[rgba(200,150,90,0.1)] bg-[#0a0805] cinematic-footer-wrapper">
+      <div className="max-w-7xl mx-auto px-6 md:px-12 py-10 flex flex-col md:flex-row items-center justify-between gap-6">
+        {/* Brand */}
+        <div className="flex items-center gap-2">
+          <span className="text-[#c8965a]">
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M2 21v-2h2V5H2V3h13v2h-2v3h4l3 4v6h-2v2h-2v-2H6v2H2zm4-4h12v-4l-2-3h-4V5H6v12zm3-4h2v-2H9v2zm4 0h2v-2h-2v2z"/>
+            </svg>
+          </span>
+          <span className="text-[#f5f0e8] font-black text-base" style={{ fontFamily: "'Fraunces', serif" }}>KopiSpot</span>
+        </div>
+
+        {/* Links */}
+        <div className="flex flex-wrap justify-center gap-5">
+          {["Tentang Kami", "Tambah Tempat", "Kebijakan Privasi", "Syarat & Ketentuan"].map((l) => (
+            <a key={l} href="#" className="text-[#8a7d6b] hover:text-[#f5f0e8] text-xs font-medium transition-colors">{l}</a>
+          ))}
+        </div>
+
+        {/* Right side */}
+        <div className="flex items-center gap-4">
+          <div className="footer-glass-pill px-4 py-2 rounded-full flex items-center gap-1.5">
             <span className="text-[#8a7d6b] text-[10px] font-bold uppercase tracking-widest">Dibuat dengan</span>
-            <span className="animate-footer-heartbeat text-sm text-red-400">❤</span>
-            <span className="text-[#8a7d6b] text-[10px] font-bold uppercase tracking-widest">untuk</span>
-            <span className="text-[#c8965a] font-black text-xs ml-1">Pecinta Kopi</span>
+            <span className="animate-footer-heartbeat text-xs text-red-400">❤</span>
+            <span className="text-[#c8965a] font-black text-[10px] ml-0.5">untuk Pecinta Kopi</span>
           </div>
-          <MagneticButton
+          <button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="w-11 h-11 rounded-full footer-glass-pill flex items-center justify-center text-[#8a7d6b] hover:text-[#f5f0e8] order-3"
+            className="w-9 h-9 rounded-full footer-glass-pill flex items-center justify-center text-[#8a7d6b] hover:text-[#f5f0e8] transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
             </svg>
-          </MagneticButton>
+          </button>
         </div>
-      </footer>
-    </div>
+      </div>
+      <div className="border-t border-[rgba(200,150,90,0.06)] py-4 text-center">
+        <span className="text-[#8a7d6b] text-[10px] font-semibold tracking-widest uppercase">© 2026 KopiSpot. Semua hak dilindungi.</span>
+      </div>
+    </footer>
   );
 }
 
@@ -399,27 +454,10 @@ const filters = ["Semua", "Ngopi", "Ngerjakan Tugas", "Foto-foto"];
 
 export default function App() {
   const [activeFilter, setActiveFilter] = useState("Semua");
-  const heroRef = useRef<HTMLDivElement>(null);
-  const titleRef = useRef<HTMLHeadingElement>(null);
-  const subtitleRef = useRef<HTMLParagraphElement>(null);
 
   const filtered = activeFilter === "Semua"
     ? places
     : places.filter((p) => p.category.includes(activeFilter));
-
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      gsap.fromTo(titleRef.current,
-        { opacity: 0, y: 40 },
-        { opacity: 1, y: 0, duration: 1.2, ease: "power3.out", delay: 0.2 }
-      );
-      gsap.fromTo(subtitleRef.current,
-        { opacity: 0, y: 20 },
-        { opacity: 1, y: 0, duration: 1, ease: "power3.out", delay: 0.5 }
-      );
-    });
-    return () => ctx.revert();
-  }, []);
 
   return (
     <div className="relative w-full bg-[#0a0805] min-h-screen overflow-x-hidden">
@@ -444,64 +482,8 @@ export default function App() {
         </button>
       </nav>
 
-      {/* ── HERO ── */}
-      <section ref={heroRef} className="relative min-h-screen flex flex-col items-center justify-center pt-16 px-6 overflow-hidden">
-        <div className="hero-gradient absolute inset-0 pointer-events-none" />
-
-        {/* BG image collage */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-20">
-          <img src="https://images.unsplash.com/photo-1775991072532-5a56d1419daa?w=1400&h=900&fit=crop&auto=format" alt="" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0a0805]/60 via-transparent to-[#0a0805]" />
-        </div>
-
-        <div className="relative z-10 text-center max-w-5xl mx-auto">
-          <span className="tag-pill mb-6 inline-block">✦ Rekomendasi Terkurasi 2026</span>
-          <h1
-            ref={titleRef}
-            className="text-5xl md:text-8xl font-black leading-[0.9] tracking-tighter mb-6 text-[#f5f0e8]"
-            style={{ fontFamily: "'Fraunces', serif" }}
-          >
-            Tempat Ngopi<br/>
-            <span className="text-[#c8965a] italic">Aesthetic</span> &<br/>
-            Viral Indonesia
-          </h1>
-          <p ref={subtitleRef} className="text-[#8a7d6b] text-lg md:text-xl max-w-xl mx-auto leading-relaxed mb-10">
-            Dari sudut Jakarta sampai sawah Ubud — temukan cafe paling instagramable, work-friendly, dan tentunya kopi terbaik.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <button
-              onClick={() => document.getElementById("places")?.scrollIntoView({ behavior: "smooth" })}
-              className="bg-[#c8965a] text-[#0a0805] font-black px-8 py-4 rounded-full text-base hover:bg-[#e8c48a] transition-colors duration-300"
-            >
-              Jelajahi Sekarang
-            </button>
-            <button className="footer-glass-pill px-8 py-4 rounded-full text-[#f5f0e8] font-semibold text-base">
-              Lihat Peta
-            </button>
-          </div>
-        </div>
-
-        {/* Stats row */}
-        <div className="relative z-10 mt-20 grid grid-cols-3 gap-6 md:gap-12 max-w-2xl w-full mx-auto">
-          {[
-            { num: "500+", label: "Cafe Terdaftar" },
-            { num: "12K+", label: "Ulasan Pengguna" },
-            { num: "48", label: "Kota di Indonesia" },
-          ].map((s) => (
-            <div key={s.label} className="text-center">
-              <div className="text-2xl md:text-4xl font-black text-[#c8965a]" style={{ fontFamily: "'Fraunces', serif" }}>{s.num}</div>
-              <div className="text-[#8a7d6b] text-xs md:text-sm mt-1">{s.label}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Scroll cue */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-[#8a7d6b]">
-          <span className="text-xs tracking-widest uppercase">Scroll</span>
-          <div className="w-px h-12 bg-gradient-to-b from-[#c8965a] to-transparent" />
-        </div>
-      </section>
+      {/* ── CINEMATIC HERO ── */}
+      <CinematicHero />
 
       {/* ── MARQUEE DIVIDER ── */}
       <div className="w-full overflow-hidden border-y border-[rgba(200,150,90,0.1)] bg-[rgba(10,8,5,0.9)] py-3">
@@ -622,8 +604,8 @@ export default function App() {
         </div>
       </section>
 
-      {/* ── CINEMATIC FOOTER ── */}
-      <CinematicFooter />
+      {/* ── FOOTER ── */}
+      <SimpleFooter />
     </div>
   );
 }
