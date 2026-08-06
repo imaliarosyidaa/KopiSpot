@@ -1,0 +1,10 @@
+{
+  "description": "Discover trendy and aesthetic coffee spots with reviews, ratings, and photos, perfect for studying, socializing, or capturing Instagram-worthy moments.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
