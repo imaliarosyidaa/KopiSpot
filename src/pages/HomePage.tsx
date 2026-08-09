@@ -5,12 +5,13 @@ import { MdSearch } from "react-icons/md";
 import MagneticButton from "@/components/ui/magnetic-button";
 import PlaceCard from "@/components/ui/place-card";
 import StarRating from "@/components/ui/star-rating";
+import InteractiveGlobe from "@/components/ui/interactive-globe";
 import LeftSidebar from "@/components/shared/LeftSidebar";
 import { feedApi, placesApi, type FeedRight, type PlaceListItem } from "@/lib/api";
 import { timeAgo } from "@/lib/format";
 import { PLACE_CATEGORIES } from "@/lib/constants";
 import ChatPage from "./ChatPage";
-import { CinematicFooter } from "@/components/ui/motion-footer";
+import { CinematicSection } from "@/components/ui/motion";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -196,6 +197,63 @@ export default function HomePage() {
     <>
       <CinematicHero onExplore={scrollToPlaces} />
 
+      {/*
+        ── ABOUT ──
+      */}
+      <section className="md:px-12 py-20 mx-auto">
+        <div className="rounded-3xl border border-border bg-card overflow-hidden relative footer-glass-pill">
+          <div className="absolute top-0 right-1/4 w-96 h-96 rounded-full bg-[#b07d3f]/10 blur-3xl pointer-events-none" />
+
+          <div className="flex flex-col md:flex-row items-center min-h-[520px]">
+            <div className="flex-1 flex flex-col justify-center relative z-10">
+              <div>
+                <span className="tag-pill mb-3 inline-block">Komunitas Kopi Indonesia</span>
+              </div>
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-black tracking-tight text-foreground leading-[1.1] mb-4" style={{ fontFamily: "'Fraunces', serif" }}>
+                Eksplorasi Kafe dari
+                <br />
+                <span className="bg-gradient-to-r from-[#b07d3f] to-[#e0a45e] bg-clip-text text-transparent">
+                  Seluruh Nusantara
+                </span>
+              </h2>
+
+              <p className="text-sm md:text-base text-muted-foreground max-w-md leading-relaxed mb-8">
+                <span className="font-bold">Tahukah kamu?</span> Biaya pembuatan Sistem Pemesanan Online Restoran (Restaurant Online Ordering System) bisa mencapai puluhan hingga ratusan juta. Kami membantu para pelaku UMKM kopi yang sedang merintis usahanya dan terkendala biaya dengan membangun layanan digital satu akses untuk menghubungkan UMKM kopi ke semua pelanggan.
+              </p>
+
+              <div className="flex items-center gap-6 flex-wrap">
+                <div>
+                  <p className="text-2xl font-bold text-foreground">50+</p>
+                  <p className="text-xs text-muted-foreground">Kafe Terkurasi</p>
+                </div>
+                <div className="w-px h-8 bg-border" />
+                <div>
+                  <p className="text-2xl font-bold text-foreground">8+</p>
+                  <p className="text-xs text-muted-foreground">Kota di Indonesia</p>
+                </div>
+                <div className="w-px h-8 bg-border" />
+                <div>
+                  <p className="text-2xl font-bold text-foreground">12K+</p>
+                  <p className="text-xs text-muted-foreground">Ulasan Pengguna</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex-1 flex items-center justify-center">
+              <InteractiveGlobe
+                size={440}
+                className="max-w-full"
+                dotColor="rgba(176, 125, 63, ALPHA)"
+                arcColor="rgba(176, 125, 63, 0.45)"
+                markerColor="rgba(201, 151, 79, 1)"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <CinematicSection />
+
       <section id="places" className="px-6 md:px-12 py-20 max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
           <div>
@@ -355,7 +413,6 @@ export default function HomePage() {
         </div>
       </section>
       
-      <CinematicFooter />
     </>
   );
 }
