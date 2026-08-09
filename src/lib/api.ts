@@ -344,3 +344,60 @@ export const profileApi = {
     }),
   leaderboard: () => api<LeaderboardEntry[]>("/users/leaderboard"),
 };
+
+export interface MenuItemOption {
+  id: string;
+  name: string;
+  price: number;
+  category: string;
+  description: string | null;
+  calories: number | null;
+  sugar: number | null;
+  ingredients: string | null;
+  imageUrl: string | null;
+  isAvailable: boolean;
+  place: { id: string; name: string; city: string; _count: { views: number } };
+}
+
+export const menusApi = {
+  list: (placeId?: string) => {
+    const qs = placeId ? `?placeId=${encodeURIComponent(placeId)}` : "";
+    return api<MenuItemOption[]>(`/menus${qs}`);
+  },
+};
+
+export type OrderStatus = "PENDING" | "CONFIRMED" | "PREPARING" | "READY" | "COMPLETED" | "CANCELLED";
+export type PaymentStatus = "UNPAID" | "PAID" | "FAILED";
+
+export interface OrderItem {
+  id: string;
+  orderId: string;
+  menuItemId: string;
+  quantity: number;
+  price: number;
+  menuItem: { id: string; name: string; price: number; category: string; imageUrl: string | null };
+}
+
+export interface Order {
+  id: string;
+  userId: string;
+  placeId: string;
+  status: OrderStatus;
+  total: number;
+  note: string | null;
+  paymentMethod: string | null;
+  paymentStatus: PaymentStatus;
+  createdAt: string;
+  updatedAt: string;
+  items: OrderItem[];
+  place: { id: string; name: string; city: string; imageUrl: string };
+}
+
+export const ordersApi = {
+  list: () => api<Order[]>("/orders"),
+  detail: (id: string) => api<Order>(`/orders/${id}`),
+  create: (data: { placeId: string; items: { menuItemId: string; quantity: number }[]; note?: string }) =>
+    api<Order>("/orders", { method: "POST", body: JSON.stringify(data) }),
+  pay: (id: string, method: string) =>
+    api<Order>(`/orders/${id}/pay`, { method: "PUT", body: JSON.stringify({ method }) }),
+};

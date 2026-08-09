@@ -8,6 +8,7 @@ import CreatePostPage from "@/pages/CreatePostPage";
 import ProfilePage from "@/pages/ProfilePage";
 import LeaderboardPage from "@/pages/LeaderboardPage";
 import ChatPage from "@/pages/ChatPage";
+import OrderPage from "@/pages/OrderPage";
 
 export default function App() {
   return (
@@ -23,6 +24,8 @@ export default function App() {
           <Route path="/post/new" element={<CreatePostPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/leaderboard" element={<LeaderboardPage />} />
+          <Route path="/chat" element={<ChatPage />} />
+          <Route path="/order" element={<OrderPage />} />
           <Route path="*" element={<HomePage />} />
         </Routes>
       </div>

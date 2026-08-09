@@ -7,6 +7,8 @@ import postsRouter from "./routes/posts.routes.js";
 import profileRouter from "./routes/profile.routes.js";
 import feedRouter from "./routes/feed.routes.js";
 import chatRouter from "./routes/chat.routes.js";
+import menusRouter from "./routes/menus.routes.js";
+import ordersRouter from "./routes/orders.routes.js";
 import uploadRouter, { UPLOAD_DIR } from "./routes/upload.routes.js";
 
 if (!fs.existsSync(UPLOAD_DIR)) {
@@ -29,6 +31,8 @@ app.use("/api/posts", postsRouter);
 app.use("/api/users", profileRouter);
 app.use("/api/feed", feedRouter);
 app.use("/api/chat", chatRouter);
+app.use("/api/menus", menusRouter);
+app.use("/api/orders", ordersRouter);
 app.use("/api/upload", uploadRouter);
 
 app.use((_req, res) => {

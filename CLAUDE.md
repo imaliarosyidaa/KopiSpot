@@ -199,7 +199,7 @@ Pengguna dapat mengedit:
 
 ---
 
-[ ] 6. Pesan Kopi
+[x] 6. Pesan Kopi
 
 Pengguna dapat memesan menu dari café yang tersedia.
 

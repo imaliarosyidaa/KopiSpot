@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import { MdAdd, MdLogout } from "react-icons/md";
+import { MdAdd, MdLogout, MdShoppingCart } from "react-icons/md";
 import { useAuth } from "@/lib/auth-context";
 import AuthModal from "@/components/ui/auth-modal";
 import ThemeSwitcher from "@/components/shared/ThemeSwitcher";
+import { cartCount, useCartStore } from "@/lib/cart-store";
 
 const navItems = [
   { to: "/", label: "Beranda" },
   { to: "/feed", label: "Komunitas" },
+  { to: "/chat", label: "Chat" },
   { to: "/leaderboard", label: "Peringkat" },
 ];
 
@@ -15,6 +17,8 @@ export default function Navbar() {
   const { user, loading, logout } = useAuth();
   const [authOpen, setAuthOpen] = useState(false);
   const navigate = useNavigate();
+  const cartItems = useCartStore((s) => s.items);
+  const cartCountTotal = cartCount(cartItems);
 
   return (
     <>
@@ -47,6 +51,18 @@ export default function Navbar() {
 
         <div className="flex items-center gap-3">
           <ThemeSwitcher />
+          <Link
+            to="/order"
+            title="Pesan Kopi"
+            className="relative w-9 h-9 rounded-full footer-glass-pill flex items-center justify-center text-muted-foreground hover:text-[#b07d3f] transition-colors"
+          >
+            <MdShoppingCart className="w-5 h-5" />
+            {cartCountTotal > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#b07d3f] text-[#1a1a1a] text-[11px] font-black flex items-center justify-center">
+                {cartCountTotal}
+              </span>
+            )}
+          </Link>
           <button
             onClick={() => navigate("/post/new")}
             className="hidden sm:flex items-center gap-1.5 footer-glass-pill px-4 py-2 rounded-full text-[#b07d3f] font-semibold text-sm"

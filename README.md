@@ -88,6 +88,16 @@ npm run build         # build produksi
 - Terdapat tombol shortcut untuk pertanyaan rekomendasi di atas.
 - Chatbot sederhana dibuat dari query database (bukan API AI).
 
+[x] SUDAH SELESAI 7. Pesan Kopi
+
+- Ikon keranjang di navbar dengan jumlah item yang dipesan.
+- Alur: Pesan → List Order → Checkout → Pembayaran.
+- Pesan: pilih café melalui select box, tampilkan semua menu café, tentukan jumlah lalu tambahkan ke pesanan.
+- List Order: tampilkan café terpilih dan menu yang dipesan, atur jumlah/hapus menu, subtotal dan total, hanya berisi menu dari satu café.
+- Checkout: ringkasan pesanan, data pengguna, catatan pesanan, dan total pembayaran.
+- Pembayaran: pilih metode pembayaran (QRIS, Virtual Account, E-Wallet, Kartu, Bayar di Kafe), total & status pembayaran, lalu konfirmasi pesanan.
+- Pengguna harus login untuk checkout dan pembayaran; pesanan & riwayat transaksi tersimpan pada akun pengguna.
+
 ### Tata Letak
 
 [x] SUDAH SELESAI Sidebar Kiri
@@ -134,6 +144,8 @@ npm run build         # build produksi
 - `GET /api/places`, `GET /api/places/:id`, `POST /api/places`
 - `POST /api/places/:id/rate`, `POST /api/places/:id/comments`
 - `POST /api/chat` — tanya asisten kopi (tanpa login)
+- `GET /api/menus` — daftar menu kafe (`?placeId=`)
+- `GET /api/orders`, `GET /api/orders/:id`, `POST /api/orders`, `PUT /api/orders/:id/pay`
 - `GET /api/feed/right` — konten sidebar kanan
 - `GET /api/users/me`, `PUT /api/users/me`, `GET /api/users/leaderboard`
 
@@ -141,4 +153,4 @@ npm run build         # build produksi
 
 ## Entitas Basis Data
 
-Pengguna, Kafe, Menu, Kategori, Ulasan, Peringkat, Postingan, Komentar, Suka, Postingan Tersimpan, Gambar, Lencana, Prestasi Pengguna.
+Pengguna, Kafe, Menu, Kategori, Ulasan, Peringkat, Postingan, Komentar, Suka, Postingan Tersimpan, Gambar, Lencana, Prestasi Pengguna, Pesanan, Item Pesanan.
