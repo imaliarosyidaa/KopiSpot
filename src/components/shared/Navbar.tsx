@@ -10,6 +10,7 @@ const navItems = [
   { to: "/", label: "Beranda" },
   { to: "/feed", label: "Komunitas" },
   { to: "/chat", label: "Chat" },
+  { to: "/order", label: "Pesan Kopi" },
   { to: "/leaderboard", label: "Peringkat" },
 ];
 
@@ -52,7 +53,7 @@ export default function Navbar() {
         <div className="flex items-center gap-3">
           <ThemeSwitcher />
           <Link
-            to="/order"
+            to="/order/riwayat"
             title="Pesan Kopi"
             className="relative w-9 h-9 rounded-full footer-glass-pill flex items-center justify-center text-muted-foreground hover:text-[#b07d3f] transition-colors"
           >

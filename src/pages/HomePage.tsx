@@ -10,6 +10,7 @@ import { feedApi, placesApi, type FeedRight, type PlaceListItem } from "@/lib/ap
 import { timeAgo } from "@/lib/format";
 import { PLACE_CATEGORIES } from "@/lib/constants";
 import ChatPage from "./ChatPage";
+import { CinematicFooter } from "@/components/ui/motion-footer";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -353,6 +354,8 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+      
+      <CinematicFooter />
     </>
   );
 }

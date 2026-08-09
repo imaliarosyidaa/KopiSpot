@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   MdAdd,
   MdArrowBack,
   MdCheckCircle,
   MdDelete,
-  MdLocalCafe,
   MdPayments,
+  MdReceiptLong,
   MdRemove,
   MdShoppingCart,
 } from "react-icons/md";
@@ -13,10 +14,10 @@ import { menusApi, ordersApi, placesApi, type MenuItemOption, type Order, type P
 import { useAuth } from "@/lib/auth-context";
 import AuthModal from "@/components/ui/auth-modal";
 import { cartCount, cartSubtotal, useCartStore, type CartItem } from "@/lib/cart-store";
-import { formatDate, formatRupiah } from "@/lib/format";
+import { formatRupiah } from "@/lib/format";
+import { menuImageUrl } from "@/lib/menu-images";
 
 type Step = "menu" | "cart" | "checkout" | "pay" | "done";
-type Tab = "pesan" | "riwayat";
 
 const inputClass =
   "w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-all focus:border-[#b07d3f] focus:ring-2 focus:ring-[rgba(176,125,63,0.25)]";
@@ -28,15 +29,6 @@ const PAYMENT_METHODS = [
   "Kartu Kredit / Debit",
   "Bayar di Kafe",
 ];
-
-const STATUS_LABEL: Record<string, string> = {
-  PENDING: "Menunggu",
-  CONFIRMED: "Dikonfirmasi",
-  PREPARING: "Disiapkan",
-  READY: "Siap Diambil",
-  COMPLETED: "Selesai",
-  CANCELLED: "Dibatalkan",
-};
 
 const PAYMENT_LABEL: Record<string, string> = {
   UNPAID: "Belum Dibayar",
@@ -63,13 +55,13 @@ function categoryLabel(value: string): string {
 
 export default function OrderPage() {
   const { user, loading } = useAuth();
+  const navigate = useNavigate();
   const items = useCartStore((s) => s.items);
   const add = useCartStore((s) => s.add);
   const setQuantity = useCartStore((s) => s.setQuantity);
   const remove = useCartStore((s) => s.remove);
   const clear = useCartStore((s) => s.clear);
 
-  const [tab, setTab] = useState<Tab>("pesan");
   const [step, setStep] = useState<Step>("menu");
   const [places, setPlaces] = useState<PlaceListItem[]>([]);
   const [selectedPlaceId, setSelectedPlaceId] = useState("");
@@ -84,9 +76,6 @@ export default function OrderPage() {
   const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [ordersError, setOrdersError] = useState<string | null>(null);
 
   const count = cartCount(items);
   const subtotal = cartSubtotal(items);
@@ -124,22 +113,6 @@ export default function OrderPage() {
     return () => clearTimeout(t);
   }, [notice]);
 
-  const loadOrders = useCallback(async () => {
-    if (!user) return;
-    setOrdersError(null);
-    try {
-      setOrders(await ordersApi.list());
-    } catch (err) {
-      setOrdersError(err instanceof Error ? err.message : "Gagal memuat riwayat.");
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (tab === "riwayat" && user) {
-      loadOrders();
-    }
-  }, [tab, user, loadOrders]);
-
   const handleAdd = (m: MenuItemOption) => {
     if (items.length > 0 && items[0].placeId !== m.place.id) {
       setNotice(`Keranjang diganti — pesanan hanya bisa berisi menu dari ${m.place.name}.`);
@@ -150,6 +123,7 @@ export default function OrderPage() {
       placeName: m.place.name,
       name: m.name,
       price: m.price,
+      category: m.category,
       imageUrl: m.imageUrl,
     });
   };
@@ -270,24 +244,23 @@ export default function OrderPage() {
             const qty = items.find((i) => i.id === m.id)?.quantity ?? 0;
             return (
               <div key={m.id} className="glass-card rounded-2xl p-4 flex flex-col gap-3">
+                <div className="relative w-full h-32 rounded-xl overflow-hidden bg-[rgba(140,95,40,0.15)]">
+                  <img
+                    src={menuImageUrl(m.category, m.imageUrl, m.name)}
+                    alt={m.name}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                  <span className="absolute top-2 right-2 tag-pill">{categoryLabel(m.category)}</span>
+                </div>
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-start gap-3 min-w-0">
-                    <div className="w-12 h-12 rounded-xl bg-[rgba(140,95,40,0.22)] flex items-center justify-center text-[#b07d3f] shrink-0 overflow-hidden">
-                      {m.imageUrl ? (
-                        <img src={m.imageUrl} alt={m.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <MdLocalCafe className="w-6 h-6" />
-                      )}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="font-semibold text-foreground text-sm truncate">{m.name}</div>
-                      <div className="text-xs text-muted-foreground">{m.place.name}</div>
-                      <div className="text-xs text-muted-foreground mt-0.5">
-                        {formatRupiah(m.price)}
-                      </div>
+                  <div className="min-w-0">
+                    <div className="font-semibold text-foreground text-sm truncate">{m.name}</div>
+                    <div className="text-xs text-muted-foreground">{m.place.name}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      {formatRupiah(m.price)}
                     </div>
                   </div>
-                  <span className="tag-pill shrink-0">{categoryLabel(m.category)}</span>
                 </div>
                 {m.description && (
                   <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
@@ -357,6 +330,12 @@ export default function OrderPage() {
         <div className="flex flex-col divide-y divide-border">
           {items.map((item: CartItem) => (
             <div key={item.id} className="flex items-center gap-3 py-4">
+              <img
+                src={menuImageUrl(item.category, item.imageUrl, item.name)}
+                alt={item.name}
+                className="w-11 h-11 rounded-xl object-cover shrink-0 border border-border"
+                loading="lazy"
+              />
               <div className="flex-1 min-w-0">
                 <div className="font-semibold text-foreground text-sm truncate">{item.name}</div>
                 <div className="text-xs text-muted-foreground">{formatRupiah(item.price)}</div>
@@ -425,7 +404,13 @@ export default function OrderPage() {
       <div className="flex flex-col gap-2 mb-4">
         {items.map((item) => (
           <div key={item.id} className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">
+            <span className="flex items-center gap-2 text-muted-foreground">
+              <img
+                src={menuImageUrl(item.category, item.imageUrl, item.name)}
+                alt={item.name}
+                className="w-8 h-8 rounded-lg object-cover border border-border"
+                loading="lazy"
+              />
               {item.name} <span className="text-foreground font-semibold">× {item.quantity}</span>
             </span>
             <span className="font-semibold text-foreground">{formatRupiah(item.price * item.quantity)}</span>
@@ -582,10 +567,7 @@ export default function OrderPage() {
           Pesan Lagi
         </button>
         <button
-          onClick={() => {
-            setTab("riwayat");
-            resetFlow();
-          }}
+          onClick={() => navigate("/order/riwayat")}
           className="bg-[#b07d3f] text-[#1a1a1a] font-black px-5 py-3 rounded-full text-sm hover:bg-[#c9974f] transition-colors"
         >
           Lihat Riwayat
@@ -593,82 +575,6 @@ export default function OrderPage() {
       </div>
     </div>
   );
-
-  const renderRiwayat = () => {
-    if (!user) {
-      return (
-        <div className="glass-card rounded-3xl p-10 text-center max-w-md mx-auto">
-          <div className="text-4xl mb-3">📦</div>
-          <h2 className="text-xl font-black text-foreground mb-2">Masuk untuk melihat pesanan</h2>
-          <p className="text-muted-foreground text-sm mb-6">Riwayat pesanan tersimpan di akunmu.</p>
-          <button
-            onClick={() => setAuthOpen(true)}
-            className="bg-[#b07d3f] text-[#1a1a1a] font-black px-6 py-3 rounded-full text-sm"
-          >
-            Masuk Sekarang
-          </button>
-        </div>
-      );
-    }
-
-    if (ordersError) {
-      return <div className="text-center text-destructive py-16">{ordersError}</div>;
-    }
-
-    if (orders.length === 0) {
-      return (
-        <div className="glass-card rounded-3xl p-10 text-center max-w-md mx-auto">
-          <div className="text-4xl mb-3">☕</div>
-          <h2 className="text-xl font-black text-foreground mb-2">Belum ada pesanan</h2>
-          <p className="text-muted-foreground text-sm mb-6">
-            Pesanan dan transaksimu akan muncul di sini.
-          </p>
-          <button
-            onClick={() => setTab("pesan")}
-            className="bg-[#b07d3f] text-[#1a1a1a] font-black px-6 py-3 rounded-full text-sm"
-          >
-            Mulai Pesan
-          </button>
-        </div>
-      );
-    }
-
-    return (
-      <div className="flex flex-col gap-4">
-        {orders.map((o) => (
-          <div key={o.id} className="glass-card rounded-2xl p-5">
-            <div className="flex items-center justify-between gap-3 mb-3">
-              <div className="min-w-0">
-                <div className="font-bold text-foreground text-sm">{o.place.name}</div>
-                <div className="text-xs text-muted-foreground">
-                  #{o.id.slice(-8)} · {formatDate(o.createdAt)}
-                </div>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="tag-pill">
-                  {o.paymentStatus === "PAID" ? "✓ " : ""}
-                  {PAYMENT_LABEL[o.paymentStatus]}
-                </span>
-                <span className="tag-pill">{STATUS_LABEL[o.status] ?? o.status}</span>
-              </div>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">
-                {o.items.reduce((s, it) => s + it.quantity, 0)} item
-                {o.paymentMethod ? ` · ${o.paymentMethod}` : ""}
-              </span>
-              <span className="font-black text-[#b07d3f]">{formatRupiah(o.total)}</span>
-            </div>
-            {o.note && (
-              <div className="mt-2 text-xs text-muted-foreground bg-[rgba(140,95,40,0.06)] rounded-lg px-3 py-2">
-                Catatan: {o.note}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    );
-  };
 
   if (loading) {
     return (
@@ -681,58 +587,42 @@ export default function OrderPage() {
   return (
     <div className="pt-16">
       <div className="max-w-5xl mx-auto px-6 md:px-12 py-10">
-        <div className="mb-6">
-          <span className="tag-pill mb-3 inline-block">Pesan Kopi</span>
-          <h1 className="text-3xl md:text-4xl font-black text-foreground" style={{ fontFamily: "'Fraunces', serif" }}>
-            Pesan & Ambil Kopimu
-          </h1>
-          <p className="text-muted-foreground text-sm mt-2">
-            Pilih menu favorit dari berbagai kafe, lalu checkout dan bayar langsung dari sini.
-          </p>
+        <div className="flex items-start justify-between gap-4 mb-6">
+          <div>
+            <span className="tag-pill mb-3 inline-block">Pesan Kopi</span>
+            <h1 className="text-3xl md:text-4xl font-black text-foreground" style={{ fontFamily: "'Fraunces', serif" }}>
+              Pesan & Ambil Kopimu
+            </h1>
+            <p className="text-muted-foreground text-sm mt-2">
+              Pilih menu favorit dari berbagai kafe, lalu checkout dan bayar langsung dari sini.
+            </p>
+          </div>
+          <button
+            onClick={() => navigate("/order/riwayat")}
+            className="shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-full footer-glass-pill text-sm font-bold text-muted-foreground hover:text-[#b07d3f] transition-colors"
+          >
+            <MdReceiptLong className="w-4 h-4" />
+            Riwayat
+          </button>
         </div>
 
-        <div className="flex items-center gap-2 mb-8">
-          {(["pesan", "riwayat"] as Tab[]).map((t) => (
+        {step !== "menu" && step !== "done" && renderStepIndicator()}
+        {step === "menu" && renderMenuStep()}
+        {step === "cart" && renderCartStep()}
+        {step === "checkout" && renderCheckoutStep()}
+        {step === "pay" && renderPayStep()}
+        {step === "done" && renderDoneStep()}
+
+        {(step === "menu" || step === "cart") && count > 0 && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
             <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`px-5 py-2 rounded-full text-sm font-bold transition-colors ${
-                tab === t ? "bg-[#b07d3f] text-[#1a1a1a]" : "footer-glass-pill text-muted-foreground hover:text-foreground"
-              }`}
+              onClick={() => setStep("cart")}
+              className="flex items-center gap-2 bg-[#b07d3f] text-[#1a1a1a] font-black px-6 py-3 rounded-full shadow-lg hover:bg-[#c9974f] transition-colors"
             >
-              {t === "pesan" ? "Pesan" : "Riwayat"}
-              {t === "pesan" && count > 0 && (
-                <span className="ml-2 inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-[#1a1a1a] text-white text-[10px] font-bold">
-                  {count}
-                </span>
-              )}
+              <MdShoppingCart className="w-5 h-5" />
+              Lihat Pesanan · {count} item
             </button>
-          ))}
-        </div>
-
-        {tab === "pesan" ? (
-          <>
-            {step !== "menu" && step !== "done" && renderStepIndicator()}
-            {step === "menu" && renderMenuStep()}
-            {step === "cart" && renderCartStep()}
-            {step === "checkout" && renderCheckoutStep()}
-            {step === "pay" && renderPayStep()}
-            {step === "done" && renderDoneStep()}
-
-            {(step === "menu" || step === "cart") && count > 0 && (
-              <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
-                <button
-                  onClick={() => setStep("cart")}
-                  className="flex items-center gap-2 bg-[#b07d3f] text-[#1a1a1a] font-black px-6 py-3 rounded-full shadow-lg hover:bg-[#c9974f] transition-colors"
-                >
-                  <MdShoppingCart className="w-5 h-5" />
-                  Lihat Pesanan · {count} item
-                </button>
-              </div>
-            )}
-          </>
-        ) : (
-          renderRiwayat()
+          </div>
         )}
       </div>
 

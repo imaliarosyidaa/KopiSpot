@@ -98,6 +98,13 @@ const placeData = [
   },
 ];
 
+const menuImageByCategory = {
+  coffee: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800&h=600&fit=crop&auto=format",
+  "non-coffee": "https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=800&h=600&fit=crop&auto=format",
+  food: "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=800&h=600&fit=crop&auto=format",
+  dessert: "https://images.unsplash.com/photo-1551024506-0bccd828d307?w=800&h=600&fit=crop&auto=format",
+};
+
 const menuByPlace = {
   "Anomali Coffee": [
     { name: "Espresso", price: 25000, category: "coffee", description: "Shot kopi pekat dari biji pilihan, disajikan tanpa campuran.", calories: 2, sugar: 0, ingredients: "Biji kopi arabika, air" },
@@ -216,7 +223,9 @@ async function main() {
     createdPlaces[place.name] = place;
 
     for (const item of menuByPlace[place.name] ?? []) {
-      await prisma.menuItem.create({ data: { ...item, placeId: place.id } });
+      await prisma.menuItem.create({
+        data: { ...item, imageUrl: item.imageUrl ?? menuImageByCategory[item.category] ?? null, placeId: place.id },
+      });
     }
 
     const values = ratingByPlace[place.name] ?? [];
