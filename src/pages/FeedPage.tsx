@@ -46,24 +46,10 @@ export default function FeedPage() {
   return (
     <div className="pt-24 px-6 md:px-12 max-w-7xl mx-auto pb-20">
       <div className="flex flex-col md:flex-row items-start gap-8">
+        <RightSidebar />
         <div className="flex-1 min-w-0">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
-            <div>
-              <span className="tag-pill mb-3 inline-block">Umpan Komunitas</span>
-              <h1 className="text-4xl md:text-5xl font-black text-foreground leading-tight" style={{ fontFamily: "'Fraunces', serif" }}>
-                Cerita dari<br />Pecinta Kopi
-              </h1>
-            </div>
-            <Link
-              to="/post/new"
-              className="flex items-center gap-2 bg-[#b07d3f] text-[#1a1a1a] font-black px-5 py-3 rounded-full text-sm hover:bg-[#c9974f] transition-colors w-fit"
-            >
-              <MdAdd className="w-4 h-4" />
-              Buat Postingan
-            </Link>
-          </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 mb-6">
+          <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <MdSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <input
@@ -73,7 +59,16 @@ export default function FeedPage() {
                 className="w-full rounded-full border border-border bg-card px-10 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-[#b07d3f] focus:ring-2 focus:ring-[rgba(176,125,63,0.25)]"
               />
             </div>
-            <div className="flex items-center gap-1 p-1 rounded-full footer-glass-pill w-fit">
+                        <Link
+              to="/post/new"
+              className="flex items-center gap-2 bg-[#b07d3f] text-[#1a1a1a] font-black px-5 py-3 rounded-full text-sm hover:bg-[#c9974f] transition-colors w-fit"
+            >
+              <MdAdd className="w-4 h-4" />
+              Buat Postingan
+            </Link>
+          </div>
+
+            <div className="my-4 flex items-center gap-1 p-1 rounded-full footer-glass-pill w-fit">
               {(["latest", "popular"] as const).map((s) => (
                 <button
                   key={s}
@@ -86,7 +81,6 @@ export default function FeedPage() {
                 </button>
               ))}
             </div>
-          </div>
 
           <div className="flex flex-col gap-5 max-w-2xl">
             {loading && page === 1 ? (
