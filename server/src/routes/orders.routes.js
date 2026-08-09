@@ -41,6 +41,8 @@ router.post("/", requireAuth, async (req, res) => {
   const placeId = typeof body.placeId === "string" ? body.placeId : "";
   const items = Array.isArray(body.items) ? body.items : [];
   const note = typeof body.note === "string" ? body.note.trim() : "";
+  const billingAddress =
+    typeof body.billingAddress === "string" ? body.billingAddress.trim() : "";
 
   if (!placeId) {
     return res.status(400).json({ error: "Kafe wajib dipilih." });
@@ -50,6 +52,9 @@ router.post("/", requireAuth, async (req, res) => {
   }
   if (note.length > 500) {
     return res.status(400).json({ error: "Catatan maksimal 500 karakter." });
+  }
+  if (billingAddress.length > 1000) {
+    return res.status(400).json({ error: "Alamat penagihan maksimal 1000 karakter." });
   }
 
   const place = await prisma.place.findUnique({
@@ -88,6 +93,7 @@ router.post("/", requireAuth, async (req, res) => {
       placeId,
       total,
       note: note || null,
+      billingAddress: billingAddress || null,
       status: "PENDING",
       paymentStatus: "UNPAID",
       items: {
@@ -106,6 +112,10 @@ router.post("/", requireAuth, async (req, res) => {
 // PUT /api/orders/:id/pay — konfirmasi pembayaran pesanan
 router.put("/:id/pay", requireAuth, async (req, res) => {
   const method = typeof req.body?.method === "string" ? req.body.method.trim() : "";
+  const proofUrl =
+    typeof req.body?.proofUrl === "string" && req.body.proofUrl.trim()
+      ? req.body.proofUrl.trim()
+      : null;
   if (!method) {
     return res.status(400).json({ error: "Pilih metode pembayaran." });
   }
@@ -125,6 +135,7 @@ router.put("/:id/pay", requireAuth, async (req, res) => {
     where: { id: req.params.id },
     data: {
       paymentMethod: method,
+      paymentProofUrl: proofUrl,
       paymentStatus: "PAID",
       status: "CONFIRMED",
     },
@@ -132,6 +143,22 @@ router.put("/:id/pay", requireAuth, async (req, res) => {
   });
 
   res.json(updated);
+});
+
+// DELETE /api/orders/:id — hapus pesanan yang belum dibayar dari keranjang
+router.delete("/:id", requireAuth, async (req, res) => {
+  const order = await prisma.order.findUnique({
+    where: { id: req.params.id },
+    select: { id: true, userId: true, paymentStatus: true },
+  });
+  if (!order || order.userId !== req.userId) {
+    return res.status(404).json({ error: "Pesanan tidak ditemukan." });
+  }
+  if (order.paymentStatus === "PAID") {
+    return res.status(400).json({ error: "Pesanan sudah dibayar, tidak bisa dihapus." });
+  }
+  await prisma.order.delete({ where: { id: req.params.id } });
+  res.json({ ok: true });
 });
 
 export default router;

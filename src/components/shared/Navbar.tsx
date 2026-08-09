@@ -53,8 +53,8 @@ export default function Navbar() {
         <div className="flex items-center gap-3">
           <ThemeSwitcher />
           <Link
-            to="/order/riwayat"
-            title="Pesan Kopi"
+            to="/order/keranjang"
+            title="Keranjang Pesanan"
             className="relative w-9 h-9 rounded-full footer-glass-pill flex items-center justify-center text-muted-foreground hover:text-[#b07d3f] transition-colors"
           >
             <MdShoppingCart className="w-5 h-5" />

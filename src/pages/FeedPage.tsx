@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { MdAdd, MdSearch } from "react-icons/md";
-import { postsApi, type PostItem } from "@/lib/api";
+import { placesApi, postsApi, type PlaceListItem, type PostItem } from "@/lib/api";
 import PostCard from "@/components/feed/post-card";
+import LeftSidebar from "@/components/shared/LeftSidebar";
 import RightSidebar from "@/components/shared/RightSidebar";
 
 export default function FeedPage() {
@@ -12,6 +13,25 @@ export default function FeedPage() {
   const [sort, setSort] = useState<"latest" | "popular">("latest");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [places, setPlaces] = useState<PlaceListItem[]>([]);
+  const [activeCategory, setActiveCategory] = useState("SEMUA");
+  const [activeCity, setActiveCity] = useState("SEMUA");
+
+  const cities = useMemo(() => {
+    const unique = Array.from(new Set(places.map((p) => p.city).filter(Boolean)));
+    return unique.sort();
+  }, [places]);
+
+  const placesById = useMemo(() => new Map(places.map((p) => [p.id, p])), [places]);
+
+  const visiblePosts = useMemo(() => {
+    if (activeCategory === "SEMUA" && activeCity === "SEMUA") return posts;
+    return posts.filter((post) => {
+      if (activeCity !== "SEMUA" && post.place?.city !== activeCity) return false;
+      if (activeCategory !== "SEMUA" && placesById.get(post.placeId ?? "")?.category !== activeCategory) return false;
+      return true;
+    });
+  }, [posts, activeCategory, activeCity, placesById]);
 
   const load = useCallback(async (targetPage: number, keep: boolean) => {
     setLoading(true);
@@ -31,6 +51,17 @@ export default function FeedPage() {
     load(1, false);
   }, [load]);
 
+  useEffect(() => {
+    let active = true;
+    placesApi
+      .list()
+      .then((d) => active && setPlaces(d))
+      .catch(() => active && setPlaces([]));
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const updatePost = (updated: PostItem) => {
     setPosts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
   };
@@ -46,7 +77,13 @@ export default function FeedPage() {
   return (
     <div className="pt-24 px-6 md:px-12 max-w-7xl mx-auto pb-20">
       <div className="flex flex-col md:flex-row items-start gap-8">
-        <RightSidebar />
+        <LeftSidebar
+          cities={cities}
+          activeCategory={activeCategory}
+          activeCity={activeCity}
+          onCategory={setActiveCategory}
+          onCity={setActiveCity}
+        />
         <div className="flex-1 min-w-0">
 
           <div className="flex flex-col sm:flex-row gap-3">
@@ -85,14 +122,14 @@ export default function FeedPage() {
           <div className="flex flex-col gap-5 max-w-2xl">
             {loading && page === 1 ? (
               <div className="glass-card rounded-3xl h-80 animate-pulse" />
-            ) : posts.length === 0 ? (
+            ) : visiblePosts.length === 0 ? (
               <div className="glass-card rounded-3xl p-12 text-center">
                 <div className="text-4xl mb-3">📭</div>
                 <p className="text-foreground font-semibold">Belum ada postingan yang cocok.</p>
                 <p className="text-muted-foreground text-sm mt-1">Jadilah orang pertama yang berbagi cerita!</p>
               </div>
             ) : (
-              posts.map((post) => <PostCard key={post.id} post={post} onChanged={removePost} />)
+              visiblePosts.map((post) => <PostCard key={post.id} post={post} onChanged={removePost} />)
             )}
 
             {page < totalPages && (

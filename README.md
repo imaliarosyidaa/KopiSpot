@@ -136,6 +136,22 @@ npm run build         # build produksi
 - Lencana: Penjelajah Kopi, Peninjau Teratas, Kontributor Teratas, Kreator yang Sedang Naik Daun.
 - Papan peringkat, XP, level, dan lencana.
 
+[x] SUDAH SELESAI Keranjang Pesanan
+
+- Hapus menu dari pesanan, simpan untuk nanti, dan pindahkan ke daftar keinginan.
+- Daftar "Simpan untuk Nanti" dan "Daftar Keinginan" dapat dikembalikan ke keranjang atau dihapus.
+
+[x] SUDAH SELESAI Fitur Checkout
+
+- Leftbar: alamat penagihan (nama, no. HP, alamat, kota, kode pos) dan pemilihan metode pembayaran.
+- Rightbar: ringkasan pesanan, catatan pesanan, total pembayaran, dan tombol bayar.
+
+[x] SUDAH SELESAI Fitur Pembayaran
+
+- QRIS menampilkan QR code yang bisa dipindai.
+- Virtual Account (bank) menampilkan nomor VA yang bisa disalin.
+- Tombol kirim bukti pembayaran (unggah gambar) sebelum konfirmasi pesanan.
+
 ---
 
 ## Endpoint API (Ringkasan)

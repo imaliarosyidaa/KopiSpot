@@ -9,7 +9,7 @@ import ProfilePage from "@/pages/ProfilePage";
 import LeaderboardPage from "@/pages/LeaderboardPage";
 import ChatPage from "@/pages/ChatPage";
 import OrderPage from "@/pages/OrderPage";
-import OrderHistoryPage from "@/pages/OrderHistoryPage";
+import OrderCartPage from "@/pages/OrderCartPage";
 
 export default function App() {
   return (
@@ -27,7 +27,7 @@ export default function App() {
           <Route path="/leaderboard" element={<LeaderboardPage />} />
           <Route path="/chat" element={<ChatPage />} />
           <Route path="/order" element={<OrderPage />} />
-          <Route path="/order/riwayat" element={<OrderHistoryPage />} />
+          <Route path="/order/keranjang" element={<OrderCartPage />} />
           <Route path="*" element={<HomePage />} />
         </Routes>
       </div>

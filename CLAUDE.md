@@ -309,6 +309,34 @@ Pengguna tamu hanya dapat melihat-lihat konten.
 
 ---
 
+[x] Keranjang Pesanan
+
+- Hapus
+- Simpan untuk nanti
+- Pindahkan ke daftar keinginan
+
+---
+
+[x] Fitur Checkout
+
+leftbar:
+- Alamat penagihan
+- Metode pembayaran
+
+rightbar:
+- Ringkasan pesanan
+- tombol bayar
+
+---
+
+[x] Fitur Pembayaran
+
+- generate qrocode jika memilih qris
+- va jika memilih bank
+- Tombol kirim bukti pembayaran
+
+---
+
 [x] Fitur Pengguna
 
 - Edit profil

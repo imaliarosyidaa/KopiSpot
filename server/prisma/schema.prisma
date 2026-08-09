@@ -259,11 +259,13 @@ model Order {
   id            String        @id @default(cuid())
   userId        String
   placeId       String
-  status        OrderStatus   @default(PENDING)
-  total         Int
-  note          String?
-  paymentMethod String?
-  paymentStatus PaymentStatus @default(UNPAID)
+  status           OrderStatus   @default(PENDING)
+  total            Int
+  note             String?
+  billingAddress   String?
+  paymentMethod    String?
+  paymentProofUrl  String?
+  paymentStatus    PaymentStatus @default(UNPAID)
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 

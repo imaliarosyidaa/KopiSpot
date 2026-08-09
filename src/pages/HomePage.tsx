@@ -80,12 +80,12 @@ function CinematicHero({ onExplore }: { onExplore: () => void }) {
           className="text-5xl md:text-8xl font-black footer-text-glow tracking-tighter mb-5"
           style={{ fontFamily: "'Fraunces', serif" }}
         >
-          Temukan Spot
+          Satu Akses di
           <br />
-          Favoritmu.
+          Pintu Kopi.
         </h1>
         <p ref={subRef} className="text-muted-foreground text-sm md:text-base mb-10 max-w-md leading-relaxed">
-          Ratusan tempat ngopi terbaik, tersaring khusus untuk kamu yang suka kopi, kerja dari cafe, atau sekadar foto-foto.
+          Pintu Kopi adalah platform digital yang menjadi satu pintu bagi pelanggan untuk menemukan dan memesan kopi dari berbagai UMKM kopi.
         </p>
 
         <div ref={linksRef} className="flex flex-col items-center gap-4 w-full">

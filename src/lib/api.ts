@@ -385,7 +385,9 @@ export interface Order {
   status: OrderStatus;
   total: number;
   note: string | null;
+  billingAddress: string | null;
   paymentMethod: string | null;
+  paymentProofUrl: string | null;
   paymentStatus: PaymentStatus;
   createdAt: string;
   updatedAt: string;
@@ -396,8 +398,16 @@ export interface Order {
 export const ordersApi = {
   list: () => api<Order[]>("/orders"),
   detail: (id: string) => api<Order>(`/orders/${id}`),
-  create: (data: { placeId: string; items: { menuItemId: string; quantity: number }[]; note?: string }) =>
-    api<Order>("/orders", { method: "POST", body: JSON.stringify(data) }),
-  pay: (id: string, method: string) =>
-    api<Order>(`/orders/${id}/pay`, { method: "PUT", body: JSON.stringify({ method }) }),
+  create: (data: {
+    placeId: string;
+    items: { menuItemId: string; quantity: number }[];
+    note?: string;
+    billingAddress?: string;
+  }) => api<Order>("/orders", { method: "POST", body: JSON.stringify(data) }),
+  pay: (id: string, method: string, proofUrl?: string) =>
+    api<Order>(`/orders/${id}/pay`, {
+      method: "PUT",
+      body: JSON.stringify({ method, proofUrl: proofUrl ?? null }),
+    }),
+  remove: (id: string) => api<{ ok: boolean }>(`/orders/${id}`, { method: "DELETE" }),
 };

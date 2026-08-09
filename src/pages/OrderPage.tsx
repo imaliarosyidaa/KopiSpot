@@ -1,16 +1,31 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   MdAdd,
   MdArrowBack,
+  MdBookmarkAdd,
   MdCheckCircle,
+  MdClose,
   MdDelete,
+  MdFavoriteBorder,
+  MdLocationOn,
   MdPayments,
   MdReceiptLong,
   MdRemove,
+  MdRestore,
   MdShoppingCart,
+  MdUpload,
 } from "react-icons/md";
-import { menusApi, ordersApi, placesApi, type MenuItemOption, type Order, type PlaceListItem } from "@/lib/api";
+import { QRCodeSVG } from "qrcode.react";
+import {
+  menusApi,
+  ordersApi,
+  placesApi,
+  uploadFile,
+  type MenuItemOption,
+  type Order,
+  type PlaceListItem,
+} from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import AuthModal from "@/components/ui/auth-modal";
 import { cartCount, cartSubtotal, useCartStore, type CartItem } from "@/lib/cart-store";
@@ -53,16 +68,37 @@ function categoryLabel(value: string): string {
   return map[value] ?? value;
 }
 
+function vaNumber(orderId: string): string {
+  const digits = orderId.replace(/\D/g, "").slice(-12);
+  return `988${digits || "000000000001"}`;
+}
+
+function billingSummary(order: Order | null): string {
+  return order?.billingAddress?.replace(/\n/g, " · ") ?? "-";
+}
+
 export default function OrderPage() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const items = useCartStore((s) => s.items);
+  const savedForLater = useCartStore((s) => s.savedForLater);
+  const wishlist = useCartStore((s) => s.wishlist);
   const add = useCartStore((s) => s.add);
   const setQuantity = useCartStore((s) => s.setQuantity);
   const remove = useCartStore((s) => s.remove);
   const clear = useCartStore((s) => s.clear);
+  const saveForLater = useCartStore((s) => s.saveForLater);
+  const restoreSaved = useCartStore((s) => s.restoreSaved);
+  const removeSaved = useCartStore((s) => s.removeSaved);
+  const moveToWishlist = useCartStore((s) => s.moveToWishlist);
+  const moveFromWishlist = useCartStore((s) => s.moveFromWishlist);
+  const removeFromWishlist = useCartStore((s) => s.removeFromWishlist);
 
-  const [step, setStep] = useState<Step>("menu");
+  const initialStep = (location.state as { step?: Step } | null)?.step;
+  const [step, setStep] = useState<Step>(() =>
+    initialStep && initialStep !== "done" ? initialStep : "menu"
+  );
   const [places, setPlaces] = useState<PlaceListItem[]>([]);
   const [selectedPlaceId, setSelectedPlaceId] = useState("");
   const [menus, setMenus] = useState<MenuItemOption[]>([]);
@@ -72,10 +108,15 @@ export default function OrderPage() {
 
   const [authOpen, setAuthOpen] = useState(false);
   const [note, setNote] = useState("");
+  const [billing, setBilling] = useState({ name: "", phone: "", address: "", city: "", postalCode: "" });
+  const [billingError, setBillingError] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState(PAYMENT_METHODS[0]);
   const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [proofUrl, setProofUrl] = useState<string | null>(null);
+  const [proofName, setProofName] = useState("");
+  const [uploadingProof, setUploadingProof] = useState(false);
 
   const count = cartCount(items);
   const subtotal = cartSubtotal(items);
@@ -86,6 +127,12 @@ export default function OrderPage() {
       .then(setPlaces)
       .catch(() => setPlaces([]));
   }, []);
+
+  useEffect(() => {
+    if (user && !billing.name) {
+      setBilling((b) => ({ ...b, name: user.name ?? "" }));
+    }
+  }, [user, billing.name]);
 
   useEffect(() => {
     let active = true;
@@ -139,9 +186,23 @@ export default function OrderPage() {
     setStep("cart");
   };
 
+  const buildBillingAddress = (): string => {
+    const lines = [
+      billing.name.trim() + (billing.phone.trim() ? ` · ${billing.phone.trim()}` : ""),
+      billing.address.trim(),
+      billing.city.trim() + (billing.postalCode.trim() ? `, ${billing.postalCode.trim()}` : ""),
+    ];
+    return lines.join("\n");
+  };
+
   const placeOrder = async () => {
     if (!requireLogin()) return;
     if (items.length === 0) return;
+    if (!billing.name.trim() || !billing.address.trim() || !billing.city.trim()) {
+      setBillingError("Lengkapi nama, alamat, dan kota pada alamat penagihan.");
+      return;
+    }
+    setBillingError(null);
     setError(null);
     setSubmitting(true);
     try {
@@ -149,6 +210,7 @@ export default function OrderPage() {
         placeId: items[0].placeId,
         items: items.map((i) => ({ menuItemId: i.id, quantity: i.quantity })),
         note: note.trim() || undefined,
+        billingAddress: buildBillingAddress(),
       });
       setCreatedOrder(order);
       setStep("pay");
@@ -159,16 +221,37 @@ export default function OrderPage() {
     }
   };
 
+  const handleUploadProof = async (file: File | null) => {
+    if (!file) return;
+    setUploadingProof(true);
+    setError(null);
+    try {
+      const { url } = await uploadFile(file);
+      setProofUrl(url);
+      setProofName(file.name);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gagal mengunggah bukti pembayaran.");
+    } finally {
+      setUploadingProof(false);
+    }
+  };
+
   const confirmPayment = async () => {
     if (!requireLogin()) return;
     if (!createdOrder) return;
+    if (paymentMethod !== "Bayar di Kafe" && !proofUrl) {
+      setError("Mohon kirim bukti pembayaran terlebih dahulu.");
+      return;
+    }
     setError(null);
     setSubmitting(true);
     try {
-      const paid = await ordersApi.pay(createdOrder.id, paymentMethod);
+      const paid = await ordersApi.pay(createdOrder.id, paymentMethod, proofUrl ?? undefined);
       setCreatedOrder(paid);
       clear();
       setNote("");
+      setProofUrl(null);
+      setProofName("");
       setStep("done");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal memproses pembayaran.");
@@ -292,7 +375,7 @@ export default function OrderPage() {
   );
 
   const renderCartStep = () => {
-    if (items.length === 0) {
+    if (items.length === 0 && savedForLater.length === 0 && wishlist.length === 0) {
       return (
         <div className="glass-card rounded-3xl p-10 text-center max-w-md mx-auto">
           <div className="text-4xl mb-3">🛒</div>
@@ -308,223 +391,549 @@ export default function OrderPage() {
       );
     }
 
-    const placeName = items[0].placeName;
+    const handleCartPlaceChange = (value: string) => {
+      if (!value || value === items[0]?.placeId) return;
+      clear();
+      setSelectedPlaceId(value);
+      setStep("menu");
+    };
+
+    const actionPill =
+      "flex items-center gap-1 text-xs font-semibold rounded-full px-3 py-1.5 footer-glass-pill text-muted-foreground hover:text-foreground transition-colors";
+
     return (
       <div className="glass-card rounded-3xl p-6 md:p-8 max-w-2xl mx-auto">
-        <div className="flex items-center justify-between mb-5">
-          <div>
-            <span className="tag-pill mb-2 inline-block">List Order</span>
-            <h2 className="text-2xl font-black text-foreground" style={{ fontFamily: "'Fraunces', serif" }}>
-              {placeName}
-            </h2>
+        <div className="mb-5">
+          <span className="tag-pill mb-3 inline-block">List Order</span>
+          <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+            Pilih Kafe
+          </label>
+          <div className="flex items-center gap-3">
+            <select
+              value={items[0]?.placeId ?? ""}
+              onChange={(e) => handleCartPlaceChange(e.target.value)}
+              className={inputClass}
+            >
+              <option value="" disabled>
+                Pilih kafe untuk pesanan...
+              </option>
+              {places.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name} · {p.city}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={() => setStep("menu")}
+              className="shrink-0 flex items-center gap-1.5 footer-glass-pill px-4 py-3 rounded-full text-sm text-muted-foreground hover:text-foreground"
+            >
+              <MdArrowBack className="w-4 h-4" />
+              Tambah Menu
+            </button>
           </div>
-          <button
-            onClick={() => setStep("menu")}
-            className="flex items-center gap-1.5 footer-glass-pill px-4 py-2 rounded-full text-sm text-muted-foreground hover:text-foreground"
-          >
-            <MdArrowBack className="w-4 h-4" />
-            Tambah Menu
-          </button>
         </div>
 
-        <div className="flex flex-col divide-y divide-border">
-          {items.map((item: CartItem) => (
-            <div key={item.id} className="flex items-center gap-3 py-4">
-              <img
-                src={menuImageUrl(item.category, item.imageUrl, item.name)}
-                alt={item.name}
-                className="w-11 h-11 rounded-xl object-cover shrink-0 border border-border"
-                loading="lazy"
-              />
-              <div className="flex-1 min-w-0">
-                <div className="font-semibold text-foreground text-sm truncate">{item.name}</div>
-                <div className="text-xs text-muted-foreground">{formatRupiah(item.price)}</div>
+        {items.length > 0 && (
+          <div className="flex flex-col divide-y divide-border">
+            {items.map((item: CartItem) => (
+              <div key={item.id} className="flex items-center gap-3 py-4">
+                <img
+                  src={menuImageUrl(item.category, item.imageUrl, item.name)}
+                  alt={item.name}
+                  className="w-11 h-11 rounded-xl object-cover shrink-0 border border-border"
+                  loading="lazy"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-foreground text-sm truncate">{item.name}</div>
+                  <div className="text-xs text-muted-foreground">{formatRupiah(item.price)}</div>
+                  <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                    <button onClick={() => remove(item.id)} className={actionPill} title="Hapus dari pesanan">
+                      <MdDelete className="w-3.5 h-3.5" />
+                      Hapus
+                    </button>
+                    <button
+                      onClick={() => saveForLater(item.id)}
+                      className={actionPill}
+                      title="Simpan untuk nanti"
+                    >
+                      <MdBookmarkAdd className="w-3.5 h-3.5" />
+                      Simpan untuk Nanti
+                    </button>
+                    <button
+                      onClick={() => moveToWishlist(item.id)}
+                      className={actionPill}
+                      title="Pindahkan ke daftar keinginan"
+                    >
+                      <MdFavoriteBorder className="w-3.5 h-3.5" />
+                      Wishlist
+                    </button>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setQuantity(item.id, item.quantity - 1)}
+                    className="w-7 h-7 rounded-full footer-glass-pill flex items-center justify-center text-muted-foreground hover:text-foreground"
+                  >
+                    <MdRemove className="w-4 h-4" />
+                  </button>
+                  <span className="w-8 text-center text-sm font-bold text-foreground">{item.quantity}</span>
+                  <button
+                    onClick={() => setQuantity(item.id, item.quantity + 1)}
+                    className="w-7 h-7 rounded-full footer-glass-pill flex items-center justify-center text-muted-foreground hover:text-foreground"
+                  >
+                    <MdAdd className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="w-20 text-right text-sm font-semibold text-foreground">
+                  {formatRupiah(item.price * item.quantity)}
+                </div>
               </div>
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => setQuantity(item.id, item.quantity - 1)}
-                  className="w-7 h-7 rounded-full footer-glass-pill flex items-center justify-center text-muted-foreground hover:text-foreground"
-                >
-                  <MdRemove className="w-4 h-4" />
-                </button>
-                <span className="w-8 text-center text-sm font-bold text-foreground">{item.quantity}</span>
-                <button
-                  onClick={() => setQuantity(item.id, item.quantity + 1)}
-                  className="w-7 h-7 rounded-full footer-glass-pill flex items-center justify-center text-muted-foreground hover:text-foreground"
-                >
-                  <MdAdd className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="w-20 text-right text-sm font-semibold text-foreground">
-                {formatRupiah(item.price * item.quantity)}
-              </div>
-              <button
-                onClick={() => remove(item.id)}
-                className="w-7 h-7 rounded-full footer-glass-pill flex items-center justify-center text-muted-foreground hover:text-destructive"
-                title="Hapus"
-              >
-                <MdDelete className="w-4 h-4" />
-              </button>
+            ))}
+          </div>
+        )}
+
+        {savedForLater.length > 0 && (
+          <div className="mt-6 pt-5 border-t border-border">
+            <div className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground mb-2">
+              <MdBookmarkAdd className="w-4 h-4" />
+              Simpan untuk Nanti ({savedForLater.length})
             </div>
-          ))}
-        </div>
+            <div className="flex flex-col divide-y divide-border">
+              {savedForLater.map((s) => (
+                <div key={s.id} className="flex items-center gap-3 py-3">
+                  <img
+                    src={menuImageUrl(s.category, s.imageUrl, s.name)}
+                    alt={s.name}
+                    className="w-10 h-10 rounded-xl object-cover shrink-0 border border-border"
+                    loading="lazy"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-foreground text-sm truncate">{s.name}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {s.quantity} × {formatRupiah(s.price)}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => restoreSaved(s.id)}
+                    className="flex items-center gap-1 text-xs font-semibold rounded-full px-3 py-1.5 bg-[#b07d3f]/15 text-[#b07d3f] hover:bg-[#b07d3f]/25 transition-colors"
+                  >
+                    <MdRestore className="w-3.5 h-3.5" />
+                    Kembalikan
+                  </button>
+                  <button
+                    onClick={() => removeSaved(s.id)}
+                    className="flex items-center gap-1 text-xs font-semibold rounded-full px-3 py-1.5 footer-glass-pill text-muted-foreground hover:text-destructive transition-colors"
+                    title="Hapus dari daftar"
+                  >
+                    <MdClose className="w-3.5 h-3.5" />
+                    Hapus
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
-        <div className="flex items-center justify-between pt-4 mt-2 border-t border-border">
-          <span className="text-sm text-muted-foreground">Subtotal</span>
-          <span className="font-black text-foreground">{formatRupiah(subtotal)}</span>
-        </div>
-        <div className="flex items-center justify-between pt-2">
-          <span className="text-sm font-semibold text-foreground">Total</span>
-          <span className="font-black text-lg text-[#b07d3f]">{formatRupiah(subtotal)}</span>
-        </div>
+        {wishlist.length > 0 && (
+          <div className="mt-6 pt-5 border-t border-border">
+            <div className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground mb-2">
+              <MdFavoriteBorder className="w-4 h-4" />
+              Daftar Keinginan ({wishlist.length})
+            </div>
+            <div className="flex flex-col divide-y divide-border">
+              {wishlist.map((w) => (
+                <div key={w.id} className="flex items-center gap-3 py-3">
+                  <img
+                    src={menuImageUrl(w.category, w.imageUrl, w.name)}
+                    alt={w.name}
+                    className="w-10 h-10 rounded-xl object-cover shrink-0 border border-border"
+                    loading="lazy"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-foreground text-sm truncate">{w.name}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {w.quantity} × {formatRupiah(w.price)}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => moveFromWishlist(w.id)}
+                    className="flex items-center gap-1 text-xs font-semibold rounded-full px-3 py-1.5 bg-[#b07d3f]/15 text-[#b07d3f] hover:bg-[#b07d3f]/25 transition-colors"
+                  >
+                    <MdAdd className="w-3.5 h-3.5" />
+                    Pindah ke Keranjang
+                  </button>
+                  <button
+                    onClick={() => removeFromWishlist(w.id)}
+                    className="flex items-center gap-1 text-xs font-semibold rounded-full px-3 py-1.5 footer-glass-pill text-muted-foreground hover:text-destructive transition-colors"
+                    title="Hapus dari daftar"
+                  >
+                    <MdClose className="w-3.5 h-3.5" />
+                    Hapus
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
-        <button
-          onClick={placeOrder}
-          disabled={submitting}
-          className="mt-6 w-full bg-[#b07d3f] text-[#1a1a1a] font-black px-6 py-3.5 rounded-full text-sm hover:bg-[#c9974f] transition-colors disabled:opacity-60"
-        >
-          {submitting ? "Menyimpan..." : "Lanjut ke Checkout"}
-        </button>
+        {items.length > 0 && (
+          <>
+            <div className="flex items-center justify-between pt-4 mt-2 border-t border-border">
+              <span className="text-sm text-muted-foreground">Subtotal</span>
+              <span className="font-black text-foreground">{formatRupiah(subtotal)}</span>
+            </div>
+            <div className="flex items-center justify-between pt-2">
+              <span className="text-sm font-semibold text-foreground">Total</span>
+              <span className="font-black text-lg text-[#b07d3f]">{formatRupiah(subtotal)}</span>
+            </div>
+
+            <button
+              onClick={() => {
+                if (!requireLogin()) return;
+                setStep("checkout");
+              }}
+              className="mt-6 w-full bg-[#b07d3f] text-[#1a1a1a] font-black px-6 py-3.5 rounded-full text-sm hover:bg-[#c9974f] transition-colors"
+            >
+              Lanjut ke Checkout
+            </button>
+          </>
+        )}
       </div>
     );
   };
 
   const renderCheckoutStep = () => (
-    <div className="glass-card rounded-3xl p-6 md:p-8 max-w-2xl mx-auto">
-      <span className="tag-pill mb-2 inline-block">Checkout</span>
-      <h2 className="text-2xl font-black text-foreground mb-5" style={{ fontFamily: "'Fraunces', serif" }}>
-        Ringkasan Pesanan
-      </h2>
-
-      <div className="mb-4">
-        <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Kafe</div>
-        <div className="font-semibold text-foreground">{items[0]?.placeName}</div>
-      </div>
-
-      <div className="flex flex-col gap-2 mb-4">
-        {items.map((item) => (
-          <div key={item.id} className="flex items-center justify-between text-sm">
-            <span className="flex items-center gap-2 text-muted-foreground">
-              <img
-                src={menuImageUrl(item.category, item.imageUrl, item.name)}
-                alt={item.name}
-                className="w-8 h-8 rounded-lg object-cover border border-border"
-                loading="lazy"
-              />
-              {item.name} <span className="text-foreground font-semibold">× {item.quantity}</span>
-            </span>
-            <span className="font-semibold text-foreground">{formatRupiah(item.price * item.quantity)}</span>
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
+      <div className="flex flex-col gap-6 min-w-0">
+        <div className="glass-card rounded-3xl p-6 md:p-8">
+          <div className="flex items-center gap-2 mb-5">
+            <MdLocationOn className="w-5 h-5 text-[#b07d3f]" />
+            <h2 className="text-xl font-black text-foreground" style={{ fontFamily: "'Fraunces', serif" }}>
+              Alamat Penagihan
+            </h2>
           </div>
-        ))}
-      </div>
 
-      <div className="mb-4">
-        <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Data Pengguna</div>
-        <div className="text-sm text-foreground">{user?.name ?? "-"}</div>
-        <div className="text-sm text-muted-foreground">{user?.email}</div>
-      </div>
+          {billingError && (
+            <div className="mb-4 rounded-xl border border-[rgba(220,38,38,0.35)] bg-[rgba(220,38,38,0.08)] px-4 py-3 text-sm text-destructive">
+              {billingError}
+            </div>
+          )}
 
-      <div className="mb-4">
-        <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
-          Catatan Pesanan
-        </label>
-        <textarea
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          rows={3}
-          placeholder="Contoh: tanpa gula, susu diganti oat, dll."
-          className={`${inputClass} resize-none`}
-        />
-      </div>
-
-      <div className="flex items-center justify-between py-3 border-t border-border">
-        <span className="font-semibold text-foreground">Total Pembayaran</span>
-        <span className="font-black text-lg text-[#b07d3f]">{formatRupiah(subtotal)}</span>
-      </div>
-
-      {error && (
-        <div className="mb-4 rounded-xl border border-[rgba(220,38,38,0.35)] bg-[rgba(220,38,38,0.08)] px-4 py-3 text-sm text-destructive">
-          {error}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+                Nama Penerima
+              </label>
+              <input
+                value={billing.name}
+                onChange={(e) => setBilling((b) => ({ ...b, name: e.target.value }))}
+                placeholder="Nama lengkap"
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+                No. HP
+              </label>
+              <input
+                value={billing.phone}
+                onChange={(e) => setBilling((b) => ({ ...b, phone: e.target.value }))}
+                placeholder="08xxxxxxxxxx"
+                className={inputClass}
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+                Alamat
+              </label>
+              <textarea
+                value={billing.address}
+                onChange={(e) => setBilling((b) => ({ ...b, address: e.target.value }))}
+                rows={2}
+                placeholder="Nama jalan, nomor, RT/RW, kelurahan, kecamatan"
+                className={`${inputClass} resize-none`}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+                Kota
+              </label>
+              <input
+                value={billing.city}
+                onChange={(e) => setBilling((b) => ({ ...b, city: e.target.value }))}
+                placeholder="Contoh: Bandung"
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+                Kode Pos
+              </label>
+              <input
+                value={billing.postalCode}
+                onChange={(e) => setBilling((b) => ({ ...b, postalCode: e.target.value }))}
+                placeholder="Contoh: 40123"
+                className={inputClass}
+              />
+            </div>
+          </div>
         </div>
-      )}
 
-      <div className="flex items-center gap-3 mt-4">
-        <button
-          onClick={() => setStep("cart")}
-          className="footer-glass-pill px-5 py-3 rounded-full text-sm font-semibold text-muted-foreground hover:text-foreground"
-        >
-          Kembali
-        </button>
-        <button
-          onClick={placeOrder}
-          disabled={submitting}
-          className="flex-1 bg-[#b07d3f] text-[#1a1a1a] font-black px-6 py-3 rounded-full text-sm hover:bg-[#c9974f] transition-colors disabled:opacity-60"
-        >
-          {submitting ? "Menyimpan..." : "Lanjut ke Pembayaran"}
-        </button>
-      </div>
-    </div>
-  );
-
-  const renderPayStep = () => (
-    <div className="glass-card rounded-3xl p-6 md:p-8 max-w-2xl mx-auto">
-      <span className="tag-pill mb-2 inline-block">Pembayaran</span>
-      <h2 className="text-2xl font-black text-foreground mb-5" style={{ fontFamily: "'Fraunces', serif" }}>
-        Pilih Metode Pembayaran
-      </h2>
-
-      <div className="flex flex-col gap-2.5 mb-6">
-        {PAYMENT_METHODS.map((m) => (
-          <label
-            key={m}
-            className={`flex items-center gap-3 rounded-xl border px-4 py-3.5 cursor-pointer transition-colors ${
-              paymentMethod === m
-                ? "border-[#b07d3f] bg-[rgba(176,125,63,0.08)]"
-                : "border-border hover:border-[rgba(176,125,63,0.4)]"
-            }`}
-          >
-            <input
-              type="radio"
-              name="payment"
-              value={m}
-              checked={paymentMethod === m}
-              onChange={() => setPaymentMethod(m)}
-              className="accent-[#b07d3f]"
-            />
+        <div className="glass-card rounded-3xl p-6 md:p-8">
+          <div className="flex items-center gap-2 mb-5">
             <MdPayments className="w-5 h-5 text-[#b07d3f]" />
-            <span className="text-sm font-semibold text-foreground">{m}</span>
-          </label>
-        ))}
-      </div>
+            <h2 className="text-xl font-black text-foreground" style={{ fontFamily: "'Fraunces', serif" }}>
+              Metode Pembayaran
+            </h2>
+          </div>
 
-      <div className="flex items-center justify-between py-3 border-t border-border">
-        <span className="font-semibold text-foreground">Total Pembayaran</span>
-        <span className="font-black text-lg text-[#b07d3f]">{formatRupiah(subtotal)}</span>
-      </div>
-
-      {error && (
-        <div className="mb-4 rounded-xl border border-[rgba(220,38,38,0.35)] bg-[rgba(220,38,38,0.08)] px-4 py-3 text-sm text-destructive">
-          {error}
+          <div className="flex flex-col gap-2.5">
+            {PAYMENT_METHODS.map((m) => (
+              <label
+                key={m}
+                className={`flex items-center gap-3 rounded-xl border px-4 py-3.5 cursor-pointer transition-colors ${
+                  paymentMethod === m
+                    ? "border-[#b07d3f] bg-[rgba(176,125,63,0.08)]"
+                    : "border-border hover:border-[rgba(176,125,63,0.4)]"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="payment"
+                  value={m}
+                  checked={paymentMethod === m}
+                  onChange={() => setPaymentMethod(m)}
+                  className="accent-[#b07d3f]"
+                />
+                <MdPayments className="w-5 h-5 text-[#b07d3f]" />
+                <span className="text-sm font-semibold text-foreground">{m}</span>
+              </label>
+            ))}
+          </div>
         </div>
-      )}
+      </div>
 
-      <div className="flex items-center gap-3 mt-4">
-        <button
-          onClick={() => setStep("checkout")}
-          className="footer-glass-pill px-5 py-3 rounded-full text-sm font-semibold text-muted-foreground hover:text-foreground"
-        >
-          Kembali
-        </button>
-        <button
-          onClick={confirmPayment}
-          disabled={submitting}
-          className="flex-1 bg-[#b07d3f] text-[#1a1a1a] font-black px-6 py-3 rounded-full text-sm hover:bg-[#c9974f] transition-colors disabled:opacity-60"
-        >
-          {submitting ? "Memproses..." : "Konfirmasi Pembayaran"}
-        </button>
+      <div className="glass-card rounded-3xl p-6 md:p-8 lg:sticky lg:top-24">
+        <span className="tag-pill mb-3 inline-block">Ringkasan Pesanan</span>
+        <div className="mb-4">
+          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Kafe</div>
+          <div className="font-semibold text-foreground">{items[0]?.placeName}</div>
+        </div>
+
+        <div className="flex flex-col gap-2 mb-4">
+          {items.map((item) => (
+            <div key={item.id} className="flex items-center justify-between text-sm">
+              <span className="flex items-center gap-2 text-muted-foreground">
+                <img
+                  src={menuImageUrl(item.category, item.imageUrl, item.name)}
+                  alt={item.name}
+                  className="w-8 h-8 rounded-lg object-cover border border-border"
+                  loading="lazy"
+                />
+                {item.name} <span className="text-foreground font-semibold">× {item.quantity}</span>
+              </span>
+              <span className="font-semibold text-foreground">{formatRupiah(item.price * item.quantity)}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+            Catatan Pesanan
+          </label>
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            rows={2}
+            placeholder="Contoh: tanpa gula, susu diganti oat, dll."
+            className={`${inputClass} resize-none`}
+          />
+        </div>
+
+        <div className="flex items-center justify-between py-3 border-t border-border">
+          <span className="font-semibold text-foreground">Total Pembayaran</span>
+          <span className="font-black text-lg text-[#b07d3f]">{formatRupiah(subtotal)}</span>
+        </div>
+
+        {error && (
+          <div className="mb-4 rounded-xl border border-[rgba(220,38,38,0.35)] bg-[rgba(220,38,38,0.08)] px-4 py-3 text-sm text-destructive">
+            {error}
+          </div>
+        )}
+
+        <div className="flex items-center gap-3 mt-4">
+          <button
+            onClick={() => setStep("cart")}
+            className="footer-glass-pill px-5 py-3 rounded-full text-sm font-semibold text-muted-foreground hover:text-foreground"
+          >
+            Kembali
+          </button>
+          <button
+            onClick={placeOrder}
+            disabled={submitting}
+            className="flex-1 bg-[#b07d3f] text-[#1a1a1a] font-black px-6 py-3 rounded-full text-sm hover:bg-[#c9974f] transition-colors disabled:opacity-60"
+          >
+            {submitting ? "Menyimpan..." : "Bayar"}
+          </button>
+        </div>
       </div>
     </div>
   );
+
+  const renderPayStep = () => {
+    const isQris = paymentMethod === "QRIS";
+    const isVa = paymentMethod.includes("Virtual Account");
+    const isBayarDiKafe = paymentMethod === "Bayar di Kafe";
+
+    return (
+      <div className="glass-card rounded-3xl p-6 md:p-8 max-w-2xl mx-auto">
+        <span className="tag-pill mb-2 inline-block">Pembayaran</span>
+        <h2 className="text-2xl font-black text-foreground mb-1" style={{ fontFamily: "'Fraunces', serif" }}>
+          Selesaikan Pembayaran
+        </h2>
+        <div className="text-sm text-muted-foreground mb-5">
+          Pesanan #{createdOrder?.id.slice(-8)} · {paymentMethod}
+        </div>
+
+        {isQris && (
+          <div className="rounded-2xl border border-border p-5 mb-5 flex flex-col items-center text-center">
+            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+              Scan QRIS berikut untuk membayar
+            </div>
+            <div className="bg-white rounded-2xl p-4 inline-block">
+              <QRCodeSVG
+                value={`KOPISPOT-QRIS:${createdOrder?.id}:${createdOrder?.total}`}
+                size={184}
+                bgColor="#ffffff"
+                fgColor="#1a1a1a"
+              />
+            </div>
+            <div className="text-xs text-muted-foreground mt-3">
+              Buka aplikasi e-wallet atau mobile banking lalu pindai kode QR di atas.
+            </div>
+          </div>
+        )}
+
+        {isVa && (
+          <div className="rounded-2xl border border-border p-5 mb-5">
+            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+              Nomor Virtual Account
+            </div>
+            <div className="flex items-center justify-between gap-3 rounded-xl bg-[rgba(140,95,40,0.08)] border border-[rgba(140,95,40,0.2)] px-5 py-4">
+              <div>
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Bank Digital</div>
+                <div className="font-black text-foreground text-xl tracking-widest select-all">
+                  {vaNumber(createdOrder?.id ?? "")}
+                </div>
+              </div>
+              <button
+                onClick={() => navigator.clipboard?.writeText(vaNumber(createdOrder?.id ?? ""))}
+                className="shrink-0 text-xs font-semibold rounded-full px-4 py-2 bg-[#b07d3f] text-[#1a1a1a] hover:bg-[#c9974f] transition-colors"
+              >
+                Salin
+              </button>
+            </div>
+            <div className="text-xs text-muted-foreground mt-3">
+              Lakukan transfer ke nomor virtual account di atas melalui aplikasi bank Anda.
+            </div>
+          </div>
+        )}
+
+        {!isQris && !isVa && !isBayarDiKafe && (
+          <div className="rounded-2xl border border-border p-5 mb-5">
+            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+              Instruksi Pembayaran
+            </div>
+            <p className="text-sm text-foreground">
+              Lanjutkan pembayaran melalui {paymentMethod}, lalu unggah bukti pembayaran di bawah.
+            </p>
+          </div>
+        )}
+
+        {isBayarDiKafe && (
+          <div className="rounded-2xl border border-border p-5 mb-5">
+            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+              Bayar di Kafe
+            </div>
+            <p className="text-sm text-foreground">
+              Selesaikan pembayaran langsung di kafe saat mengambil pesanan. Tidak perlu mengunggah bukti.
+            </p>
+          </div>
+        )}
+
+        {!isBayarDiKafe && (
+          <div className="rounded-2xl border border-border p-5 mb-5">
+            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+              Bukti Pembayaran
+            </div>
+            {proofUrl ? (
+              <div className="flex items-center gap-3">
+                <img
+                  src={proofUrl}
+                  alt="Bukti pembayaran"
+                  className="w-14 h-14 rounded-xl object-cover border border-border"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-foreground truncate">
+                    {proofName || "Bukti terkirim"}
+                  </div>
+                  <button
+                    onClick={() => {
+                      setProofUrl(null);
+                      setProofName("");
+                    }}
+                    className="text-xs text-muted-foreground hover:text-destructive"
+                  >
+                    Hapus bukti
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <label className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-border px-4 py-3 cursor-pointer hover:border-[#b07d3f] transition-colors">
+                <MdUpload className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">
+                  {uploadingProof ? "Mengunggah..." : "Kirim Bukti Pembayaran"}
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handleUploadProof(e.target.files?.[0] ?? null)}
+                />
+              </label>
+            )}
+          </div>
+        )}
+
+        <div className="flex items-center justify-between py-3 border-t border-border">
+          <span className="font-semibold text-foreground">Total Pembayaran</span>
+          <span className="font-black text-lg text-[#b07d3f]">{formatRupiah(createdOrder?.total ?? subtotal)}</span>
+        </div>
+
+        {error && (
+          <div className="mb-4 rounded-xl border border-[rgba(220,38,38,0.35)] bg-[rgba(220,38,38,0.08)] px-4 py-3 text-sm text-destructive">
+            {error}
+          </div>
+        )}
+
+        <div className="flex items-center gap-3 mt-4">
+          <button
+            onClick={() => setStep("checkout")}
+            className="footer-glass-pill px-5 py-3 rounded-full text-sm font-semibold text-muted-foreground hover:text-foreground"
+          >
+            Kembali
+          </button>
+          <button
+            onClick={confirmPayment}
+            disabled={submitting}
+            className="flex-1 bg-[#b07d3f] text-[#1a1a1a] font-black px-6 py-3 rounded-full text-sm hover:bg-[#c9974f] transition-colors disabled:opacity-60"
+          >
+            {submitting ? "Memproses..." : "Konfirmasi Pembayaran"}
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   const renderDoneStep = () => (
     <div className="glass-card rounded-3xl p-10 text-center max-w-md mx-auto">
@@ -549,6 +958,12 @@ export default function OrderPage() {
           <span className="font-semibold text-foreground">{createdOrder?.paymentMethod}</span>
         </div>
         <div className="flex justify-between">
+          <span className="text-muted-foreground">Alamat Penagihan</span>
+          <span className="font-semibold text-foreground text-right max-w-[55%]">
+            {billingSummary(createdOrder)}
+          </span>
+        </div>
+        <div className="flex justify-between">
           <span className="text-muted-foreground">Status</span>
           <span className="font-semibold text-[#b07d3f]">
             {createdOrder ? PAYMENT_LABEL[createdOrder.paymentStatus] : ""}
@@ -559,6 +974,15 @@ export default function OrderPage() {
           <span className="font-black text-[#b07d3f]">{formatRupiah(createdOrder?.total ?? 0)}</span>
         </div>
       </div>
+      {createdOrder?.paymentProofUrl && (
+        <div className="rounded-2xl border border-border p-3 mb-6 flex items-center justify-center">
+          <img
+            src={createdOrder.paymentProofUrl}
+            alt="Bukti pembayaran"
+            className="h-24 rounded-xl object-cover"
+          />
+        </div>
+      )}
       <div className="flex items-center justify-center gap-3">
         <button
           onClick={resetFlow}
@@ -567,10 +991,10 @@ export default function OrderPage() {
           Pesan Lagi
         </button>
         <button
-          onClick={() => navigate("/order/riwayat")}
+          onClick={() => navigate("/order/keranjang")}
           className="bg-[#b07d3f] text-[#1a1a1a] font-black px-5 py-3 rounded-full text-sm hover:bg-[#c9974f] transition-colors"
         >
-          Lihat Riwayat
+          Lihat Keranjang
         </button>
       </div>
     </div>
@@ -598,11 +1022,11 @@ export default function OrderPage() {
             </p>
           </div>
           <button
-            onClick={() => navigate("/order/riwayat")}
+            onClick={() => navigate("/order/keranjang")}
             className="shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-full footer-glass-pill text-sm font-bold text-muted-foreground hover:text-[#b07d3f] transition-colors"
           >
             <MdReceiptLong className="w-4 h-4" />
-            Riwayat
+            Keranjang
           </button>
         </div>
 
