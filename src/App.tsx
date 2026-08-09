@@ -7,6 +7,7 @@ import FeedPage from "@/pages/FeedPage";
 import CreatePostPage from "@/pages/CreatePostPage";
 import ProfilePage from "@/pages/ProfilePage";
 import LeaderboardPage from "@/pages/LeaderboardPage";
+import ChatPage from "@/pages/ChatPage";
 
 export default function App() {
   return (

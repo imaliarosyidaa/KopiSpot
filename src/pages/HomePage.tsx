@@ -9,6 +9,7 @@ import LeftSidebar from "@/components/shared/LeftSidebar";
 import { feedApi, placesApi, type FeedRight, type PlaceListItem } from "@/lib/api";
 import { timeAgo } from "@/lib/format";
 import { PLACE_CATEGORIES } from "@/lib/constants";
+import ChatPage from "./ChatPage";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -264,6 +265,9 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ── Chatbot ── */}
+      <ChatPage />
+      
       {/* ── FEATURED SPOT ── */}
       <section className="px-6 md:px-12 py-10 max-w-7xl mx-auto">
         <div className="glass-card rounded-3xl overflow-hidden grid md:grid-cols-2 gap-0">

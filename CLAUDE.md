@@ -89,7 +89,7 @@ KopiSpot/
 
 # Core Pages
 
-[] 1. Halaman Beranda
+[x] 1. Halaman Beranda
 - Menampilkan daftar kafe unggulan dan yang sedang tren.
 
 - Mendukung pencarian berdasarkan nama kafe atau lokasi.
@@ -107,7 +107,7 @@ KopiSpot/
 
 ---
 
-[] 2. Halaman Detail Kafe
+[x] 2. Halaman Detail Kafe
 Setiap kafe harus memiliki halaman detail khusus yang berisi:
 
 - Gambar sampul/header besar
@@ -119,14 +119,14 @@ Setiap kafe harus memiliki halaman detail khusus yang berisi:
 - Deskripsi
 - Galeri
 
-[] Bagian Menu
+[x] Bagian Menu
 Tampilkan menu kafe termasuk:
 - Gambar menu (opsional)
 - Nama menu
 - Harga
 - Deskripsi
 
-[] Bagian Ulasan
+[x] Bagian Ulasan
 Tampilkan ulasan yang dikirimkan oleh pengguna:
 - Avatar pengguna
 - Nama pengguna
@@ -143,7 +143,7 @@ Pengguna yang terautentikasi dapat:
 
 ---
 
-[] 3. Umpan Komunitas
+[x] 3. Umpan Komunitas
 Pengguna Pengguna dapat membuat postingan terkait kafe.
 
 Setiap postingan berisi:
@@ -161,7 +161,7 @@ Pengguna dapat:
 
 ---
 
-[] 4. Halaman Buat Postingan
+[x] 4. Halaman Buat Postingan
 Pengguna yang terautentikasi dapat membuat postingan baru.
 
 Kolom:
@@ -173,7 +173,7 @@ Kolom:
 
 ---
 
-[] 5. Halaman Profil
+[x] 5. Halaman Profil
 
 Tampilan informasi pengguna:
 - Foto profil
@@ -199,19 +199,56 @@ Pengguna dapat mengedit:
 
 ---
 
+[ ] 6. Pesan Kopi
+
+Pengguna dapat memesan menu dari café yang tersedia.
+
+icon dan menu tambahan di navbar:
+- cart icon
+
+Alur pemesanan:
+**Pesan → List Order → Checkout → Pembayaran**
+
+### Pesan
+- Pilihan default yaitu semua, menampilkan kopi yang paling diminati dan trend dari berbagai café.
+- Pengguna dapat memilih café melalui select box.
+- Setelah café dipilih, tampilkan semua menu yang tersedia di café tersebut.
+- Pengguna dapat memilih menu, menentukan jumlah, dan menambahkannya ke pesanan.
+
+### List Order
+- Tampilkan café yang dipilih dan semua menu yang dipesan.
+- Pengguna dapat menambah/mengurangi jumlah atau menghapus menu.
+- Tampilkan subtotal dan total pesanan.
+- Pesanan hanya dapat berisi menu dari satu café.
+
+### Checkout
+- Tampilkan ringkasan pesanan, data pengguna, catatan pesanan, dan total pembayaran.
+- Pengguna dapat memeriksa pesanan sebelum melanjutkan pembayaran.
+
+### Pembayaran
+- Pengguna memilih metode pembayaran.
+- Tampilkan total pembayaran dan status pembayaran.
+- Setelah pembayaran berhasil, tampilkan konfirmasi pesanan.
+
+### Authentication
+- Pengguna harus login untuk melakukan checkout dan pembayaran.
+- Pesanan dan riwayat transaksi tersimpan pada akun pengguna.
+
+---
+
 # Tata Letak
 
-[] Sidebar Kiri
+[x] Sidebar Kiri
 Opsi penyaringan:
 
-[] Kota
+[x] Kota
 - Jakarta
 - Bandung
 - Bogor
 - Surabaya
 - dll.
 
-[] Kategori
+[x] Kategori
 - Tempat Nongkrong
 - Kafe Estetik
 - Kafe Belajar
@@ -223,7 +260,7 @@ Opsi penyaringan:
 
 ---
 
-[] Sidebar Kanan
+[x] Sidebar Kanan
 
 Tampilan:
 
@@ -250,7 +287,7 @@ Pengguna tamu hanya dapat melihat-lihat konten.
 ---
 
 ### Features
-[] Fitur Komunitas
+[x] Fitur Komunitas
 
 - Buat postingan
 - Edit postingan sendiri
@@ -262,7 +299,7 @@ Pengguna tamu hanya dapat melihat-lihat konten.
 
 ---
 
-[] Fitur Ulasan
+[x] Fitur Ulasan
 
 - Beri peringkat bintang
 - Tulis ulasan
@@ -272,7 +309,7 @@ Pengguna tamu hanya dapat melihat-lihat konten.
 
 ---
 
-[] Fitur Pengguna
+[x] Fitur Pengguna
 
 - Edit profil
 - Ubah kata sandi
@@ -283,7 +320,7 @@ Pengguna tamu hanya dapat melihat-lihat konten.
 
 ---
 
-[] Gamifikasi
+[x] Gamifikasi
 
 Tingkatkan keterlibatan pengguna melalui pencapaian.
 
@@ -303,6 +340,24 @@ Pengguna mendapatkan:
 - XP
 - Level
 - Lencana
+
+---
+
+[x] 5. Chatbot
+
+Membantu pengguna memahami komposisi dari minuman kopi, kalori, dan berapa konsumsi batas gua yang disarkan untuk dikonsumsi.
+
+catatan:
+For all users without credentials
+
+Contoh:
+- Berapa kalori kopi x
+- Berapa kadar gula kopi x
+- ingredients dari kopi x
+- waktu terbaik untuk minum kopi
+- kafe hits aestetik di bandung
+
+Di dalam chatbot berikan tombol shortcut dari rekomendasi pertanyaan di atas. chatbot sederhana dibuat dari query databasse bukan dari API AI.
 
 ---
 

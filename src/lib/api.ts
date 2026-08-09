@@ -280,6 +280,16 @@ export const feedApi = {
   right: () => api<FeedRight>("/feed/right"),
 };
 
+export interface ChatReply {
+  reply: string;
+  suggestions: string[];
+}
+
+export const chatApi = {
+  send: (message: string) =>
+    api<ChatReply>("/chat", { method: "POST", body: JSON.stringify({ message }) }),
+};
+
 export interface Badge {
   id: string;
   name: string;

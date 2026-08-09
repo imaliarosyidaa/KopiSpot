@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -77,6 +77,7 @@ model Place {
   openHours   String
   imageUrl    String
   tagsJson    String        @default("[]")
+  imagesJson  String        @default("[]")
   wifi        Boolean       @default(true)
   cozy        Boolean       @default(true)
   authorId    String
@@ -201,6 +202,8 @@ model Rating {
 model Comment {
   id        String   @id @default(cuid())
   body      String
+  rating    Int?
+  imageUrl  String?
   userId    String
   placeId   String
   createdAt DateTime @default(now())
@@ -230,6 +233,10 @@ model MenuItem {
   placeId     String
   name        String
   price       Int
+  description String?
+  calories    Int?
+  sugar       Int?
+  ingredients String?
   category    String
   imageUrl    String?
   isAvailable Boolean  @default(true)
