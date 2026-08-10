@@ -1,15 +1,15 @@
-import { Router } from "express";
-import { prisma } from "../db.js";
+import { Router } from "express"
+import { prisma } from "../db.js"
 
-const router = Router();
+const router = Router()
 
 // GET /api/menus?placeId=... — daftar menu tersedia dari berbagai kafe
 router.get("/", async (req, res) => {
-  const { placeId } = req.query;
+  const { placeId } = req.query
 
-  const where = { isAvailable: true };
+  const where = { isAvailable: true }
   if (typeof placeId === "string" && placeId.trim()) {
-    where.placeId = placeId.trim();
+    where.placeId = placeId.trim()
   }
 
   const menus = await prisma.menuItem.findMany({
@@ -24,14 +24,16 @@ router.get("/", async (req, res) => {
         },
       },
     },
-  });
+  })
 
   // Menu kopi yang paling ramai dilihat tampil lebih dulu (trending).
   menus.sort(
-    (a, b) => b.place._count.views - a.place._count.views || a.place.name.localeCompare(b.place.name)
-  );
+    (a, b) =>
+      b.place._count.views - a.place._count.views ||
+      a.place.name.localeCompare(b.place.name),
+  )
 
-  res.json(menus);
-});
+  res.json(menus)
+})
 
-export default router;
+export default router

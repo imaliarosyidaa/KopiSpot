@@ -1,15 +1,15 @@
-import { Routes, Route } from "react-router-dom";
-import Navbar from "@/components/shared/Navbar";
-import { CinematicFooter } from "@/components/ui/motion";
-import HomePage from "@/pages/HomePage";
-import PlaceDetailPage from "@/pages/PlaceDetailPage";
-import FeedPage from "@/pages/FeedPage";
-import CreatePostPage from "@/pages/CreatePostPage";
-import ProfilePage from "@/pages/ProfilePage";
-import LeaderboardPage from "@/pages/LeaderboardPage";
-import ChatPage from "@/pages/ChatPage";
-import OrderPage from "@/pages/OrderPage";
-import OrderCartPage from "@/pages/OrderCartPage";
+import { Routes, Route } from "react-router-dom"
+import Navbar from "@/components/shared/Navbar"
+import HomePage from "@/pages/HomePage"
+import PlaceDetailPage from "@/pages/PlaceDetailPage"
+import FeedPage from "@/pages/FeedPage"
+import CreatePostPage from "@/pages/CreatePostPage"
+import ProfilePage from "@/pages/ProfilePage"
+import LeaderboardPage from "@/pages/LeaderboardPage"
+import ChatPage from "@/pages/ChatPage"
+import OrderPage from "@/pages/OrderPage"
+import OrderCartPage from "@/pages/OrderCartPage"
+import PagePartnerPage from "@/pages/PagePartnerPage"
 
 export default function App() {
   return (
@@ -28,9 +28,10 @@ export default function App() {
           <Route path="/chat" element={<ChatPage />} />
           <Route path="/order" element={<OrderPage />} />
           <Route path="/order/keranjang" element={<OrderCartPage />} />
+          <Route path="/mitra" element={<PagePartnerPage />} />
           <Route path="*" element={<HomePage />} />
         </Routes>
       </div>
     </div>
-  );
+  )
 }

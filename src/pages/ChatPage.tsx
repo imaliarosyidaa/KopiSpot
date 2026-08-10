@@ -1,16 +1,16 @@
-import { useEffect, useRef, useState } from "react";
-import { MdAutoAwesome, MdSend } from "react-icons/md";
-import { chatApi } from "@/lib/api";
-import { initials } from "@/lib/format";
-import { useAuth } from "@/lib/auth-context";
+import { useEffect, useRef, useState } from "react"
+import { MdAutoAwesome, MdSend } from "react-icons/md"
+import { chatApi } from "@/lib/api"
+import { initials } from "@/lib/format"
+import { useAuth } from "@/lib/auth-context"
 
 interface ChatMessage {
-  role: "user" | "bot";
-  text: string;
+  role: "user" | "bot"
+  text: string
 }
 
 const WELCOME =
-  "Halo! Aku asisten KopiSpot ☕\n\nAku bisa bantu jawab seputar kalori, kadar gula, ingredients menu, waktu terbaik minum kopi, dan rekomendasi kafe. Silakan pilih salah satu pertanyaan di bawah, atau tulis pertanyaanmu sendiri!";
+  "Halo! Aku asisten KopiSpot ☕\n\nAku bisa bantu jawab seputar kalori, kadar gula, ingredients menu, waktu terbaik minum kopi, dan rekomendasi kafe. Silakan pilih salah satu pertanyaan di bawah, atau tulis pertanyaanmu sendiri!"
 
 const SHORTCUTS = [
   "Berapa kalori Kopi Latte?",
@@ -18,64 +18,81 @@ const SHORTCUTS = [
   "Ingredients dari V60?",
   "Waktu terbaik untuk minum kopi?",
   "Kafe estetik hits di Bandung",
-];
+]
 
 export default function ChatPage() {
-  const { user } = useAuth();
+  const { user } = useAuth()
   const [messages, setMessages] = useState<ChatMessage[]>([
     { role: "bot", text: WELCOME },
-  ]);
-  const [input, setInput] = useState("");
-  const [typing, setTyping] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  ])
+  const [input, setInput] = useState("")
+  const [typing, setTyping] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, typing]);
+    scrollRef.current?.scrollTo({
+      top: scrollRef.current.scrollHeight,
+      behavior: "smooth",
+    })
+  }, [messages, typing])
 
   const send = async (raw: string) => {
-    const text = raw.trim();
-    if (!text || typing) return;
-    setError(null);
-    setMessages((prev) => [...prev, { role: "user", text }]);
-    setInput("");
-    setTyping(true);
+    const text = raw.trim()
+    if (!text || typing) return
+    setError(null)
+    setMessages((prev) => [...prev, { role: "user", text }])
+    setInput("")
+    setTyping(true)
     try {
-      const data = await chatApi.send(text);
-      setMessages((prev) => [...prev, { role: "bot", text: data.reply }]);
+      const data = await chatApi.send(text)
+      setMessages((prev) => [...prev, { role: "bot", text: data.reply }])
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Terjadi kesalahan saat mengirim pesan.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Terjadi kesalahan saat mengirim pesan.",
+      )
       setMessages((prev) => [
         ...prev,
-        { role: "bot", text: "Maaf, terjadi gangguan. Silakan coba lagi nanti ya 🙏" },
-      ]);
+        {
+          role: "bot",
+          text: "Maaf, terjadi gangguan. Silakan coba lagi nanti ya 🙏",
+        },
+      ])
     } finally {
-      setTyping(false);
+      setTyping(false)
     }
-  };
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    send(input);
-  };
+    e.preventDefault()
+    send(input)
+  }
 
   return (
     <div className="pt-16">
       <div className="grid grid-cols-2 mx-auto px-6 md:px-12 py-10">
         <div className="mb-6">
           <span className="tag-pill mb-3 inline-block">Tanya KopiSpot</span>
-          <h2 className="text-4xl md:text-6xl font-black text-foreground leading-tight" style={{ fontFamily: "'Fraunces', serif" }}>
+          <h2
+            className="text-4xl md:text-6xl font-black text-foreground leading-tight"
+            style={{ fontFamily: "'Fraunces', serif" }}
+          >
             Asisten Kopi
           </h2>
           <p className="text-muted-foreground text-sm mt-2">
-            Chatbot sederhana Interaktif <br/> Tanyakan pertanyaan mu seputar kopi dan cafe di sini
+            Chatbot sederhana Interaktif <br /> Tanyakan pertanyaan mu seputar
+            kopi dan cafe di sini
           </p>
         </div>
 
         <div className="glass-card rounded-3xl overflow-hidden flex flex-col">
           {/* Pesan */}
-          <div ref={scrollRef} className="flex-1 h-[52vh] overflow-y-auto p-4 md:p-6 space-y-4">
+          <div
+            ref={scrollRef}
+            className="flex-1 h-[52vh] overflow-y-auto p-4 md:p-6 space-y-4"
+          >
             {messages.map((m, i) =>
               m.role === "bot" ? (
                 <div key={i} className="flex items-start gap-3">
@@ -93,13 +110,17 @@ export default function ChatPage() {
                   </div>
                   <div className="w-9 h-9 rounded-full bg-[rgba(140,95,40,0.22)] border border-[rgba(140,95,40,0.35)] flex items-center justify-center text-[#b07d3f] font-bold text-sm shrink-0 overflow-hidden">
                     {user?.image ? (
-                      <img src={user.image} alt="" className="w-full h-full object-cover" />
+                      <img
+                        src={user.image}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
                       initials(user?.name ?? user?.email ?? "Kamu")
                     )}
                   </div>
                 </div>
-              )
+              ),
             )}
 
             {typing && (
@@ -158,5 +179,5 @@ export default function ChatPage() {
         </div>
       </div>
     </div>
-  );
+  )
 }

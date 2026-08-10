@@ -1,25 +1,26 @@
-import { useState } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
-import { MdAdd, MdLogout, MdShoppingCart } from "react-icons/md";
-import { useAuth } from "@/lib/auth-context";
-import AuthModal from "@/components/ui/auth-modal";
-import ThemeSwitcher from "@/components/shared/ThemeSwitcher";
-import { cartCount, useCartStore } from "@/lib/cart-store";
+import { useState } from "react"
+import { Link, NavLink, useNavigate } from "react-router-dom"
+import { MdAdd, MdLogout, MdShoppingCart } from "react-icons/md"
+import { useAuth } from "@/lib/auth-context"
+import AuthModal from "@/components/ui/auth-modal"
+import ThemeSwitcher from "@/components/shared/ThemeSwitcher"
+import { cartCount, useCartStore } from "@/lib/cart-store"
 
 const navItems = [
   { to: "/", label: "Beranda" },
   { to: "/feed", label: "Komunitas" },
   { to: "/chat", label: "Chat" },
   { to: "/order", label: "Pesan Kopi" },
+  { to: "/mitra", label: "Mitra" },
   { to: "/leaderboard", label: "Peringkat" },
-];
+]
 
 export default function Navbar() {
-  const { user, loading, logout } = useAuth();
-  const [authOpen, setAuthOpen] = useState(false);
-  const navigate = useNavigate();
-  const cartItems = useCartStore((s) => s.items);
-  const cartCountTotal = cartCount(cartItems);
+  const { user, loading, logout } = useAuth()
+  const [authOpen, setAuthOpen] = useState(false)
+  const navigate = useNavigate()
+  const cartItems = useCartStore((s) => s.items)
+  const cartCountTotal = cartCount(cartItems)
 
   return (
     <>
@@ -30,7 +31,10 @@ export default function Navbar() {
               <path d="M2 21v-2h2V5H2V3h13v2h-2v3h4l3 4v6h-2v2h-2v-2H6v2H2zm4-4h12v-4l-2-3h-4V5H6v12zm3-4h2v-2H9v2zm4 0h2v-2h-2v2z" />
             </svg>
           </span>
-          <span className="text-foreground font-black text-lg tracking-tight" style={{ fontFamily: "'Fraunces', serif" }}>
+          <span
+            className="text-foreground font-black text-lg tracking-tight"
+            style={{ fontFamily: "'Fraunces', serif" }}
+          >
             KopiSpot
           </span>
         </Link>
@@ -42,7 +46,11 @@ export default function Navbar() {
               to={item.to}
               end={item.to === "/"}
               className={({ isActive }) =>
-                `text-sm font-medium transition-colors ${isActive ? "text-[#b07d3f] font-bold" : "text-muted-foreground hover:text-foreground"}`
+                `text-sm font-medium transition-colors ${
+                  isActive
+                    ? "text-[#b07d3f] font-bold"
+                    : "text-muted-foreground hover:text-foreground"
+                }`
               }
             >
               {item.label}
@@ -79,7 +87,11 @@ export default function Navbar() {
               <Link to="/profile" className="flex items-center gap-2.5 group">
                 <div className="w-9 h-9 rounded-full bg-[rgba(140,95,40,0.22)] border border-[rgba(140,95,40,0.35)] flex items-center justify-center text-[#b07d3f] font-bold text-sm overflow-hidden">
                   {user.image ? (
-                    <img src={user.image} alt={user.name ?? "avatar"} className="w-full h-full object-cover" />
+                    <img
+                      src={user.image}
+                      alt={user.name ?? "avatar"}
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
                     (user.name || user.email || "?")[0].toUpperCase()
                   )}
@@ -90,8 +102,8 @@ export default function Navbar() {
               </Link>
               <button
                 onClick={() => {
-                  logout();
-                  navigate("/");
+                  logout()
+                  navigate("/")
                 }}
                 title="Keluar"
                 className="w-9 h-9 rounded-full footer-glass-pill flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors"
@@ -112,5 +124,5 @@ export default function Navbar() {
 
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
     </>
-  );
+  )
 }

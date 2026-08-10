@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react"
+import { useLocation, useNavigate } from "react-router-dom"
 import {
   MdAdd,
   MdArrowBack,
@@ -15,8 +15,8 @@ import {
   MdRestore,
   MdShoppingCart,
   MdUpload,
-} from "react-icons/md";
-import { QRCodeSVG } from "qrcode.react";
+} from "react-icons/md"
+import { QRCodeSVG } from "qrcode.react"
 import {
   menusApi,
   ordersApi,
@@ -25,17 +25,22 @@ import {
   type MenuItemOption,
   type Order,
   type PlaceListItem,
-} from "@/lib/api";
-import { useAuth } from "@/lib/auth-context";
-import AuthModal from "@/components/ui/auth-modal";
-import { cartCount, cartSubtotal, useCartStore, type CartItem } from "@/lib/cart-store";
-import { formatRupiah } from "@/lib/format";
-import { menuImageUrl } from "@/lib/menu-images";
+} from "@/lib/api"
+import { useAuth } from "@/lib/auth-context"
+import AuthModal from "@/components/ui/auth-modal"
+import {
+  cartCount,
+  cartSubtotal,
+  useCartStore,
+  type CartItem,
+} from "@/lib/cart-store"
+import { formatRupiah } from "@/lib/format"
+import { menuImageUrl } from "@/lib/menu-images"
 
-type Step = "menu" | "cart" | "checkout" | "pay" | "done";
+type Step = "menu" | "cart" | "checkout" | "pay" | "done"
 
 const inputClass =
-  "w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-all focus:border-[#b07d3f] focus:ring-2 focus:ring-[rgba(176,125,63,0.25)]";
+  "w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-all focus:border-[#b07d3f] focus:ring-2 focus:ring-[rgba(176,125,63,0.25)]"
 
 const PAYMENT_METHODS = [
   "QRIS",
@@ -43,20 +48,20 @@ const PAYMENT_METHODS = [
   "E-Wallet (GoPay / OVO / DANA)",
   "Kartu Kredit / Debit",
   "Bayar di Kafe",
-];
+]
 
 const PAYMENT_LABEL: Record<string, string> = {
   UNPAID: "Belum Dibayar",
   PAID: "Lunas",
   FAILED: "Gagal",
-};
+}
 
 const STEPS: { key: Step; label: string }[] = [
   { key: "menu", label: "Pesan" },
   { key: "cart", label: "List Order" },
   { key: "checkout", label: "Checkout" },
   { key: "pay", label: "Pembayaran" },
-];
+]
 
 function categoryLabel(value: string): string {
   const map: Record<string, string> = {
@@ -64,105 +69,116 @@ function categoryLabel(value: string): string {
     "non-coffee": "Non Kopi",
     food: "Makanan",
     dessert: "Dessert",
-  };
-  return map[value] ?? value;
+  }
+  return map[value] ?? value
 }
 
 function vaNumber(orderId: string): string {
-  const digits = orderId.replace(/\D/g, "").slice(-12);
-  return `988${digits || "000000000001"}`;
+  const digits = orderId.replace(/\D/g, "").slice(-12)
+  return `988${digits || "000000000001"}`
 }
 
 function billingSummary(order: Order | null): string {
-  return order?.billingAddress?.replace(/\n/g, " · ") ?? "-";
+  return order?.billingAddress?.replace(/\n/g, " · ") ?? "-"
 }
 
 export default function OrderPage() {
-  const { user, loading } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const items = useCartStore((s) => s.items);
-  const savedForLater = useCartStore((s) => s.savedForLater);
-  const wishlist = useCartStore((s) => s.wishlist);
-  const add = useCartStore((s) => s.add);
-  const setQuantity = useCartStore((s) => s.setQuantity);
-  const remove = useCartStore((s) => s.remove);
-  const clear = useCartStore((s) => s.clear);
-  const saveForLater = useCartStore((s) => s.saveForLater);
-  const restoreSaved = useCartStore((s) => s.restoreSaved);
-  const removeSaved = useCartStore((s) => s.removeSaved);
-  const moveToWishlist = useCartStore((s) => s.moveToWishlist);
-  const moveFromWishlist = useCartStore((s) => s.moveFromWishlist);
-  const removeFromWishlist = useCartStore((s) => s.removeFromWishlist);
+  const { user, loading } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const items = useCartStore((s) => s.items)
+  const savedForLater = useCartStore((s) => s.savedForLater)
+  const wishlist = useCartStore((s) => s.wishlist)
+  const add = useCartStore((s) => s.add)
+  const setQuantity = useCartStore((s) => s.setQuantity)
+  const remove = useCartStore((s) => s.remove)
+  const clear = useCartStore((s) => s.clear)
+  const saveForLater = useCartStore((s) => s.saveForLater)
+  const restoreSaved = useCartStore((s) => s.restoreSaved)
+  const removeSaved = useCartStore((s) => s.removeSaved)
+  const moveToWishlist = useCartStore((s) => s.moveToWishlist)
+  const moveFromWishlist = useCartStore((s) => s.moveFromWishlist)
+  const removeFromWishlist = useCartStore((s) => s.removeFromWishlist)
 
-  const initialStep = (location.state as { step?: Step } | null)?.step;
+  const initialStep = (location.state as { step?: Step } | null)?.step
   const [step, setStep] = useState<Step>(() =>
-    initialStep && initialStep !== "done" ? initialStep : "menu"
-  );
-  const [places, setPlaces] = useState<PlaceListItem[]>([]);
-  const [selectedPlaceId, setSelectedPlaceId] = useState("");
-  const [menus, setMenus] = useState<MenuItemOption[]>([]);
-  const [loadingMenus, setLoadingMenus] = useState(true);
-  const [menuError, setMenuError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+    initialStep && initialStep !== "done" ? initialStep : "menu",
+  )
+  const [places, setPlaces] = useState<PlaceListItem[]>([])
+  const [selectedPlaceId, setSelectedPlaceId] = useState("")
+  const [menus, setMenus] = useState<MenuItemOption[]>([])
+  const [loadingMenus, setLoadingMenus] = useState(true)
+  const [menuError, setMenuError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
 
-  const [authOpen, setAuthOpen] = useState(false);
-  const [note, setNote] = useState("");
-  const [billing, setBilling] = useState({ name: "", phone: "", address: "", city: "", postalCode: "" });
-  const [billingError, setBillingError] = useState<string | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState(PAYMENT_METHODS[0]);
-  const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [proofUrl, setProofUrl] = useState<string | null>(null);
-  const [proofName, setProofName] = useState("");
-  const [uploadingProof, setUploadingProof] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false)
+  const [note, setNote] = useState("")
+  const [billing, setBilling] = useState({
+    name: "",
+    phone: "",
+    address: "",
+    city: "",
+    postalCode: "",
+  })
+  const [billingError, setBillingError] = useState<string | null>(null)
+  const [paymentMethod, setPaymentMethod] = useState(PAYMENT_METHODS[0])
+  const [createdOrder, setCreatedOrder] = useState<Order | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [proofUrl, setProofUrl] = useState<string | null>(null)
+  const [proofName, setProofName] = useState("")
+  const [uploadingProof, setUploadingProof] = useState(false)
 
-  const count = cartCount(items);
-  const subtotal = cartSubtotal(items);
+  const count = cartCount(items)
+  const subtotal = cartSubtotal(items)
 
   useEffect(() => {
     placesApi
       .list()
       .then(setPlaces)
-      .catch(() => setPlaces([]));
-  }, []);
+      .catch(() => setPlaces([]))
+  }, [])
 
   useEffect(() => {
     if (user && !billing.name) {
-      setBilling((b) => ({ ...b, name: user.name ?? "" }));
+      setBilling((b) => ({ ...b, name: user.name ?? "" }))
     }
-  }, [user, billing.name]);
+  }, [user, billing.name])
 
   useEffect(() => {
-    let active = true;
-    setLoadingMenus(true);
-    setMenuError(null);
+    let active = true
+    setLoadingMenus(true)
+    setMenuError(null)
     menusApi
       .list(selectedPlaceId || undefined)
       .then((data) => {
-        if (active) setMenus(data);
+        if (active) setMenus(data)
       })
       .catch((err) => {
-        if (active) setMenuError(err instanceof Error ? err.message : "Gagal memuat menu.");
+        if (active)
+          setMenuError(
+            err instanceof Error ? err.message : "Gagal memuat menu.",
+          )
       })
       .finally(() => {
-        if (active) setLoadingMenus(false);
-      });
+        if (active) setLoadingMenus(false)
+      })
     return () => {
-      active = false;
-    };
-  }, [selectedPlaceId]);
+      active = false
+    }
+  }, [selectedPlaceId])
 
   useEffect(() => {
-    if (!notice) return;
-    const t = setTimeout(() => setNotice(null), 3000);
-    return () => clearTimeout(t);
-  }, [notice]);
+    if (!notice) return
+    const t = setTimeout(() => setNotice(null), 3000)
+    return () => clearTimeout(t)
+  }, [notice])
 
   const handleAdd = (m: MenuItemOption) => {
     if (items.length > 0 && items[0].placeId !== m.place.id) {
-      setNotice(`Keranjang diganti — pesanan hanya bisa berisi menu dari ${m.place.name}.`);
+      setNotice(
+        `Keranjang diganti — pesanan hanya bisa berisi menu dari ${m.place.name}.`,
+      )
     }
     add({
       id: m.id,
@@ -172,102 +188,118 @@ export default function OrderPage() {
       price: m.price,
       category: m.category,
       imageUrl: m.imageUrl,
-    });
-  };
+    })
+  }
 
   const requireLogin = (): boolean => {
-    if (user) return true;
-    setAuthOpen(true);
-    return false;
-  };
+    if (user) return true
+    setAuthOpen(true)
+    return false
+  }
 
   const goCheckout = () => {
-    if (!requireLogin()) return;
-    setStep("cart");
-  };
+    if (!requireLogin()) return
+    setStep("cart")
+  }
 
   const buildBillingAddress = (): string => {
     const lines = [
-      billing.name.trim() + (billing.phone.trim() ? ` · ${billing.phone.trim()}` : ""),
+      billing.name.trim() +
+        (billing.phone.trim() ? ` · ${billing.phone.trim()}` : ""),
       billing.address.trim(),
-      billing.city.trim() + (billing.postalCode.trim() ? `, ${billing.postalCode.trim()}` : ""),
-    ];
-    return lines.join("\n");
-  };
+      billing.city.trim() +
+        (billing.postalCode.trim() ? `, ${billing.postalCode.trim()}` : ""),
+    ]
+    return lines.join("\n")
+  }
 
   const placeOrder = async () => {
-    if (!requireLogin()) return;
-    if (items.length === 0) return;
-    if (!billing.name.trim() || !billing.address.trim() || !billing.city.trim()) {
-      setBillingError("Lengkapi nama, alamat, dan kota pada alamat penagihan.");
-      return;
+    if (!requireLogin()) return
+    if (items.length === 0) return
+    if (
+      !billing.name.trim() ||
+      !billing.address.trim() ||
+      !billing.city.trim()
+    ) {
+      setBillingError("Lengkapi nama, alamat, dan kota pada alamat penagihan.")
+      return
     }
-    setBillingError(null);
-    setError(null);
-    setSubmitting(true);
+    setBillingError(null)
+    setError(null)
+    setSubmitting(true)
     try {
       const order = await ordersApi.create({
         placeId: items[0].placeId,
         items: items.map((i) => ({ menuItemId: i.id, quantity: i.quantity })),
         note: note.trim() || undefined,
         billingAddress: buildBillingAddress(),
-      });
-      setCreatedOrder(order);
-      setStep("pay");
+      })
+      setCreatedOrder(order)
+      setStep("pay")
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal membuat pesanan.");
+      setError(err instanceof Error ? err.message : "Gagal membuat pesanan.")
     } finally {
-      setSubmitting(false);
+      setSubmitting(false)
     }
-  };
+  }
 
   const handleUploadProof = async (file: File | null) => {
-    if (!file) return;
-    setUploadingProof(true);
-    setError(null);
+    if (!file) return
+    setUploadingProof(true)
+    setError(null)
     try {
-      const { url } = await uploadFile(file);
-      setProofUrl(url);
-      setProofName(file.name);
+      const { url } = await uploadFile(file)
+      setProofUrl(url)
+      setProofName(file.name)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal mengunggah bukti pembayaran.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Gagal mengunggah bukti pembayaran.",
+      )
     } finally {
-      setUploadingProof(false);
+      setUploadingProof(false)
     }
-  };
+  }
 
   const confirmPayment = async () => {
-    if (!requireLogin()) return;
-    if (!createdOrder) return;
+    if (!requireLogin()) return
+    if (!createdOrder) return
     if (paymentMethod !== "Bayar di Kafe" && !proofUrl) {
-      setError("Mohon kirim bukti pembayaran terlebih dahulu.");
-      return;
+      setError("Mohon kirim bukti pembayaran terlebih dahulu.")
+      return
     }
-    setError(null);
-    setSubmitting(true);
+    setError(null)
+    setSubmitting(true)
     try {
-      const paid = await ordersApi.pay(createdOrder.id, paymentMethod, proofUrl ?? undefined);
-      setCreatedOrder(paid);
-      clear();
-      setNote("");
-      setProofUrl(null);
-      setProofName("");
-      setStep("done");
+      const paid = await ordersApi.pay(
+        createdOrder.id,
+        paymentMethod,
+        proofUrl ?? undefined,
+      )
+      setCreatedOrder(paid)
+      clear()
+      setNote("")
+      setProofUrl(null)
+      setProofName("")
+      setStep("done")
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal memproses pembayaran.");
+      setError(
+        err instanceof Error ? err.message : "Gagal memproses pembayaran.",
+      )
     } finally {
-      setSubmitting(false);
+      setSubmitting(false)
     }
-  };
+  }
 
   const resetFlow = () => {
-    setCreatedOrder(null);
-    setError(null);
-    setStep("menu");
-  };
+    setCreatedOrder(null)
+    setError(null)
+    setStep("menu")
+  }
 
   const renderStepIndicator = () => {
-    const currentIndex = STEPS.findIndex((s) => s.key === step);
+    const currentIndex = STEPS.findIndex((s) => s.key === step)
     return (
       <div className="flex items-center gap-2 flex-wrap mb-6">
         {STEPS.map((s, i) => (
@@ -284,12 +316,14 @@ export default function OrderPage() {
               <span>{i + 1}</span>
               <span>{s.label}</span>
             </div>
-            {i < STEPS.length - 1 && <span className="text-muted-foreground/40 text-xs">→</span>}
+            {i < STEPS.length - 1 && (
+              <span className="text-muted-foreground/40 text-xs">→</span>
+            )}
           </div>
         ))}
       </div>
-    );
-  };
+    )
+  }
 
   const renderMenuStep = () => (
     <div>
@@ -318,15 +352,20 @@ export default function OrderPage() {
       )}
 
       {loadingMenus ? (
-        <div className="text-center text-muted-foreground animate-pulse py-16">Memuat menu...</div>
+        <div className="text-center text-muted-foreground animate-pulse py-16">
+          Memuat menu...
+        </div>
       ) : menuError ? (
         <div className="text-center text-destructive py-16">{menuError}</div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {menus.map((m) => {
-            const qty = items.find((i) => i.id === m.id)?.quantity ?? 0;
+            const qty = items.find((i) => i.id === m.id)?.quantity ?? 0
             return (
-              <div key={m.id} className="glass-card rounded-2xl p-4 flex flex-col gap-3">
+              <div
+                key={m.id}
+                className="glass-card rounded-2xl p-4 flex flex-col gap-3"
+              >
                 <div className="relative w-full h-32 rounded-xl overflow-hidden bg-[rgba(140,95,40,0.15)]">
                   <img
                     src={menuImageUrl(m.category, m.imageUrl, m.name)}
@@ -334,12 +373,18 @@ export default function OrderPage() {
                     className="w-full h-full object-cover"
                     loading="lazy"
                   />
-                  <span className="absolute top-2 right-2 tag-pill">{categoryLabel(m.category)}</span>
+                  <span className="absolute top-2 right-2 tag-pill">
+                    {categoryLabel(m.category)}
+                  </span>
                 </div>
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="font-semibold text-foreground text-sm truncate">{m.name}</div>
-                    <div className="text-xs text-muted-foreground">{m.place.name}</div>
+                    <div className="font-semibold text-foreground text-sm truncate">
+                      {m.name}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {m.place.name}
+                    </div>
                     <div className="text-xs text-muted-foreground mt-0.5">
                       {formatRupiah(m.price)}
                     </div>
@@ -362,7 +407,7 @@ export default function OrderPage() {
                   {qty > 0 ? `Di Keranjang · ${qty}` : "Tambah"}
                 </button>
               </div>
-            );
+            )
           })}
           {menus.length === 0 && (
             <div className="col-span-full text-center text-muted-foreground py-16">
@@ -372,15 +417,23 @@ export default function OrderPage() {
         </div>
       )}
     </div>
-  );
+  )
 
   const renderCartStep = () => {
-    if (items.length === 0 && savedForLater.length === 0 && wishlist.length === 0) {
+    if (
+      items.length === 0 &&
+      savedForLater.length === 0 &&
+      wishlist.length === 0
+    ) {
       return (
         <div className="glass-card rounded-3xl p-10 text-center max-w-md mx-auto">
           <div className="text-4xl mb-3">🛒</div>
-          <h2 className="text-xl font-black text-foreground mb-2">Keranjang masih kosong</h2>
-          <p className="text-muted-foreground text-sm mb-6">Yuk pilih menu favoritmu dulu.</p>
+          <h2 className="text-xl font-black text-foreground mb-2">
+            Keranjang masih kosong
+          </h2>
+          <p className="text-muted-foreground text-sm mb-6">
+            Yuk pilih menu favoritmu dulu.
+          </p>
           <button
             onClick={() => setStep("menu")}
             className="bg-[#b07d3f] text-[#1a1a1a] font-black px-6 py-3 rounded-full text-sm"
@@ -388,18 +441,18 @@ export default function OrderPage() {
             Pilih Menu
           </button>
         </div>
-      );
+      )
     }
 
     const handleCartPlaceChange = (value: string) => {
-      if (!value || value === items[0]?.placeId) return;
-      clear();
-      setSelectedPlaceId(value);
-      setStep("menu");
-    };
+      if (!value || value === items[0]?.placeId) return
+      clear()
+      setSelectedPlaceId(value)
+      setStep("menu")
+    }
 
     const actionPill =
-      "flex items-center gap-1 text-xs font-semibold rounded-full px-3 py-1.5 footer-glass-pill text-muted-foreground hover:text-foreground transition-colors";
+      "flex items-center gap-1 text-xs font-semibold rounded-full px-3 py-1.5 footer-glass-pill text-muted-foreground hover:text-foreground transition-colors"
 
     return (
       <div className="glass-card rounded-3xl p-6 md:p-8 max-w-2xl mx-auto">
@@ -444,10 +497,18 @@ export default function OrderPage() {
                   loading="lazy"
                 />
                 <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-foreground text-sm truncate">{item.name}</div>
-                  <div className="text-xs text-muted-foreground">{formatRupiah(item.price)}</div>
+                  <div className="font-semibold text-foreground text-sm truncate">
+                    {item.name}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {formatRupiah(item.price)}
+                  </div>
                   <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                    <button onClick={() => remove(item.id)} className={actionPill} title="Hapus dari pesanan">
+                    <button
+                      onClick={() => remove(item.id)}
+                      className={actionPill}
+                      title="Hapus dari pesanan"
+                    >
                       <MdDelete className="w-3.5 h-3.5" />
                       Hapus
                     </button>
@@ -476,7 +537,9 @@ export default function OrderPage() {
                   >
                     <MdRemove className="w-4 h-4" />
                   </button>
-                  <span className="w-8 text-center text-sm font-bold text-foreground">{item.quantity}</span>
+                  <span className="w-8 text-center text-sm font-bold text-foreground">
+                    {item.quantity}
+                  </span>
                   <button
                     onClick={() => setQuantity(item.id, item.quantity + 1)}
                     className="w-7 h-7 rounded-full footer-glass-pill flex items-center justify-center text-muted-foreground hover:text-foreground"
@@ -508,7 +571,9 @@ export default function OrderPage() {
                     loading="lazy"
                   />
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-foreground text-sm truncate">{s.name}</div>
+                    <div className="font-semibold text-foreground text-sm truncate">
+                      {s.name}
+                    </div>
                     <div className="text-xs text-muted-foreground">
                       {s.quantity} × {formatRupiah(s.price)}
                     </div>
@@ -550,7 +615,9 @@ export default function OrderPage() {
                     loading="lazy"
                   />
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-foreground text-sm truncate">{w.name}</div>
+                    <div className="font-semibold text-foreground text-sm truncate">
+                      {w.name}
+                    </div>
                     <div className="text-xs text-muted-foreground">
                       {w.quantity} × {formatRupiah(w.price)}
                     </div>
@@ -580,17 +647,23 @@ export default function OrderPage() {
           <>
             <div className="flex items-center justify-between pt-4 mt-2 border-t border-border">
               <span className="text-sm text-muted-foreground">Subtotal</span>
-              <span className="font-black text-foreground">{formatRupiah(subtotal)}</span>
+              <span className="font-black text-foreground">
+                {formatRupiah(subtotal)}
+              </span>
             </div>
             <div className="flex items-center justify-between pt-2">
-              <span className="text-sm font-semibold text-foreground">Total</span>
-              <span className="font-black text-lg text-[#b07d3f]">{formatRupiah(subtotal)}</span>
+              <span className="text-sm font-semibold text-foreground">
+                Total
+              </span>
+              <span className="font-black text-lg text-[#b07d3f]">
+                {formatRupiah(subtotal)}
+              </span>
             </div>
 
             <button
               onClick={() => {
-                if (!requireLogin()) return;
-                setStep("checkout");
+                if (!requireLogin()) return
+                setStep("checkout")
               }}
               className="mt-6 w-full bg-[#b07d3f] text-[#1a1a1a] font-black px-6 py-3.5 rounded-full text-sm hover:bg-[#c9974f] transition-colors"
             >
@@ -599,8 +672,8 @@ export default function OrderPage() {
           </>
         )}
       </div>
-    );
-  };
+    )
+  }
 
   const renderCheckoutStep = () => (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
@@ -608,7 +681,10 @@ export default function OrderPage() {
         <div className="glass-card rounded-3xl p-6 md:p-8">
           <div className="flex items-center gap-2 mb-5">
             <MdLocationOn className="w-5 h-5 text-[#b07d3f]" />
-            <h2 className="text-xl font-black text-foreground" style={{ fontFamily: "'Fraunces', serif" }}>
+            <h2
+              className="text-xl font-black text-foreground"
+              style={{ fontFamily: "'Fraunces', serif" }}
+            >
               Alamat Penagihan
             </h2>
           </div>
@@ -626,7 +702,9 @@ export default function OrderPage() {
               </label>
               <input
                 value={billing.name}
-                onChange={(e) => setBilling((b) => ({ ...b, name: e.target.value }))}
+                onChange={(e) =>
+                  setBilling((b) => ({ ...b, name: e.target.value }))
+                }
                 placeholder="Nama lengkap"
                 className={inputClass}
               />
@@ -637,7 +715,9 @@ export default function OrderPage() {
               </label>
               <input
                 value={billing.phone}
-                onChange={(e) => setBilling((b) => ({ ...b, phone: e.target.value }))}
+                onChange={(e) =>
+                  setBilling((b) => ({ ...b, phone: e.target.value }))
+                }
                 placeholder="08xxxxxxxxxx"
                 className={inputClass}
               />
@@ -648,7 +728,9 @@ export default function OrderPage() {
               </label>
               <textarea
                 value={billing.address}
-                onChange={(e) => setBilling((b) => ({ ...b, address: e.target.value }))}
+                onChange={(e) =>
+                  setBilling((b) => ({ ...b, address: e.target.value }))
+                }
                 rows={2}
                 placeholder="Nama jalan, nomor, RT/RW, kelurahan, kecamatan"
                 className={`${inputClass} resize-none`}
@@ -660,7 +742,9 @@ export default function OrderPage() {
               </label>
               <input
                 value={billing.city}
-                onChange={(e) => setBilling((b) => ({ ...b, city: e.target.value }))}
+                onChange={(e) =>
+                  setBilling((b) => ({ ...b, city: e.target.value }))
+                }
                 placeholder="Contoh: Bandung"
                 className={inputClass}
               />
@@ -671,7 +755,9 @@ export default function OrderPage() {
               </label>
               <input
                 value={billing.postalCode}
-                onChange={(e) => setBilling((b) => ({ ...b, postalCode: e.target.value }))}
+                onChange={(e) =>
+                  setBilling((b) => ({ ...b, postalCode: e.target.value }))
+                }
                 placeholder="Contoh: 40123"
                 className={inputClass}
               />
@@ -682,7 +768,10 @@ export default function OrderPage() {
         <div className="glass-card rounded-3xl p-6 md:p-8">
           <div className="flex items-center gap-2 mb-5">
             <MdPayments className="w-5 h-5 text-[#b07d3f]" />
-            <h2 className="text-xl font-black text-foreground" style={{ fontFamily: "'Fraunces', serif" }}>
+            <h2
+              className="text-xl font-black text-foreground"
+              style={{ fontFamily: "'Fraunces', serif" }}
+            >
               Metode Pembayaran
             </h2>
           </div>
@@ -706,7 +795,9 @@ export default function OrderPage() {
                   className="accent-[#b07d3f]"
                 />
                 <MdPayments className="w-5 h-5 text-[#b07d3f]" />
-                <span className="text-sm font-semibold text-foreground">{m}</span>
+                <span className="text-sm font-semibold text-foreground">
+                  {m}
+                </span>
               </label>
             ))}
           </div>
@@ -716,13 +807,20 @@ export default function OrderPage() {
       <div className="glass-card rounded-3xl p-6 md:p-8 lg:sticky lg:top-24">
         <span className="tag-pill mb-3 inline-block">Ringkasan Pesanan</span>
         <div className="mb-4">
-          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Kafe</div>
-          <div className="font-semibold text-foreground">{items[0]?.placeName}</div>
+          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+            Kafe
+          </div>
+          <div className="font-semibold text-foreground">
+            {items[0]?.placeName}
+          </div>
         </div>
 
         <div className="flex flex-col gap-2 mb-4">
           {items.map((item) => (
-            <div key={item.id} className="flex items-center justify-between text-sm">
+            <div
+              key={item.id}
+              className="flex items-center justify-between text-sm"
+            >
               <span className="flex items-center gap-2 text-muted-foreground">
                 <img
                   src={menuImageUrl(item.category, item.imageUrl, item.name)}
@@ -730,9 +828,14 @@ export default function OrderPage() {
                   className="w-8 h-8 rounded-lg object-cover border border-border"
                   loading="lazy"
                 />
-                {item.name} <span className="text-foreground font-semibold">× {item.quantity}</span>
+                {item.name}{" "}
+                <span className="text-foreground font-semibold">
+                  × {item.quantity}
+                </span>
               </span>
-              <span className="font-semibold text-foreground">{formatRupiah(item.price * item.quantity)}</span>
+              <span className="font-semibold text-foreground">
+                {formatRupiah(item.price * item.quantity)}
+              </span>
             </div>
           ))}
         </div>
@@ -751,8 +854,12 @@ export default function OrderPage() {
         </div>
 
         <div className="flex items-center justify-between py-3 border-t border-border">
-          <span className="font-semibold text-foreground">Total Pembayaran</span>
-          <span className="font-black text-lg text-[#b07d3f]">{formatRupiah(subtotal)}</span>
+          <span className="font-semibold text-foreground">
+            Total Pembayaran
+          </span>
+          <span className="font-black text-lg text-[#b07d3f]">
+            {formatRupiah(subtotal)}
+          </span>
         </div>
 
         {error && (
@@ -778,17 +885,20 @@ export default function OrderPage() {
         </div>
       </div>
     </div>
-  );
+  )
 
   const renderPayStep = () => {
-    const isQris = paymentMethod === "QRIS";
-    const isVa = paymentMethod.includes("Virtual Account");
-    const isBayarDiKafe = paymentMethod === "Bayar di Kafe";
+    const isQris = paymentMethod === "QRIS"
+    const isVa = paymentMethod.includes("Virtual Account")
+    const isBayarDiKafe = paymentMethod === "Bayar di Kafe"
 
     return (
       <div className="glass-card rounded-3xl p-6 md:p-8 max-w-2xl mx-auto">
         <span className="tag-pill mb-2 inline-block">Pembayaran</span>
-        <h2 className="text-2xl font-black text-foreground mb-1" style={{ fontFamily: "'Fraunces', serif" }}>
+        <h2
+          className="text-2xl font-black text-foreground mb-1"
+          style={{ fontFamily: "'Fraunces', serif" }}
+        >
           Selesaikan Pembayaran
         </h2>
         <div className="text-sm text-muted-foreground mb-5">
@@ -809,7 +919,8 @@ export default function OrderPage() {
               />
             </div>
             <div className="text-xs text-muted-foreground mt-3">
-              Buka aplikasi e-wallet atau mobile banking lalu pindai kode QR di atas.
+              Buka aplikasi e-wallet atau mobile banking lalu pindai kode QR di
+              atas.
             </div>
           </div>
         )}
@@ -821,20 +932,27 @@ export default function OrderPage() {
             </div>
             <div className="flex items-center justify-between gap-3 rounded-xl bg-[rgba(140,95,40,0.08)] border border-[rgba(140,95,40,0.2)] px-5 py-4">
               <div>
-                <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Bank Digital</div>
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">
+                  Bank Digital
+                </div>
                 <div className="font-black text-foreground text-xl tracking-widest select-all">
                   {vaNumber(createdOrder?.id ?? "")}
                 </div>
               </div>
               <button
-                onClick={() => navigator.clipboard?.writeText(vaNumber(createdOrder?.id ?? ""))}
+                onClick={() =>
+                  navigator.clipboard?.writeText(
+                    vaNumber(createdOrder?.id ?? ""),
+                  )
+                }
                 className="shrink-0 text-xs font-semibold rounded-full px-4 py-2 bg-[#b07d3f] text-[#1a1a1a] hover:bg-[#c9974f] transition-colors"
               >
                 Salin
               </button>
             </div>
             <div className="text-xs text-muted-foreground mt-3">
-              Lakukan transfer ke nomor virtual account di atas melalui aplikasi bank Anda.
+              Lakukan transfer ke nomor virtual account di atas melalui aplikasi
+              bank Anda.
             </div>
           </div>
         )}
@@ -845,7 +963,8 @@ export default function OrderPage() {
               Instruksi Pembayaran
             </div>
             <p className="text-sm text-foreground">
-              Lanjutkan pembayaran melalui {paymentMethod}, lalu unggah bukti pembayaran di bawah.
+              Lanjutkan pembayaran melalui {paymentMethod}, lalu unggah bukti
+              pembayaran di bawah.
             </p>
           </div>
         )}
@@ -856,7 +975,8 @@ export default function OrderPage() {
               Bayar di Kafe
             </div>
             <p className="text-sm text-foreground">
-              Selesaikan pembayaran langsung di kafe saat mengambil pesanan. Tidak perlu mengunggah bukti.
+              Selesaikan pembayaran langsung di kafe saat mengambil pesanan.
+              Tidak perlu mengunggah bukti.
             </p>
           </div>
         )}
@@ -879,8 +999,8 @@ export default function OrderPage() {
                   </div>
                   <button
                     onClick={() => {
-                      setProofUrl(null);
-                      setProofName("");
+                      setProofUrl(null)
+                      setProofName("")
                     }}
                     className="text-xs text-muted-foreground hover:text-destructive"
                   >
@@ -898,7 +1018,9 @@ export default function OrderPage() {
                   type="file"
                   accept="image/*"
                   className="hidden"
-                  onChange={(e) => handleUploadProof(e.target.files?.[0] ?? null)}
+                  onChange={(e) =>
+                    handleUploadProof(e.target.files?.[0] ?? null)
+                  }
                 />
               </label>
             )}
@@ -906,8 +1028,12 @@ export default function OrderPage() {
         )}
 
         <div className="flex items-center justify-between py-3 border-t border-border">
-          <span className="font-semibold text-foreground">Total Pembayaran</span>
-          <span className="font-black text-lg text-[#b07d3f]">{formatRupiah(createdOrder?.total ?? subtotal)}</span>
+          <span className="font-semibold text-foreground">
+            Total Pembayaran
+          </span>
+          <span className="font-black text-lg text-[#b07d3f]">
+            {formatRupiah(createdOrder?.total ?? subtotal)}
+          </span>
         </div>
 
         {error && (
@@ -932,13 +1058,16 @@ export default function OrderPage() {
           </button>
         </div>
       </div>
-    );
-  };
+    )
+  }
 
   const renderDoneStep = () => (
     <div className="glass-card rounded-3xl p-10 text-center max-w-md mx-auto">
       <MdCheckCircle className="w-14 h-14 text-[#b07d3f] mx-auto mb-4" />
-      <h2 className="text-2xl font-black text-foreground mb-2" style={{ fontFamily: "'Fraunces', serif" }}>
+      <h2
+        className="text-2xl font-black text-foreground mb-2"
+        style={{ fontFamily: "'Fraunces', serif" }}
+      >
         Pembayaran Berhasil!
       </h2>
       <p className="text-muted-foreground text-sm mb-6">
@@ -947,15 +1076,21 @@ export default function OrderPage() {
       <div className="rounded-2xl bg-[rgba(140,95,40,0.08)] border border-[rgba(140,95,40,0.2)] p-4 text-left text-sm space-y-1.5 mb-6">
         <div className="flex justify-between">
           <span className="text-muted-foreground">No. Pesanan</span>
-          <span className="font-semibold text-foreground">#{createdOrder?.id.slice(-8)}</span>
+          <span className="font-semibold text-foreground">
+            #{createdOrder?.id.slice(-8)}
+          </span>
         </div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">Kafe</span>
-          <span className="font-semibold text-foreground">{createdOrder?.place.name}</span>
+          <span className="font-semibold text-foreground">
+            {createdOrder?.place.name}
+          </span>
         </div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">Metode</span>
-          <span className="font-semibold text-foreground">{createdOrder?.paymentMethod}</span>
+          <span className="font-semibold text-foreground">
+            {createdOrder?.paymentMethod}
+          </span>
         </div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">Alamat Penagihan</span>
@@ -971,7 +1106,9 @@ export default function OrderPage() {
         </div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">Total</span>
-          <span className="font-black text-[#b07d3f]">{formatRupiah(createdOrder?.total ?? 0)}</span>
+          <span className="font-black text-[#b07d3f]">
+            {formatRupiah(createdOrder?.total ?? 0)}
+          </span>
         </div>
       </div>
       {createdOrder?.paymentProofUrl && (
@@ -998,14 +1135,14 @@ export default function OrderPage() {
         </button>
       </div>
     </div>
-  );
+  )
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center pt-16 text-muted-foreground animate-pulse">
         Memuat...
       </div>
-    );
+    )
   }
 
   return (
@@ -1014,11 +1151,15 @@ export default function OrderPage() {
         <div className="flex items-start justify-between gap-4 mb-6">
           <div>
             <span className="tag-pill mb-3 inline-block">Pesan Kopi</span>
-            <h1 className="text-3xl md:text-4xl font-black text-foreground" style={{ fontFamily: "'Fraunces', serif" }}>
+            <h1
+              className="text-3xl md:text-4xl font-black text-foreground"
+              style={{ fontFamily: "'Fraunces', serif" }}
+            >
               Pesan & Ambil Kopimu
             </h1>
             <p className="text-muted-foreground text-sm mt-2">
-              Pilih menu favorit dari berbagai kafe, lalu checkout dan bayar langsung dari sini.
+              Pilih menu favorit dari berbagai kafe, lalu checkout dan bayar
+              langsung dari sini.
             </p>
           </div>
           <button
@@ -1052,5 +1193,5 @@ export default function OrderPage() {
 
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
     </div>
-  );
+  )
 }

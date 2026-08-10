@@ -371,7 +371,7 @@ Pengguna mendapatkan:
 
 ---
 
-[x] 5. Chatbot
+[x] Chatbot
 
 Membantu pengguna memahami komposisi dari minuman kopi, kalori, dan berapa konsumsi batas gua yang disarkan untuk dikonsumsi.
 
@@ -388,6 +388,55 @@ Contoh:
 Di dalam chatbot berikan tombol shortcut dari rekomendasi pertanyaan di atas. chatbot sederhana dibuat dari query databasse bukan dari API AI.
 
 ---
+
+[x] Daftar Mitra Usaha
+
+Authenticated users dapat mendaftarkan usaha café/kedai mereka sebagai mitra.
+
+### Kepemilikan Usaha
+- Setiap usaha hanya memiliki satu pemilik/admin utama.
+- User yang mendaftarkan usaha otomatis menjadi **Owner/Admin** usaha tersebut.
+- Owner hanya dapat mengelola usaha yang dimilikinya.
+- User biasa tidak dapat mengakses dashboard atau data pengelolaan usaha milik user lain.
+
+### Fitur Pengelolaan Usaha
+
+Owner/Admin dapat:
+
+- Menambahkan dan mengedit informasi café.
+- Menambahkan foto café.
+- Mengubah deskripsi dan informasi café.
+- Menambahkan, mengedit, dan menghapus produk makanan/minuman.
+- Mengatur harga dan ketersediaan produk.
+- Mengelola menu café.
+- Melihat dan menerima pesanan pelanggan.
+- Mengubah status pesanan.
+- Melihat riwayat pesanan.
+
+### Dashboard Mitra
+
+Setiap Owner/Admin memiliki dashboard khusus untuk mengelola usahanya.
+
+Dashboard menampilkan:
+- Total pesanan.
+- Total pendapatan.
+- Produk terlaris.
+- Pesanan terbaru.
+- Status pesanan.
+- Statistik penjualan.
+- Rating dan review pelanggan.
+
+### Role
+
+Gunakan dua role utama:
+
+- `USER` — pengguna/pelanggan.
+- `BUSINESS_OWNER` — pemilik/admin café.
+
+`BUSINESS_OWNER` dapat tetap menggunakan seluruh fitur sebagai `USER`, tetapi juga memiliki akses ke dashboard dan fitur pengelolaan usaha.
+
+---
+
 
 # Entitas Basis Data
 

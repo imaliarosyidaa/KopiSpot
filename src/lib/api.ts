@@ -12,6 +12,7 @@ export interface AuthUser {
   bio?: string | null;
   xp?: number;
   level?: number;
+  role?: string;
 }
 
 export class ApiError extends Error {
@@ -99,8 +100,153 @@ export const authApi = {
         places: unknown[];
         orders: unknown[];
         reservations: unknown[];
+        role: string;
       }
     >("/auth/me"),
+};
+
+export interface PartnerPlace {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  address: string;
+  city: string;
+  price: string;
+  openHours: string;
+  imageUrl: string;
+  wifi: boolean;
+  cozy: boolean;
+  tags: string[];
+  avgRating: number;
+  createdAt: string;
+  _count: { orders: number; menuItems: number; ratings: number };
+}
+
+export interface PartnerOrder {
+  id: string;
+  userId: string;
+  placeId: string;
+  status: OrderStatus;
+  total: number;
+  note: string | null;
+  billingAddress: string | null;
+  paymentMethod: string | null;
+  paymentProofUrl: string | null;
+  paymentStatus: PaymentStatus;
+  createdAt: string;
+  updatedAt: string;
+  user: { id: string; name: string | null; image: string | null };
+  items: {
+    id: string;
+    quantity: number;
+    price: number;
+    menuItem: { id: string; name: string; price: number; category: string; imageUrl: string | null };
+  }[];
+}
+
+export interface PartnerDashboard {
+  totalOrders: number;
+  totalRevenue: number;
+  statusCounts: Record<OrderStatus, number>;
+  bestSellers: { menuItemId: string; name: string; quantity: number }[];
+  recentOrders: {
+    id: string;
+    createdAt: string;
+    status: OrderStatus;
+    total: number;
+    user: { id: string; name: string | null; image: string | null };
+  }[];
+  avgRating: number;
+  ratingCount: number;
+  recentReviews: {
+    id: string;
+    body: string;
+    createdAt: string;
+    user: { id: string; name: string | null; image: string | null };
+  }[];
+  menuCount: number;
+}
+
+export interface PartnerMenuItem {
+  id: string;
+  placeId: string;
+  name: string;
+  price: number;
+  description: string | null;
+  calories: number | null;
+  sugar: number | null;
+  ingredients: string | null;
+  category: string;
+  imageUrl: string | null;
+  isAvailable: boolean;
+  createdAt: string;
+}
+
+export const partnerApi = {
+  register: (data: {
+    name: string;
+    category: string;
+    description: string;
+    address: string;
+    city: string;
+    price: string;
+    openHours: string;
+    imageUrl?: string;
+    tags?: string[];
+  }) =>
+    api<{ place: PartnerPlace; role: string }>("/partner/register", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  places: () => api<PartnerPlace[]>("/partner/places"),
+  dashboard: (placeId: string) => api<PartnerDashboard>(`/partner/dashboard/${placeId}`),
+  menus: (placeId: string) => api<PartnerMenuItem[]>(`/partner/places/${placeId}/menus`),
+  createMenu: (
+    placeId: string,
+    data: Partial<{
+      name: string;
+      price: number;
+      category: string;
+      description: string;
+      calories: number;
+      sugar: number;
+      ingredients: string;
+      imageUrl: string;
+      isAvailable: boolean;
+    }>
+  ) =>
+    api<PartnerMenuItem>(`/partner/places/${placeId}/menus`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  updateMenu: (
+    placeId: string,
+    menuId: string,
+    data: Partial<{
+      name: string;
+      price: number;
+      category: string;
+      description: string;
+      calories: number;
+      sugar: number;
+      ingredients: string;
+      imageUrl: string;
+      isAvailable: boolean;
+    }>
+  ) =>
+    api<PartnerMenuItem>(`/partner/places/${placeId}/menus/${menuId}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+  deleteMenu: (placeId: string, menuId: string) =>
+    api<{ ok: boolean }>(`/partner/places/${placeId}/menus/${menuId}`, { method: "DELETE" }),
+  orders: (placeId: string) => api<PartnerOrder[]>(`/partner/places/${placeId}/orders`),
+  setOrderStatus: (placeId: string, orderId: string, status: OrderStatus) =>
+    api<PartnerOrder>(`/partner/places/${placeId}/orders/${orderId}/status`, {
+      method: "PUT",
+      body: JSON.stringify({ status }),
+    }),
 };
 
 export interface PlaceListItem {
@@ -134,7 +280,13 @@ export const placesApi = {
       PlaceListItem & {
         createdAt: string;
         author: { id: string; name: string | null };
-        comments: { id: string; body: string; userId: string; createdAt: string; user: { id: string; name: string | null; image: string | null } }[];
+        comments: {
+          id: string;
+          body: string;
+          userId: string;
+          createdAt: string;
+          user: { id: string; name: string | null; image: string | null };
+        }[];
         menuItems: { id: string; name: string; price: number; category: string }[];
         viewCount: number;
         commentCount: number;
@@ -142,6 +294,10 @@ export const placesApi = {
     >(`/places/${id}`),
   create: (data: Record<string, unknown>) =>
     api("/places", { method: "POST", body: JSON.stringify(data) }),
+  update: (id: string, data: Record<string, unknown>) =>
+    api(`/places/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+  remove: (id: string) =>
+    api<{ ok: boolean }>(`/places/${id}`, { method: "DELETE" }),
   rate: (id: string, value: number) =>
     api(`/places/${id}/rate`, { method: "POST", body: JSON.stringify({ value }) }),
   comment: (id: string, body: string) =>
@@ -207,7 +363,13 @@ export interface PostCommentItem {
 }
 
 export const postsApi = {
-  list: (params?: { page?: number; limit?: number; q?: string; category?: string; sort?: "latest" | "popular" }) => {
+  list: (params?: {
+    page?: number;
+    limit?: number;
+    q?: string;
+    category?: string;
+    sort?: "latest" | "popular";
+  }) => {
     const query = new URLSearchParams();
     if (params?.page) query.set("page", String(params.page));
     if (params?.limit) query.set("limit", String(params.limit));
@@ -223,10 +385,17 @@ export const postsApi = {
         comments: PostCommentItem[];
       }
     >(`/posts/${id}`),
-  create: (data: { caption: string; placeId?: string | null; category?: string; tags?: string[]; images?: string[] }) =>
-    api<PostItem>("/posts", { method: "POST", body: JSON.stringify(data) }),
-  update: (id: string, data: Partial<{ caption: string; category: string; placeId: string | null; tags: string[]; images: string[] }>) =>
-    api<PostItem>(`/posts/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+  create: (data: {
+    caption: string;
+    placeId?: string | null;
+    category?: string;
+    tags?: string[];
+    images?: string[];
+  }) => api<PostItem>("/posts", { method: "POST", body: JSON.stringify(data) }),
+  update: (
+    id: string,
+    data: Partial<{ caption: string; category: string; placeId: string | null; tags: string[]; images: string[] }>
+  ) => api<PostItem>(`/posts/${id}`, { method: "PUT", body: JSON.stringify(data) }),
   remove: (id: string) => api<{ ok: boolean }>(`/posts/${id}`, { method: "DELETE" }),
   like: (id: string) =>
     api<{ liked: boolean; likesCount: number }>(`/posts/${id}/like`, { method: "POST" }),
@@ -333,10 +502,16 @@ export interface LeaderboardEntry {
 export const profileApi = {
   me: () => api<ProfileData>("/users/me"),
   update: (data: Partial<{ name: string; username: string; bio: string; image: string }>) =>
-    api<{ id: string; name: string | null; username: string | null; email: string; bio: string | null; image: string | null; xp: number; level: number }>(
-      "/users/me",
-      { method: "PUT", body: JSON.stringify(data) }
-    ),
+    api<{
+      id: string;
+      name: string | null;
+      username: string | null;
+      email: string;
+      bio: string | null;
+      image: string | null;
+      xp: number;
+      level: number;
+    }>("/users/me", { method: "PUT", body: JSON.stringify(data) }),
   changePassword: (currentPassword: string, newPassword: string) =>
     api<{ ok: boolean }>("/users/password", {
       method: "PUT",

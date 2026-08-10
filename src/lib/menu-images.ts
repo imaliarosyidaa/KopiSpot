@@ -1,4 +1,5 @@
-const IMG = (id: string) => `https://images.unsplash.com/${id}?w=400&h=400&fit=crop&auto=format`;
+const IMG = (id: string) =>
+  `https://images.unsplash.com/${id}?w=400&h=400&fit=crop&auto=format`
 
 const CATEGORY_IMAGES: Record<string, string[]> = {
   coffee: [
@@ -29,18 +30,22 @@ const CATEGORY_IMAGES: Record<string, string[]> = {
     IMG("photo-1578985545062-69928b1d9587"),
     IMG("photo-1551106652-a5bcf4b29ab6"),
   ],
-};
-
-function hashString(value: string): number {
-  let h = 0;
-  for (let i = 0; i < value.length; i++) {
-    h = (h * 31 + value.charCodeAt(i)) >>> 0;
-  }
-  return h;
 }
 
-export function menuImageUrl(category: string, imageUrl: string | null, seed = ""): string {
-  if (imageUrl) return imageUrl;
-  const list = CATEGORY_IMAGES[category] ?? CATEGORY_IMAGES.coffee;
-  return list[hashString(seed || category) % list.length];
+function hashString(value: string): number {
+  let h = 0
+  for (let i = 0; i < value.length; i++) {
+    h = (h * 31 + value.charCodeAt(i)) >>> 0
+  }
+  return h
+}
+
+export function menuImageUrl(
+  category: string,
+  imageUrl: string | null,
+  seed = "",
+): string {
+  if (imageUrl) return imageUrl
+  const list = CATEGORY_IMAGES[category] ?? CATEGORY_IMAGES.coffee
+  return list[hashString(seed || category) % list.length]
 }

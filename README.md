@@ -152,6 +152,16 @@ npm run build         # build produksi
 - Virtual Account (bank) menampilkan nomor VA yang bisa disalin.
 - Tombol kirim bukti pembayaran (unggah gambar) sebelum konfirmasi pesanan.
 
+[x] SUDAH SELESAI Daftar Mitra Usaha
+
+- User dapat mendaftarkan usaha café/kedai dari halaman `/mitra`.
+- User yang mendaftarkan usaha otomatis menjadi pemilik (BUSINESS_OWNER) kafe tersebut.
+- Owner hanya dapat mengelola usaha yang dimilikinya.
+- Owner dapat menambah, mengedit, dan menghapus kafe serta mengunggah foto.
+- Owner dapat menambah, mengedit, dan menghapus produk, mengatur harga, dan ketersediaan produk.
+- Owner dapat melihat dan menerima pesanan pelanggan serta mengubah status pesanan.
+- Dashboard Mitra menampilkan: total pesanan, total pendapatan, produk terlaris, pesanan terbaru, status pesanan, rating, dan review pelanggan.
+
 ---
 
 ## Endpoint API (Ringkasan)
@@ -161,7 +171,12 @@ npm run build         # build produksi
 - `POST /api/places/:id/rate`, `POST /api/places/:id/comments`
 - `POST /api/chat` — tanya asisten kopi (tanpa login)
 - `GET /api/menus` — daftar menu kafe (`?placeId=`)
-- `GET /api/orders`, `GET /api/orders/:id`, `POST /api/orders`, `PUT /api/orders/:id/pay`
+- `GET /api/orders`, `GET /api/orders/:id`, `POST /api/orders`, `PUT /api/orders/:id/pay`, `DELETE /api/orders/:id`
+- `POST /api/partner/register` — daftarkan usaha mitra
+- `GET /api/partner/places` — daftar usaha milik user
+- `GET /api/partner/dashboard/:placeId` — ringkasan dashboard mitra
+- `GET|POST|PUT|DELETE /api/partner/places/:placeId/menus[/:menuId]` — kelola menu
+- `GET /api/partner/places/:placeId/orders` + `PUT .../orders/:orderId/status` — kelola pesanan
 - `GET /api/feed/right` — konten sidebar kanan
 - `GET /api/users/me`, `PUT /api/users/me`, `GET /api/users/leaderboard`
 

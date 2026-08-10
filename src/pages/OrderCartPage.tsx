@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react"
+import { Link, useNavigate } from "react-router-dom"
 import {
   MdAdd,
   MdBookmarkAdd,
@@ -8,16 +8,16 @@ import {
   MdReceiptLong,
   MdRestore,
   MdShoppingCart,
-} from "react-icons/md";
-import { ordersApi, type Order } from "@/lib/api";
-import { useAuth } from "@/lib/auth-context";
-import AuthModal from "@/components/ui/auth-modal";
-import { useCartStore } from "@/lib/cart-store";
-import { formatDate, formatRupiah } from "@/lib/format";
-import { menuImageUrl } from "@/lib/menu-images";
+} from "react-icons/md"
+import { ordersApi, type Order } from "@/lib/api"
+import { useAuth } from "@/lib/auth-context"
+import AuthModal from "@/components/ui/auth-modal"
+import { useCartStore } from "@/lib/cart-store"
+import { formatDate, formatRupiah } from "@/lib/format"
+import { menuImageUrl } from "@/lib/menu-images"
 
 const inputClass =
-  "w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-all focus:border-[#b07d3f] focus:ring-2 focus:ring-[rgba(176,125,63,0.25)]";
+  "w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-all focus:border-[#b07d3f] focus:ring-2 focus:ring-[rgba(176,125,63,0.25)]"
 
 const STATUS_LABEL: Record<string, string> = {
   PENDING: "Menunggu",
@@ -26,46 +26,48 @@ const STATUS_LABEL: Record<string, string> = {
   READY: "Siap Diambil",
   COMPLETED: "Selesai",
   CANCELLED: "Dibatalkan",
-};
+}
 
 const PAYMENT_LABEL: Record<string, string> = {
   UNPAID: "Belum Dibayar",
   PAID: "Lunas",
   FAILED: "Gagal",
-};
+}
 
 const actionPill =
-  "flex items-center gap-1 text-xs font-semibold rounded-full px-3 py-2 footer-glass-pill text-muted-foreground hover:text-foreground transition-colors";
+  "flex items-center gap-1 text-xs font-semibold rounded-full px-3 py-2 footer-glass-pill text-muted-foreground hover:text-foreground transition-colors"
 
 export default function OrderCartPage() {
-  const { user, loading } = useAuth();
-  const navigate = useNavigate();
-  const addToCart = useCartStore((s) => s.add);
-  const [authOpen, setAuthOpen] = useState(false);
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [ordersError, setOrdersError] = useState<string | null>(null);
-  const [loadingOrders, setLoadingOrders] = useState(false);
-  const [selectedCafe, setSelectedCafe] = useState("");
-  const [savedOrderIds, setSavedOrderIds] = useState<string[]>([]);
-  const [wishOrderIds, setWishOrderIds] = useState<string[]>([]);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const { user, loading } = useAuth()
+  const navigate = useNavigate()
+  const addToCart = useCartStore((s) => s.add)
+  const [authOpen, setAuthOpen] = useState(false)
+  const [orders, setOrders] = useState<Order[]>([])
+  const [ordersError, setOrdersError] = useState<string | null>(null)
+  const [loadingOrders, setLoadingOrders] = useState(false)
+  const [selectedCafe, setSelectedCafe] = useState("")
+  const [savedOrderIds, setSavedOrderIds] = useState<string[]>([])
+  const [wishOrderIds, setWishOrderIds] = useState<string[]>([])
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const loadOrders = useCallback(async () => {
-    if (!user) return;
-    setOrdersError(null);
-    setLoadingOrders(true);
+    if (!user) return
+    setOrdersError(null)
+    setLoadingOrders(true)
     try {
-      setOrders(await ordersApi.list());
+      setOrders(await ordersApi.list())
     } catch (err) {
-      setOrdersError(err instanceof Error ? err.message : "Gagal memuat keranjang.");
+      setOrdersError(
+        err instanceof Error ? err.message : "Gagal memuat keranjang.",
+      )
     } finally {
-      setLoadingOrders(false);
+      setLoadingOrders(false)
     }
-  }, [user]);
+  }, [user])
 
   useEffect(() => {
-    loadOrders();
-  }, [loadOrders]);
+    loadOrders()
+  }, [loadOrders])
 
   const handleCheckout = (o: Order) => {
     o.items.forEach((it) => {
@@ -77,60 +79,66 @@ export default function OrderCartPage() {
         price: it.menuItem.price,
         category: it.menuItem.category,
         imageUrl: it.menuItem.imageUrl,
-      });
-    });
-    navigate("/order", { state: { step: "checkout" } });
-  };
+      })
+    })
+    navigate("/order", { state: { step: "checkout" } })
+  }
 
   const moveToSaved = (id: string) => {
-    setSavedOrderIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
-    setWishOrderIds((prev) => prev.filter((x) => x !== id));
-  };
+    setSavedOrderIds((prev) => (prev.includes(id) ? prev : [...prev, id]))
+    setWishOrderIds((prev) => prev.filter((x) => x !== id))
+  }
 
   const moveToWish = (id: string) => {
-    setWishOrderIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
-    setSavedOrderIds((prev) => prev.filter((x) => x !== id));
-  };
+    setWishOrderIds((prev) => (prev.includes(id) ? prev : [...prev, id]))
+    setSavedOrderIds((prev) => prev.filter((x) => x !== id))
+  }
 
   const restoreOrder = (id: string) => {
-    setSavedOrderIds((prev) => prev.filter((x) => x !== id));
-    setWishOrderIds((prev) => prev.filter((x) => x !== id));
-  };
+    setSavedOrderIds((prev) => prev.filter((x) => x !== id))
+    setWishOrderIds((prev) => prev.filter((x) => x !== id))
+  }
 
   const handleDelete = async (id: string) => {
-    if (deletingId) return;
+    if (deletingId) return
     try {
-      await ordersApi.remove(id);
-      setSavedOrderIds((prev) => prev.filter((x) => x !== id));
-      setWishOrderIds((prev) => prev.filter((x) => x !== id));
-      await loadOrders();
+      await ordersApi.remove(id)
+      setSavedOrderIds((prev) => prev.filter((x) => x !== id))
+      setWishOrderIds((prev) => prev.filter((x) => x !== id))
+      await loadOrders()
     } catch (err) {
-      setOrdersError(err instanceof Error ? err.message : "Gagal menghapus pesanan.");
+      setOrdersError(
+        err instanceof Error ? err.message : "Gagal menghapus pesanan.",
+      )
     } finally {
-      setDeletingId(null);
+      setDeletingId(null)
     }
-  };
+  }
 
-  const unpaidOrders = orders.filter((o) => o.paymentStatus !== "PAID" && o.status !== "CANCELLED");
+  const unpaidOrders = orders.filter(
+    (o) => o.paymentStatus !== "PAID" && o.status !== "CANCELLED",
+  )
   const placeOptions = Array.from(
-    new Map(unpaidOrders.map((o) => [o.place.id, o.place])).values()
-  );
+    new Map(unpaidOrders.map((o) => [o.place.id, o.place])).values(),
+  )
   const cafeFiltered = selectedCafe
     ? unpaidOrders.filter((o) => o.place.id === selectedCafe)
-    : unpaidOrders;
+    : unpaidOrders
   const activeOrders = cafeFiltered.filter(
-    (o) => !savedOrderIds.includes(o.id) && !wishOrderIds.includes(o.id)
-  );
-  const savedOrders = cafeFiltered.filter((o) => savedOrderIds.includes(o.id));
-  const wishOrders = cafeFiltered.filter((o) => wishOrderIds.includes(o.id));
+    (o) => !savedOrderIds.includes(o.id) && !wishOrderIds.includes(o.id),
+  )
+  const savedOrders = cafeFiltered.filter((o) => savedOrderIds.includes(o.id))
+  const wishOrders = cafeFiltered.filter((o) => wishOrderIds.includes(o.id))
 
   const renderOrderCard = (o: Order, bucket: "active" | "saved" | "wish") => {
-    const removing = deletingId === o.id;
+    const removing = deletingId === o.id
     return (
       <div key={o.id} className="glass-card rounded-2xl p-5">
         <div className="flex items-center justify-between gap-3 mb-3">
           <div className="min-w-0">
-            <div className="font-bold text-foreground text-sm">{o.place.name}</div>
+            <div className="font-bold text-foreground text-sm">
+              {o.place.name}
+            </div>
             <div className="text-xs text-muted-foreground">
               #{o.id.slice(-8)} · {formatDate(o.createdAt)}
             </div>
@@ -140,7 +148,9 @@ export default function OrderCartPage() {
               {o.paymentStatus === "PAID" ? "✓ " : ""}
               {PAYMENT_LABEL[o.paymentStatus]}
             </span>
-            <span className="tag-pill">{STATUS_LABEL[o.status] ?? o.status}</span>
+            <span className="tag-pill">
+              {STATUS_LABEL[o.status] ?? o.status}
+            </span>
           </div>
         </div>
         <div className="flex items-center justify-between text-sm">
@@ -148,13 +158,19 @@ export default function OrderCartPage() {
             {o.items.reduce((s, it) => s + it.quantity, 0)} item
             {o.paymentMethod ? ` · ${o.paymentMethod}` : ""}
           </span>
-          <span className="font-black text-[#b07d3f]">{formatRupiah(o.total)}</span>
+          <span className="font-black text-[#b07d3f]">
+            {formatRupiah(o.total)}
+          </span>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
           {o.items.slice(0, 5).map((it) => (
             <img
               key={it.id}
-              src={menuImageUrl(it.menuItem.category, it.menuItem.imageUrl, it.menuItem.name)}
+              src={menuImageUrl(
+                it.menuItem.category,
+                it.menuItem.imageUrl,
+                it.menuItem.name,
+              )}
               alt={it.menuItem.name}
               title={it.menuItem.name}
               className="w-11 h-11 rounded-xl object-cover border border-border"
@@ -177,11 +193,19 @@ export default function OrderCartPage() {
           <div className="flex items-center gap-2 flex-wrap">
             {bucket === "active" && (
               <>
-                <button onClick={() => moveToSaved(o.id)} className={actionPill} title="Simpan untuk nanti">
+                <button
+                  onClick={() => moveToSaved(o.id)}
+                  className={actionPill}
+                  title="Simpan untuk nanti"
+                >
                   <MdBookmarkAdd className="w-3.5 h-3.5" />
                   Simpan untuk Nanti
                 </button>
-                <button onClick={() => moveToWish(o.id)} className={actionPill} title="Pindahkan ke daftar keinginan">
+                <button
+                  onClick={() => moveToWish(o.id)}
+                  className={actionPill}
+                  title="Pindahkan ke daftar keinginan"
+                >
                   <MdFavoriteBorder className="w-3.5 h-3.5" />
                   Wishlist
                 </button>
@@ -224,15 +248,15 @@ export default function OrderCartPage() {
           </button>
         </div>
       </div>
-    );
-  };
+    )
+  }
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center pt-16 text-muted-foreground animate-pulse">
         Memuat...
       </div>
-    );
+    )
   }
 
   return (
@@ -241,7 +265,10 @@ export default function OrderCartPage() {
         <div className="flex items-start justify-between gap-4 mb-6">
           <div>
             <span className="tag-pill mb-3 inline-block">Keranjang</span>
-            <h1 className="text-3xl md:text-4xl font-black text-foreground" style={{ fontFamily: "'Fraunces', serif" }}>
+            <h1
+              className="text-3xl md:text-4xl font-black text-foreground"
+              style={{ fontFamily: "'Fraunces', serif" }}
+            >
               Keranjang Pesanan
             </h1>
             <p className="text-muted-foreground text-sm mt-2">
@@ -260,8 +287,12 @@ export default function OrderCartPage() {
         {!user ? (
           <div className="glass-card rounded-3xl p-10 text-center max-w-md mx-auto">
             <div className="text-4xl mb-3">🛒</div>
-            <h2 className="text-xl font-black text-foreground mb-2">Masuk untuk melihat keranjang</h2>
-            <p className="text-muted-foreground text-sm mb-6">Pesanan yang belum dicheckout tersimpan di akunmu.</p>
+            <h2 className="text-xl font-black text-foreground mb-2">
+              Masuk untuk melihat keranjang
+            </h2>
+            <p className="text-muted-foreground text-sm mb-6">
+              Pesanan yang belum dicheckout tersimpan di akunmu.
+            </p>
             <button
               onClick={() => setAuthOpen(true)}
               className="bg-[#b07d3f] text-[#1a1a1a] font-black px-6 py-3 rounded-full text-sm"
@@ -270,13 +301,19 @@ export default function OrderCartPage() {
             </button>
           </div>
         ) : ordersError ? (
-          <div className="text-center text-destructive py-16">{ordersError}</div>
+          <div className="text-center text-destructive py-16">
+            {ordersError}
+          </div>
         ) : loadingOrders ? (
-          <div className="text-center text-muted-foreground animate-pulse py-16">Memuat keranjang...</div>
+          <div className="text-center text-muted-foreground animate-pulse py-16">
+            Memuat keranjang...
+          </div>
         ) : unpaidOrders.length === 0 ? (
           <div className="glass-card rounded-3xl p-10 text-center max-w-md mx-auto">
             <div className="text-4xl mb-3">☕</div>
-            <h2 className="text-xl font-black text-foreground mb-2">Keranjang kosong</h2>
+            <h2 className="text-xl font-black text-foreground mb-2">
+              Keranjang kosong
+            </h2>
             <p className="text-muted-foreground text-sm mb-6">
               Tidak ada pesanan yang menunggu checkout. Yuk pesan kopi sekarang.
             </p>
@@ -349,11 +386,13 @@ export default function OrderCartPage() {
                   </div>
                 )}
 
-                {activeOrders.length === 0 && savedOrders.length === 0 && wishOrders.length === 0 && (
-                  <div className="text-center text-muted-foreground py-16">
-                    Tidak ada pesanan yang belum dicheckout dari kafe ini.
-                  </div>
-                )}
+                {activeOrders.length === 0 &&
+                  savedOrders.length === 0 &&
+                  wishOrders.length === 0 && (
+                    <div className="text-center text-muted-foreground py-16">
+                      Tidak ada pesanan yang belum dicheckout dari kafe ini.
+                    </div>
+                  )}
               </div>
             )}
           </>
@@ -362,5 +401,5 @@ export default function OrderCartPage() {
 
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
     </div>
-  );
+  )
 }

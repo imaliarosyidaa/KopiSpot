@@ -1,20 +1,25 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { MdSearch } from "react-icons/md";
-import MagneticButton from "@/components/ui/magnetic-button";
-import PlaceCard from "@/components/ui/place-card";
-import StarRating from "@/components/ui/star-rating";
-import InteractiveGlobe from "@/components/ui/interactive-globe";
-import LeftSidebar from "@/components/shared/LeftSidebar";
-import { feedApi, placesApi, type FeedRight, type PlaceListItem } from "@/lib/api";
-import { timeAgo } from "@/lib/format";
-import { PLACE_CATEGORIES } from "@/lib/constants";
-import ChatPage from "./ChatPage";
-import { CinematicSection } from "@/components/ui/motion";
+import { useEffect, useMemo, useRef, useState } from "react"
+import { gsap } from "gsap"
+import { ScrollTrigger } from "gsap/ScrollTrigger"
+import { MdSearch } from "react-icons/md"
+import MagneticButton from "@/components/ui/magnetic-button"
+import PlaceCard from "@/components/ui/place-card"
+import StarRating from "@/components/ui/star-rating"
+import InteractiveGlobe from "@/components/ui/interactive-globe"
+import LeftSidebar from "@/components/shared/LeftSidebar"
+import {
+  feedApi,
+  placesApi,
+  type FeedRight,
+  type PlaceListItem,
+} from "@/lib/api"
+import { timeAgo } from "@/lib/format"
+import { PLACE_CATEGORIES } from "@/lib/constants"
+import ChatPage from "./ChatPage"
+import { CinematicSection } from "@/components/ui/motion"
 
 if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger);
+  gsap.registerPlugin(ScrollTrigger)
 }
 
 // ─── HERO ────────────────────────────────────────────────────────────────────
@@ -22,48 +27,67 @@ if (typeof window !== "undefined") {
 function HeroMarqueeItem() {
   return (
     <div className="flex items-center space-x-12 px-6">
-      <span>Kopi Terbaik Indonesia</span> <span className="text-[#b07d3f]">✦</span>
-      <span>Tempat Aesthetic & Viral</span> <span className="text-[#6b6b6b]">✦</span>
-      <span>Review Jujur & Terpercaya</span> <span className="text-[#b07d3f]">✦</span>
+      <span>Kopi Terbaik Indonesia</span>{" "}
+      <span className="text-[#b07d3f]">✦</span>
+      <span>Tempat Aesthetic & Viral</span>{" "}
+      <span className="text-[#6b6b6b]">✦</span>
+      <span>Review Jujur & Terpercaya</span>{" "}
+      <span className="text-[#b07d3f]">✦</span>
       <span>Foto-worthy Spots</span> <span className="text-[#6b6b6b]">✦</span>
       <span>Work-Friendly Cafes</span> <span className="text-[#b07d3f]">✦</span>
     </div>
-  );
+  )
 }
 
 function CinematicHero({ onExplore }: { onExplore: () => void }) {
-  const giantTextRef = useRef<HTMLDivElement>(null);
-  const headingRef = useRef<HTMLHeadingElement>(null);
-  const subRef = useRef<HTMLParagraphElement>(null);
-  const linksRef = useRef<HTMLDivElement>(null);
+  const giantTextRef = useRef<HTMLDivElement>(null)
+  const headingRef = useRef<HTMLHeadingElement>(null)
+  const subRef = useRef<HTMLParagraphElement>(null)
+  const linksRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const targets = [headingRef.current, subRef.current, linksRef.current].filter(Boolean);
+    const targets = [
+      headingRef.current,
+      subRef.current,
+      linksRef.current,
+    ].filter(Boolean)
     const ctx = gsap.context(() => {
       if (giantTextRef.current) {
-        gsap.fromTo(
-          giantTextRef.current,
-          { y: 40, scale: 0.9, opacity: 0 },
-          { y: 0, scale: 1, opacity: 1, duration: 1.4, ease: "power3.out", delay: 0.1 }
-        );
+        gsap.fromTo(giantTextRef.current, { y: 40, scale: 0.9, opacity: 0 }, {
+          y: 0,
+          scale: 1,
+          opacity: 1,
+          duration: 1.4,
+          ease: "power3.out",
+          delay: 0.1,
+        })
       }
       if (targets.length) {
-        gsap.fromTo(
-          targets,
-          { y: 40, opacity: 0 },
-          { y: 0, opacity: 1, stagger: 0.15, duration: 1, ease: "power3.out", delay: 0.3 }
-        );
+        gsap.fromTo(targets, { y: 40, opacity: 0 }, {
+          y: 0,
+          opacity: 1,
+          stagger: 0.15,
+          duration: 1,
+          ease: "power3.out",
+          delay: 0.3,
+        })
       }
-    });
-    return () => ctx.revert();
-  }, []);
+    })
+    return () => ctx.revert()
+  }, [])
 
   return (
-    <section className="relative w-full flex flex-col bg-background text-foreground cinematic-footer-wrapper overflow-x-hidden overflow-y-hidden" style={{ minHeight: "100svh" }}>
+    <section
+      className="relative w-full flex flex-col bg-background text-foreground cinematic-footer-wrapper overflow-x-hidden overflow-y-hidden"
+      style={{ minHeight: "100svh" }}
+    >
       <div className="footer-aurora absolute left-1/2 top-1/2 h-[60vh] w-[80vw] -translate-x-1/2 -translate-y-1/2 animate-footer-breathe rounded-[50%] blur-[80px] pointer-events-none z-0" />
       <div className="footer-bg-grid absolute inset-0 z-0 pointer-events-none" />
 
-      <div ref={giantTextRef} className="footer-giant-bg-text absolute bottom-0 left-1/2 -translate-x-1/2 whitespace-nowrap z-0 pointer-events-none select-none">
+      <div
+        ref={giantTextRef}
+        className="footer-giant-bg-text absolute bottom-0 left-1/2 -translate-x-1/2 whitespace-nowrap z-0 pointer-events-none select-none"
+      >
         NGOPI
       </div>
 
@@ -75,7 +99,9 @@ function CinematicHero({ onExplore }: { onExplore: () => void }) {
       </div>
 
       <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 py-16 w-full max-w-4xl mx-auto text-center">
-        <span className="tag-pill mb-6 inline-block">✦ Rekomendasi Terkurasi 2026</span>
+        <span className="tag-pill mb-6 inline-block">
+          ✦ Rekomendasi Terkurasi 2026
+        </span>
         <h1
           ref={headingRef}
           className="text-5xl md:text-8xl font-black footer-text-glow tracking-tighter mb-5"
@@ -85,8 +111,12 @@ function CinematicHero({ onExplore }: { onExplore: () => void }) {
           <br />
           Pintu Kopi.
         </h1>
-        <p ref={subRef} className="text-muted-foreground text-sm md:text-base mb-10 max-w-md leading-relaxed">
-          Pintu Kopi adalah platform digital yang menjadi satu pintu bagi pelanggan untuk menemukan dan memesan kopi dari berbagai UMKM kopi.
+        <p
+          ref={subRef}
+          className="text-muted-foreground text-sm md:text-base mb-10 max-w-md leading-relaxed"
+        >
+          Pintu Kopi adalah platform digital yang menjadi satu pintu bagi
+          pelanggan untuk menemukan dan memesan kopi dari berbagai UMKM kopi.
         </p>
 
         <div ref={linksRef} className="flex flex-col items-center gap-4 w-full">
@@ -94,17 +124,32 @@ function CinematicHero({ onExplore }: { onExplore: () => void }) {
             onClick={onExplore}
             className="bg-[#b07d3f] text-[#1a1a1a] font-black px-10 py-4 rounded-full text-sm hover:bg-[#c9974f] transition-colors duration-300 flex items-center gap-2"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+              />
             </svg>
             Jelajahi Sekarang
           </MagneticButton>
           <div className="flex flex-wrap justify-center gap-3 mt-2">
-            {["Jakarta", "Bali", "Bandung", "Yogyakarta", "Surabaya"].map((city) => (
-              <MagneticButton key={city} className="footer-glass-pill px-5 py-2 rounded-full text-muted-foreground font-medium text-xs hover:text-foreground">
-                {city}
-              </MagneticButton>
-            ))}
+            {["Jakarta", "Bali", "Bandung", "Yogyakarta", "Surabaya"].map(
+              (city) => (
+                <MagneticButton
+                  key={city}
+                  className="footer-glass-pill px-5 py-2 rounded-full text-muted-foreground font-medium text-xs hover:text-foreground"
+                >
+                  {city}
+                </MagneticButton>
+              ),
+            )}
           </div>
         </div>
       </div>
@@ -116,7 +161,10 @@ function CinematicHero({ onExplore }: { onExplore: () => void }) {
           { num: "48", label: "Kota di Indonesia" },
         ].map((s) => (
           <div key={s.label} className="text-center">
-            <div className="text-2xl md:text-3xl font-black text-[#b07d3f]" style={{ fontFamily: "'Fraunces', serif" }}>
+            <div
+              className="text-2xl md:text-3xl font-black text-[#b07d3f]"
+              style={{ fontFamily: "'Fraunces', serif" }}
+            >
               {s.num}
             </div>
             <div className="text-muted-foreground text-xs mt-1">{s.label}</div>
@@ -124,74 +172,94 @@ function CinematicHero({ onExplore }: { onExplore: () => void }) {
         ))}
       </div>
     </section>
-  );
+  )
 }
 
 // ─── REVIEW CARD ─────────────────────────────────────────────────────────────
 
-function ReviewCard({ review }: { review: FeedRight["latestReviews"][number] }) {
+function ReviewCard({
+  review,
+}: {
+  review: FeedRight["latestReviews"][number]
+}) {
   return (
     <div className="glass-card rounded-2xl p-5 flex flex-col gap-3">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-full bg-[rgba(140,95,40,0.22)] border border-[rgba(140,95,40,0.35)] flex items-center justify-center text-[#b07d3f] font-bold text-sm shrink-0 overflow-hidden">
           {review.user.image ? (
-            <img src={review.user.image} alt="" className="w-full h-full object-cover" />
+            <img
+              src={review.user.image}
+              alt=""
+              className="w-full h-full object-cover"
+            />
           ) : (
             (review.user.name || "?")[0].toUpperCase()
           )}
         </div>
         <div>
-          <div className="font-semibold text-foreground text-sm">{review.user.name}</div>
-          <div className="text-muted-foreground text-xs">{timeAgo(review.createdAt)}</div>
+          <div className="font-semibold text-foreground text-sm">
+            {review.user.name}
+          </div>
+          <div className="text-muted-foreground text-xs">
+            {timeAgo(review.createdAt)}
+          </div>
         </div>
       </div>
-      <p className="text-muted-foreground text-sm leading-relaxed">{review.body}</p>
+      <p className="text-muted-foreground text-sm leading-relaxed">
+        {review.body}
+      </p>
     </div>
-  );
+  )
 }
 
 // ─── PAGE ────────────────────────────────────────────────────────────────────
 
 export default function HomePage() {
-  const [places, setPlaces] = useState<PlaceListItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [q, setQ] = useState("");
-  const [activeCategory, setActiveCategory] = useState("SEMUA");
-  const [activeCity, setActiveCity] = useState("SEMUA");
-  const [feed, setFeed] = useState<FeedRight | null>(null);
+  const [places, setPlaces] = useState<PlaceListItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [q, setQ] = useState("")
+  const [activeCategory, setActiveCategory] = useState("SEMUA")
+  const [activeCity, setActiveCity] = useState("SEMUA")
+  const [feed, setFeed] = useState<FeedRight | null>(null)
 
   const cities = useMemo(() => {
-    const unique = Array.from(new Set(places.map((p) => p.city).filter(Boolean)));
-    return unique.sort();
-  }, [places]);
+    const unique = Array.from(
+      new Set(places.map((p) => p.city).filter(Boolean)),
+    )
+    return unique.sort()
+  }, [places])
 
   useEffect(() => {
-    let active = true;
-    setLoading(true);
+    let active = true
+    setLoading(true)
     placesApi
-      .list({ q: q || undefined, category: activeCategory !== "SEMUA" ? activeCategory : undefined, city: activeCity !== "SEMUA" ? activeCity : undefined })
+      .list({
+        q: q || undefined,
+        category: activeCategory !== "SEMUA" ? activeCategory : undefined,
+        city: activeCity !== "SEMUA" ? activeCity : undefined,
+      })
       .then((d) => active && setPlaces(d))
       .catch(() => active && setPlaces([]))
-      .finally(() => active && setLoading(false));
+      .finally(() => active && setLoading(false))
     return () => {
-      active = false;
-    };
-  }, [q, activeCategory, activeCity]);
+      active = false
+    }
+  }, [q, activeCategory, activeCity])
 
   useEffect(() => {
-    let active = true;
+    let active = true
     feedApi
       .right()
       .then((d) => active && setFeed(d))
-      .catch(() => active && setFeed(null));
+      .catch(() => active && setFeed(null))
     return () => {
-      active = false;
-    };
-  }, []);
+      active = false
+    }
+  }, [])
 
   const scrollToPlaces = () => {
-    document.getElementById("places")?.scrollIntoView({ behavior: "smooth" });
-  };
+    document.getElementById("places")?.scrollIntoView({ behavior: "smooth" })
+  }
 
   return (
     <>
@@ -207,9 +275,14 @@ export default function HomePage() {
           <div className="flex flex-col md:flex-row items-center min-h-[520px]">
             <div className="flex-1 flex flex-col justify-center relative z-10">
               <div>
-                <span className="tag-pill mb-3 inline-block">Komunitas Kopi Indonesia</span>
+                <span className="tag-pill mb-3 inline-block">
+                  Komunitas Kopi Indonesia
+                </span>
               </div>
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-black tracking-tight text-foreground leading-[1.1] mb-4" style={{ fontFamily: "'Fraunces', serif" }}>
+              <h2
+                className="text-3xl md:text-4xl lg:text-5xl font-black tracking-tight text-foreground leading-[1.1] mb-4"
+                style={{ fontFamily: "'Fraunces', serif" }}
+              >
                 Eksplorasi Kafe dari
                 <br />
                 <span className="bg-gradient-to-r from-[#b07d3f] to-[#e0a45e] bg-clip-text text-transparent">
@@ -218,23 +291,34 @@ export default function HomePage() {
               </h2>
 
               <p className="text-sm md:text-base text-muted-foreground max-w-md leading-relaxed mb-8">
-                <span className="font-bold">Tahukah kamu?</span> Biaya pembuatan Sistem Pemesanan Online Restoran (Restaurant Online Ordering System) bisa mencapai puluhan hingga ratusan juta. Kami membantu para pelaku UMKM kopi yang sedang merintis usahanya dan terkendala biaya dengan membangun layanan digital satu akses untuk menghubungkan UMKM kopi ke semua pelanggan.
+                <span className="font-bold">Tahukah kamu?</span> Biaya pembuatan
+                Sistem Pemesanan Online Restoran (Restaurant Online Ordering
+                System) bisa mencapai puluhan hingga ratusan juta. Kami membantu
+                para pelaku UMKM kopi yang sedang merintis usahanya dan
+                terkendala biaya dengan membangun layanan digital satu akses
+                untuk menghubungkan UMKM kopi ke semua pelanggan.
               </p>
 
               <div className="flex items-center gap-6 flex-wrap">
                 <div>
                   <p className="text-2xl font-bold text-foreground">50+</p>
-                  <p className="text-xs text-muted-foreground">Kafe Terkurasi</p>
+                  <p className="text-xs text-muted-foreground">
+                    Kafe Terkurasi
+                  </p>
                 </div>
                 <div className="w-px h-8 bg-border" />
                 <div>
                   <p className="text-2xl font-bold text-foreground">8+</p>
-                  <p className="text-xs text-muted-foreground">Kota di Indonesia</p>
+                  <p className="text-xs text-muted-foreground">
+                    Kota di Indonesia
+                  </p>
                 </div>
                 <div className="w-px h-8 bg-border" />
                 <div>
                   <p className="text-2xl font-bold text-foreground">12K+</p>
-                  <p className="text-xs text-muted-foreground">Ulasan Pengguna</p>
+                  <p className="text-xs text-muted-foreground">
+                    Ulasan Pengguna
+                  </p>
                 </div>
               </div>
             </div>
@@ -258,7 +342,10 @@ export default function HomePage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
           <div>
             <span className="tag-pill mb-3 inline-block">Pilihan Editor</span>
-            <h2 className="text-4xl md:text-6xl font-black text-foreground leading-tight" style={{ fontFamily: "'Fraunces', serif" }}>
+            <h2
+              className="text-4xl md:text-6xl font-black text-foreground leading-tight"
+              style={{ fontFamily: "'Fraunces', serif" }}
+            >
               Spot Paling
               <br />
               Dicari
@@ -289,7 +376,11 @@ export default function HomePage() {
               {PLACE_CATEGORIES.slice(1).map((c) => (
                 <button
                   key={c.value}
-                  onClick={() => setActiveCategory(activeCategory === c.value ? "SEMUA" : c.value)}
+                  onClick={() =>
+                    setActiveCategory(
+                      activeCategory === c.value ? "SEMUA" : c.value,
+                    )
+                  }
                   className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 ${
                     activeCategory === c.value
                       ? "bg-[#b07d3f] text-[#1a1a1a]"
@@ -304,14 +395,21 @@ export default function HomePage() {
             {loading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="glass-card rounded-2xl h-80 animate-pulse" />
+                  <div
+                    key={i}
+                    className="glass-card rounded-2xl h-80 animate-pulse"
+                  />
                 ))}
               </div>
             ) : places.length === 0 ? (
               <div className="glass-card rounded-2xl p-12 text-center">
                 <div className="text-4xl mb-3">☕</div>
-                <p className="text-foreground font-semibold">Tidak ada kafe yang cocok.</p>
-                <p className="text-muted-foreground text-sm mt-1">Coba ubah kata kunci atau filter.</p>
+                <p className="text-foreground font-semibold">
+                  Tidak ada kafe yang cocok.
+                </p>
+                <p className="text-muted-foreground text-sm mt-1">
+                  Coba ubah kata kunci atau filter.
+                </p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -326,7 +424,7 @@ export default function HomePage() {
 
       {/* ── Chatbot ── */}
       <ChatPage />
-      
+
       {/* ── FEATURED SPOT ── */}
       <section className="px-6 md:px-12 py-10 max-w-7xl mx-auto">
         <div className="glass-card rounded-3xl overflow-hidden grid md:grid-cols-2 gap-0">
@@ -339,8 +437,13 @@ export default function HomePage() {
             <div className="absolute inset-0 bg-gradient-to-r from-transparent to-card/60" />
           </div>
           <div className="p-8 md:p-12 flex flex-col justify-center">
-            <span className="tag-pill mb-4 inline-block w-fit">⭐ Spot Terfavorit</span>
-            <h3 className="text-3xl md:text-5xl font-black text-foreground leading-tight mb-4" style={{ fontFamily: "'Fraunces', serif" }}>
+            <span className="tag-pill mb-4 inline-block w-fit">
+              ⭐ Spot Terfavorit
+            </span>
+            <h3
+              className="text-3xl md:text-5xl font-black text-foreground leading-tight mb-4"
+              style={{ fontFamily: "'Fraunces', serif" }}
+            >
               Pengalaman
               <br />
               Ngopi yang
@@ -348,22 +451,34 @@ export default function HomePage() {
               Tak Terlupakan
             </h3>
             <p className="text-muted-foreground leading-relaxed mb-6 text-sm md:text-base">
-              Setiap tegukan adalah cerita. Dari biji kopi single origin Flores hingga Kintamani Bali — Indonesia punya kopi terbaik dunia, dan kami tahu di mana menemukannya.
+              Setiap tegukan adalah cerita. Dari biji kopi single origin Flores
+              hingga Kintamani Bali — Indonesia punya kopi terbaik dunia, dan
+              kami tahu di mana menemukannya.
             </p>
             <div className="flex items-center gap-6">
               <div className="text-center">
-                <div className="text-2xl font-black text-[#b07d3f]" style={{ fontFamily: "'Fraunces', serif" }}>
+                <div
+                  className="text-2xl font-black text-[#b07d3f]"
+                  style={{ fontFamily: "'Fraunces', serif" }}
+                >
                   4.8
                 </div>
                 <StarRating rating={4.8} />
-                <div className="text-muted-foreground text-xs mt-1">Rata-rata rating</div>
+                <div className="text-muted-foreground text-xs mt-1">
+                  Rata-rata rating
+                </div>
               </div>
               <div className="w-px h-12 bg-border" />
               <div className="text-center">
-                <div className="text-2xl font-black text-[#b07d3f]" style={{ fontFamily: "'Fraunces', serif" }}>
+                <div
+                  className="text-2xl font-black text-[#b07d3f]"
+                  style={{ fontFamily: "'Fraunces', serif" }}
+                >
                   12K+
                 </div>
-                <div className="text-muted-foreground text-xs mt-1">Total ulasan</div>
+                <div className="text-muted-foreground text-xs mt-1">
+                  Total ulasan
+                </div>
               </div>
             </div>
           </div>
@@ -374,23 +489,56 @@ export default function HomePage() {
       <section className="py-16 overflow-hidden">
         <div className="px-6 md:px-12 max-w-7xl mx-auto mb-8">
           <span className="tag-pill mb-3 inline-block">Galeri Foto</span>
-          <h2 className="text-4xl md:text-5xl font-black text-foreground" style={{ fontFamily: "'Fraunces', serif" }}>
+          <h2
+            className="text-4xl md:text-5xl font-black text-foreground"
+            style={{ fontFamily: "'Fraunces', serif" }}
+          >
             Momen dari Cafe
           </h2>
         </div>
-        <div className="flex gap-4 px-6 md:px-12 overflow-x-auto pb-4" style={{ scrollbarWidth: "none" }}>
+        <div
+          className="flex gap-4 px-6 md:px-12 overflow-x-auto pb-4"
+          style={{ scrollbarWidth: "none" }}
+        >
           {[
-            { url: "https://images.unsplash.com/photo-1780130650902-ba20c8158fc9?w=400&h=500&fit=crop&auto=format", label: "Latte Art" },
-            { url: "https://images.unsplash.com/photo-1764277639919-1f77aaee0ab5?w=400&h=500&fit=crop&auto=format", label: "Cold Brew" },
-            { url: "https://images.unsplash.com/photo-1785486249846-ae7d82db4e63?w=400&h=500&fit=crop&auto=format", label: "Outdoor Vibes" },
-            { url: "https://images.unsplash.com/photo-1784391169939-c67b30d5dddc?w=400&h=500&fit=crop&auto=format", label: "Sunset Cafe" },
-            { url: "https://images.unsplash.com/photo-1695824431539-873b615cf220?w=400&h=500&fit=crop&auto=format", label: "Morning Cup" },
-            { url: "https://images.unsplash.com/photo-1782209345407-5a0f45912a9e?w=400&h=500&fit=crop&auto=format", label: "Latte Foam" },
+            {
+              url: "https://images.unsplash.com/photo-1780130650902-ba20c8158fc9?w=400&h=500&fit=crop&auto=format",
+              label: "Latte Art",
+            },
+            {
+              url: "https://images.unsplash.com/photo-1764277639919-1f77aaee0ab5?w=400&h=500&fit=crop&auto=format",
+              label: "Cold Brew",
+            },
+            {
+              url: "https://images.unsplash.com/photo-1785486249846-ae7d82db4e63?w=400&h=500&fit=crop&auto=format",
+              label: "Outdoor Vibes",
+            },
+            {
+              url: "https://images.unsplash.com/photo-1784391169939-c67b30d5dddc?w=400&h=500&fit=crop&auto=format",
+              label: "Sunset Cafe",
+            },
+            {
+              url: "https://images.unsplash.com/photo-1695824431539-873b615cf220?w=400&h=500&fit=crop&auto=format",
+              label: "Morning Cup",
+            },
+            {
+              url: "https://images.unsplash.com/photo-1782209345407-5a0f45912a9e?w=400&h=500&fit=crop&auto=format",
+              label: "Latte Foam",
+            },
           ].map((photo, i) => (
-            <div key={i} className="relative shrink-0 w-44 md:w-56 h-64 md:h-72 rounded-2xl overflow-hidden bg-muted group">
-              <img src={photo.url} alt={photo.label} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+            <div
+              key={i}
+              className="relative shrink-0 w-44 md:w-56 h-64 md:h-72 rounded-2xl overflow-hidden bg-muted group"
+            >
+              <img
+                src={photo.url}
+                alt={photo.label}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-              <span className="absolute bottom-3 left-3 tag-pill">{photo.label}</span>
+              <span className="absolute bottom-3 left-3 tag-pill">
+                {photo.label}
+              </span>
             </div>
           ))}
         </div>
@@ -400,7 +548,10 @@ export default function HomePage() {
       <section className="px-6 md:px-12 py-16 max-w-7xl mx-auto">
         <div className="mb-10">
           <span className="tag-pill mb-3 inline-block">Kata Mereka</span>
-          <h2 className="text-4xl md:text-5xl font-black text-foreground" style={{ fontFamily: "'Fraunces', serif" }}>
+          <h2
+            className="text-4xl md:text-5xl font-black text-foreground"
+            style={{ fontFamily: "'Fraunces', serif" }}
+          >
             Review
             <br />
             Pengguna
@@ -412,7 +563,6 @@ export default function HomePage() {
           ))}
         </div>
       </section>
-      
     </>
-  );
+  )
 }

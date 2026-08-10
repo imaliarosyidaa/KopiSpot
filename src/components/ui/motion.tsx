@@ -1,12 +1,12 @@
-import * as React from "react";
-import { useEffect, useRef } from "react";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { cn } from "@/lib/utils";
+import * as React from "react"
+import { useEffect, useRef } from "react"
+import { gsap } from "gsap"
+import { ScrollTrigger } from "gsap/ScrollTrigger"
+import { cn } from "@/lib/utils"
 
 // Register ScrollTrigger safely for React
 if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger);
+  gsap.registerPlugin(ScrollTrigger)
 }
 
 // -------------------------------------------------------------------------
@@ -125,32 +125,34 @@ const STYLES = `
   background-clip: text;
   filter: drop-shadow(0px 0px 20px color-mix(in oklch, var(--foreground) 15%, transparent));
 }
-`;
+`
 
 // -------------------------------------------------------------------------
 // 2. MAGNETIC BUTTON PRIMITIVE (Zero Dependency)
 // -------------------------------------------------------------------------
-export type MagneticButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> &
-  React.AnchorHTMLAttributes<HTMLAnchorElement> & {
-    as?: React.ElementType;
-  };
+export type MagneticButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & React.AnchorHTMLAttributes<HTMLAnchorElement> & {
+  as?: React.ElementType
+}
 
 const MagneticButton = React.forwardRef<HTMLElement, MagneticButtonProps>(
-  ({ className, children, as: Component = "button", ...props }, forwardedRef) => {
-    const localRef = useRef<HTMLElement>(null);
+  (
+    { className, children, as: Component = "button", ...props },
+    forwardedRef,
+  ) => {
+    const localRef = useRef<HTMLElement>(null)
 
     useEffect(() => {
-      if (typeof window === "undefined") return;
-      const element = localRef.current;
-      if (!element) return;
+      if (typeof window === "undefined") return
+      const element = localRef.current
+      if (!element) return
 
       const ctx = gsap.context(() => {
         const handleMouseMove = (e: MouseEvent) => {
-          const rect = element.getBoundingClientRect();
-          const h = rect.width / 2;
-          const w = rect.height / 2;
-          const x = e.clientX - rect.left - h;
-          const y = e.clientY - rect.top - w;
+          const rect = element.getBoundingClientRect()
+          const h = rect.width / 2
+          const w = rect.height / 2
+          const x = e.clientX - rect.left - h
+          const y = e.clientY - rect.top - w
 
           gsap.to(element, {
             x: x * 0.4,
@@ -160,8 +162,8 @@ const MagneticButton = React.forwardRef<HTMLElement, MagneticButtonProps>(
             scale: 1.05,
             ease: "power2.out",
             duration: 0.4,
-          });
-        };
+          })
+        }
 
         const handleMouseLeave = () => {
           gsap.to(element, {
@@ -172,80 +174,79 @@ const MagneticButton = React.forwardRef<HTMLElement, MagneticButtonProps>(
             scale: 1,
             ease: "elastic.out(1, 0.3)",
             duration: 1.2,
-          });
-        };
+          })
+        }
 
-        element.addEventListener("mousemove", handleMouseMove as any);
-        element.addEventListener("mouseleave", handleMouseLeave);
+        element.addEventListener("mousemove", handleMouseMove as any)
+        element.addEventListener("mouseleave", handleMouseLeave)
 
         return () => {
-          element.removeEventListener("mousemove", handleMouseMove as any);
-          element.removeEventListener("mouseleave", handleMouseLeave);
-        };
-      }, element);
+          element.removeEventListener("mousemove", handleMouseMove as any)
+          element.removeEventListener("mouseleave", handleMouseLeave)
+        }
+      }, element)
 
-      return () => ctx.revert();
-    }, []);
+      return () => ctx.revert()
+    }, [])
 
     return (
       <Component
         ref={(node: HTMLElement) => {
-          (localRef as any).current = node;
-          if (typeof forwardedRef === "function") forwardedRef(node);
-          else if (forwardedRef) (forwardedRef as any).current = node;
+          ;(localRef as any).current = node
+          if (typeof forwardedRef === "function") forwardedRef(node)
+          else if (forwardedRef) (forwardedRef as any).current = node
         }}
         className={cn("cursor-pointer", className)}
         {...props}
       >
         {children}
       </Component>
-    );
-  }
-);
-MagneticButton.displayName = "MagneticButton";
+    )
+  },
+)
+MagneticButton.displayName = "MagneticButton"
 
 // -------------------------------------------------------------------------
 // 3. MAIN COMPONENT
 // -------------------------------------------------------------------------
 const MarqueeItem = () => (
   <div className="flex items-center space-x-12 px-6">
-    <span>Kopi Terbaik Indonesia</span> <span className="text-primary/60">✦</span>
-    <span>Spot Aesthetic & Viral</span> <span className="text-secondary/60">✦</span>
-    <span>Review Jujur & Terpercaya</span> <span className="text-primary/60">✦</span>
+    <span>Kopi Terbaik Indonesia</span>{" "}
+    <span className="text-primary/60">✦</span>
+    <span>Spot Aesthetic & Viral</span>{" "}
+    <span className="text-secondary/60">✦</span>
+    <span>Review Jujur & Terpercaya</span>{" "}
+    <span className="text-primary/60">✦</span>
     <span>Foto-worthy Spots</span> <span className="text-secondary/60">✦</span>
     <span>Work-Friendly Cafes</span> <span className="text-primary/60">✦</span>
   </div>
-);
+)
 
 export function CinematicSection() {
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const giantTextRef = useRef<HTMLDivElement>(null);
-  const headingRef = useRef<HTMLHeadingElement>(null);
-  const linksRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null)
+  const giantTextRef = useRef<HTMLDivElement>(null)
+  const headingRef = useRef<HTMLHeadingElement>(null)
+  const linksRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (!wrapperRef.current) return;
+    if (typeof window === "undefined") return
+    if (!wrapperRef.current) return
 
     // React strict mode compatible GSAP context cleanup
     const ctx = gsap.context(() => {
       // Background Parallax
-      gsap.fromTo(
-        giantTextRef.current,
-        { y: "10vh", scale: 0.8, opacity: 0 },
-        {
-          y: "0vh",
-          scale: 1,
-          opacity: 1,
-          ease: "power1.out",
-          scrollTrigger: {
-            trigger: wrapperRef.current,
-            start: "top 80%",
-            end: "bottom bottom",
-            scrub: 1,
-          },
-        }
-      );
+      gsap.fromTo(giantTextRef.current, { y: "10vh", scale: 0.8, opacity: 0 }, {
+        y: "0vh",
+        scale: 1,
+        opacity: 1,
+        ease: "power1.out",
+        scrollTrigger: {
+          trigger: wrapperRef.current,
+          start: "top 80%",
+          end: "bottom bottom",
+          scrub: 1,
+        },
+      })
 
       // Staggered Content Reveal
       gsap.fromTo(
@@ -262,16 +263,16 @@ export function CinematicSection() {
             end: "bottom bottom",
             scrub: 1,
           },
-        }
-      );
-    }, wrapperRef);
+        },
+      )
+    }, wrapperRef)
 
-    return () => ctx.revert();
-  }, []);
+    return () => ctx.revert()
+  }, [])
 
   const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
 
   return (
     <>
@@ -289,7 +290,6 @@ export function CinematicSection() {
       >
         {/* The actual footer stays fixed to the viewport underneath everything */}
         <footer className="fixed bottom-0 left-0 flex h-screen w-full flex-col justify-between overflow-hidden bg-background text-foreground cinematic-footer-wrapper">
-          
           {/* Ambient Light & Grid Background */}
           <div className="footer-aurora absolute left-1/2 top-1/2 h-[60vh] w-[80vw] -translate-x-1/2 -translate-y-1/2 animate-footer-breathe rounded-[50%] blur-[80px] pointer-events-none z-0" />
           <div className="footer-bg-grid absolute inset-0 z-0 pointer-events-none" />
@@ -320,7 +320,10 @@ export function CinematicSection() {
             </h2>
 
             {/* Interactive Magnetic Pills Layout */}
-            <div ref={linksRef} className="flex flex-col items-center gap-6 w-full">
+            <div
+              ref={linksRef}
+              className="flex flex-col items-center gap-6 w-full"
+            >
               {/* App Store Links (Primary) */}
               <div className="flex flex-wrap justify-center gap-4 w-full">
                 <MagneticButton
@@ -343,30 +346,40 @@ export function CinematicSection() {
                     <path d="M8 19v-6h8v6" />
                     <path d="M3 9c0 1.1.9 2 2 2s2-.9 2-2c0 1.1.9 2 2 2s2-.9 2-2c0 1.1.9 2 2 2s2-.9 2-2c0 1.1.9 2 2 2s2-.9 2-2" />
                   </svg>
-
                   Daftar Menjadi Mitra
                 </MagneticButton>
               </div>
-              
+
               <p>Keuntungan</p>
 
               {/* Secondary Text Links */}
               <div className="flex flex-wrap justify-center gap-3 md:gap-6 w-full mt-2">
-                <MagneticButton as="a" href="#" className="footer-glass-pill px-6 py-3 rounded-full text-muted-foreground font-medium text-xs md:text-sm hover:text-foreground">
+                <MagneticButton
+                  as="a"
+                  href="#"
+                  className="footer-glass-pill px-6 py-3 rounded-full text-muted-foreground font-medium text-xs md:text-sm hover:text-foreground"
+                >
                   Komunitas Aktif
                 </MagneticButton>
-                <MagneticButton as="a" href="#" className="footer-glass-pill px-6 py-3 rounded-full text-muted-foreground font-medium text-xs md:text-sm hover:text-foreground">
+                <MagneticButton
+                  as="a"
+                  href="#"
+                  className="footer-glass-pill px-6 py-3 rounded-full text-muted-foreground font-medium text-xs md:text-sm hover:text-foreground"
+                >
                   Free Pendaftaran
                 </MagneticButton>
-                <MagneticButton as="a" href="#" className="footer-glass-pill px-6 py-3 rounded-full text-muted-foreground font-medium text-xs md:text-sm hover:text-foreground">
+                <MagneticButton
+                  as="a"
+                  href="#"
+                  className="footer-glass-pill px-6 py-3 rounded-full text-muted-foreground font-medium text-xs md:text-sm hover:text-foreground"
+                >
                   Tanpa Biaya Admin
                 </MagneticButton>
               </div>
             </div>
           </div>
-
         </footer>
       </div>
     </>
-  );
+  )
 }
