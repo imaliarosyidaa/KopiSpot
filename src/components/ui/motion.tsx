@@ -349,33 +349,6 @@ export function CinematicSection() {
                   Daftar Menjadi Mitra
                 </MagneticButton>
               </div>
-
-              <p>Keuntungan</p>
-
-              {/* Secondary Text Links */}
-              <div className="flex flex-wrap justify-center gap-3 md:gap-6 w-full mt-2">
-                <MagneticButton
-                  as="a"
-                  href="#"
-                  className="footer-glass-pill px-6 py-3 rounded-full text-muted-foreground font-medium text-xs md:text-sm hover:text-foreground"
-                >
-                  Komunitas Aktif
-                </MagneticButton>
-                <MagneticButton
-                  as="a"
-                  href="#"
-                  className="footer-glass-pill px-6 py-3 rounded-full text-muted-foreground font-medium text-xs md:text-sm hover:text-foreground"
-                >
-                  Free Pendaftaran
-                </MagneticButton>
-                <MagneticButton
-                  as="a"
-                  href="#"
-                  className="footer-glass-pill px-6 py-3 rounded-full text-muted-foreground font-medium text-xs md:text-sm hover:text-foreground"
-                >
-                  Tanpa Biaya Admin
-                </MagneticButton>
-              </div>
             </div>
           </div>
         </footer>

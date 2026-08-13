@@ -42,6 +42,32 @@ npm run build         # build produksi
 
 ---
 
+## Deploy ke Produksi
+
+### 1. Backend → Render Web Service
+
+1. Push repo ke GitHub, lalu di dashboard Render buat **New → Blueprint** dari repo tersebut (`render.yaml` sudah tersedia di root).
+2. Isi env vars yang bertanda `sync: false` pada service **kopispot-api**:
+   - `DATABASE_URL` — connection string PostgreSQL (pakai Render Postgres atau provider lain).
+   - `JWT_SECRET` — secret acak (`openssl rand -base64 32`).
+   - `JWT_EXPIRES_IN` — mis. `7d`.
+   - `CLIENT_ORIGIN` — URL frontend (opsional; CORS saat ini terbuka).
+3. Build akan otomatis menjalankan `npx prisma generate` + `npx prisma migrate deploy` lalu start `node src/index.js`.
+4. Catat URL service, mis. `https://kopispot-api.onrender.com`.
+
+> Pastikan folder `server/prisma/migrations/` ikut ter-commit ke git agar `prisma migrate deploy` bekerja.
+> Plan free Render tidur saat tidak dipakai; permintaan pertama akan membutuhkan beberapa detik.
+
+### 2. Frontend → Vercel
+
+1. Di dashboard Vercel, import repo dengan framework **Vite** (`vercel.json` sudah menyediakan `buildCommand`, `outputDirectory`, dan SPA rewrite).
+2. Tambah env var **`VITE_API_URL`** = URL API Render + `/api`, mis. `https://kopispot-api.onrender.com/api`, lalu **redeploy**.
+3. Salin `.env.example` root menjadi `.env.local` jika ingin menimpa default `http://localhost:4000/api` saat development.
+
+Tanpa `VITE_API_URL`, build di produksi tetap memakai default `http://localhost:4000/api` sehingga halaman tidak dapat menghubungi API (ERR_CONNECTION_REFUSED).
+
+---
+
 ## Checklist Fitur
 
 ### Core Pages
