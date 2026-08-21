@@ -41,7 +41,7 @@ import { menuImageUrl } from "@/lib/menu-images"
 type Step = "menu" | "cart" | "checkout" | "pay" | "done"
 
 const inputClass =
-  "w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-all focus:border-[#b07d3f] focus:ring-2 focus:ring-[rgba(176,125,63,0.25)]"
+  "w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-all focus:border-[#d1d5db] focus:ring-2 focus:ring-[rgba(209,213,219,0.25)]"
 
 const PAYMENT_METHODS = [
   "QRIS",
@@ -57,10 +57,11 @@ const PAYMENT_LABEL: Record<string, string> = {
   FAILED: "Gagal",
 }
 
-const TEST_DISCOUNT_RATE = 0.9
+const NEW_USER_COUPON = "KOPI10"
+const NEW_USER_DISCOUNT_RATE = 0.1
 
 function discountedAmount(value: number): number {
-  return Math.max(1000, Math.round(value * (1 - TEST_DISCOUNT_RATE)))
+  return Math.max(1000, Math.round(value * (1 - NEW_USER_DISCOUNT_RATE)))
 }
 
 const STEPS: { key: Step; label: string }[] = [
@@ -238,7 +239,10 @@ export default function OrderPage() {
   }
 
   const goCheckout = () => {
-    if (!requireLogin()) return
+    if (items.length === 0) {
+      setNotice("Tambahkan minimal satu menu ke keranjang terlebih dahulu.")
+      return
+    }
     setStep("cart")
   }
 
@@ -273,8 +277,25 @@ export default function OrderPage() {
         items: items.map((i) => ({ menuItemId: i.id, quantity: i.quantity })),
         note: note.trim() || undefined,
         billingAddress: buildBillingAddress(),
+        couponCode: NEW_USER_COUPON,
       })
       setCreatedOrder(order)
+
+      const payment = await paymentsApi.create({
+        orderId: order.id,
+        amount: order.total,
+        customer: {
+          firstName: billing.name || user?.name || "Coffidoor Customer",
+          email: user?.email || "customer@coffidoor.test",
+          phone: billing.phone || "081234567890",
+        },
+      })
+
+      if (payment.redirect_url) {
+        window.location.assign(payment.redirect_url)
+        return
+      }
+
       setShowMidtransPanel(true)
       setStep("checkout")
     } catch (err) {
@@ -337,7 +358,7 @@ export default function OrderPage() {
     try {
       const payment = await paymentsApi.create({
         orderId: createdOrder.id,
-        amount: discountedSubtotal,
+        amount: createdOrder.total,
         customer: {
           firstName: billing.name || user?.name || "Coffidoor Customer",
           email: user?.email || "customer@Coffidoor.test",
@@ -381,7 +402,7 @@ export default function OrderPage() {
             <div
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
                 i === currentIndex
-                  ? "bg-[#b07d3f] text-[#1a1a1a]"
+                  ? "bg-[#d1d5db] text-[#111113]"
                   : i < currentIndex
                     ? "footer-glass-pill text-muted-foreground"
                     : "footer-glass-pill text-muted-foreground/50"
@@ -420,7 +441,7 @@ export default function OrderPage() {
       </div>
 
       {notice && (
-        <div className="mb-4 rounded-xl border border-[rgba(176,125,63,0.35)] bg-[rgba(176,125,63,0.08)] px-4 py-3 text-sm text-[#b07d3f]">
+        <div className="mb-4 rounded-xl border border-[rgba(209,213,219,0.35)] bg-[rgba(209,213,219,0.08)] px-4 py-3 text-sm text-[#d1d5db]">
           {notice}
         </div>
       )}
@@ -440,7 +461,7 @@ export default function OrderPage() {
                 key={m.id}
                 className="glass-card rounded-2xl p-4 flex flex-col gap-3"
               >
-                <div className="relative w-full h-32 rounded-xl overflow-hidden bg-[rgba(140,95,40,0.15)]">
+                <div className="relative w-full h-32 rounded-xl overflow-hidden bg-[rgba(156,163,175,0.15)]">
                   <img
                     src={menuImageUrl(m.category, m.imageUrl, m.name)}
                     alt={m.name}
@@ -473,8 +494,8 @@ export default function OrderPage() {
                   onClick={() => handleAdd(m)}
                   className={`mt-auto flex items-center justify-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold transition-colors ${
                     qty > 0
-                      ? "bg-[#b07d3f] text-[#1a1a1a]"
-                      : "footer-glass-pill text-[#b07d3f] hover:bg-[#b07d3f]/10"
+                      ? "bg-[#d1d5db] text-[#111113]"
+                      : "footer-glass-pill text-[#d1d5db] hover:bg-[#d1d5db]/10"
                   }`}
                 >
                   <MdAdd className="w-4 h-4" />
@@ -510,7 +531,7 @@ export default function OrderPage() {
           </p>
           <button
             onClick={() => setStep("menu")}
-            className="bg-[#b07d3f] text-[#1a1a1a] font-black px-6 py-3 rounded-full text-sm"
+            className="bg-[#d1d5db] text-[#111113] font-black px-6 py-3 rounded-full text-sm"
           >
             Pilih Menu
           </button>
@@ -654,7 +675,7 @@ export default function OrderPage() {
                   </div>
                   <button
                     onClick={() => restoreSaved(s.id)}
-                    className="flex items-center gap-1 text-xs font-semibold rounded-full px-3 py-1.5 bg-[#b07d3f]/15 text-[#b07d3f] hover:bg-[#b07d3f]/25 transition-colors"
+                    className="flex items-center gap-1 text-xs font-semibold rounded-full px-3 py-1.5 bg-[#d1d5db]/15 text-[#d1d5db] hover:bg-[#d1d5db]/25 transition-colors"
                   >
                     <MdRestore className="w-3.5 h-3.5" />
                     Kembalikan
@@ -698,7 +719,7 @@ export default function OrderPage() {
                   </div>
                   <button
                     onClick={() => moveFromWishlist(w.id)}
-                    className="flex items-center gap-1 text-xs font-semibold rounded-full px-3 py-1.5 bg-[#b07d3f]/15 text-[#b07d3f] hover:bg-[#b07d3f]/25 transition-colors"
+                    className="flex items-center gap-1 text-xs font-semibold rounded-full px-3 py-1.5 bg-[#d1d5db]/15 text-[#d1d5db] hover:bg-[#d1d5db]/25 transition-colors"
                   >
                     <MdAdd className="w-3.5 h-3.5" />
                     Pindah ke Keranjang
@@ -725,21 +746,30 @@ export default function OrderPage() {
                 {formatRupiah(subtotal)}
               </span>
             </div>
+            <div className="flex items-center justify-between pt-2 text-sm text-emerald-600 dark:text-emerald-400">
+              <span>Kupon pengguna baru ({NEW_USER_COUPON})</span>
+              <span className="font-semibold">
+                -{formatRupiah(subtotal - discountedSubtotal)}
+              </span>
+            </div>
             <div className="flex items-center justify-between pt-2">
               <span className="text-sm font-semibold text-foreground">
                 Total
               </span>
-              <span className="font-black text-lg text-[#b07d3f]">
+              <span className="font-black text-lg text-[#d1d5db]">
                 {formatRupiah(discountedSubtotal)}
               </span>
             </div>
 
             <button
               onClick={() => {
-                if (!requireLogin()) return
+                if (items.length === 0) {
+                  setNotice("Tambahkan minimal satu menu ke keranjang terlebih dahulu.")
+                  return
+                }
                 setStep("checkout")
               }}
-              className="mt-6 w-full bg-[#b07d3f] text-[#1a1a1a] font-black px-6 py-3.5 rounded-full text-sm hover:bg-[#c9974f] transition-colors"
+              className="mt-6 w-full bg-[#d1d5db] text-[#111113] font-black px-6 py-3.5 rounded-full text-sm hover:bg-[#f3f4f6] transition-colors"
             >
               Lanjut ke Checkout
             </button>
@@ -754,7 +784,7 @@ export default function OrderPage() {
       <div className="flex flex-col gap-6 min-w-0">
         <div className="glass-card rounded-3xl p-6 md:p-8">
           <div className="flex items-center gap-2 mb-5">
-            <MdLocationOn className="w-5 h-5 text-[#b07d3f]" />
+            <MdLocationOn className="w-5 h-5 text-[#d1d5db]" />
             <h2
               className="text-xl font-black text-foreground"
               style={{ fontFamily: "'Fraunces', serif" }}
@@ -840,44 +870,9 @@ export default function OrderPage() {
         </div>
 
         <div className="glass-card rounded-3xl p-6 md:p-8">
-          <div className="flex items-center gap-2 mb-5">
-            <MdPayments className="w-5 h-5 text-[#b07d3f]" />
-            <h2
-              className="text-xl font-black text-foreground"
-              style={{ fontFamily: "'Fraunces', serif" }}
-            >
-              Metode Pembayaran
-            </h2>
-          </div>
-
-          <div className="flex flex-col gap-2.5">
-            {PAYMENT_METHODS.map((m) => (
-              <label
-                key={m}
-                className={`flex items-center gap-3 rounded-xl border px-4 py-3.5 cursor-pointer transition-colors ${
-                  paymentMethod === m
-                    ? "border-[#b07d3f] bg-[rgba(176,125,63,0.08)]"
-                    : "border-border hover:border-[rgba(176,125,63,0.4)]"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="payment"
-                  value={m}
-                  checked={paymentMethod === m}
-                  onChange={() => setPaymentMethod(m)}
-                  className="accent-[#b07d3f]"
-                />
-                <MdPayments className="w-5 h-5 text-[#b07d3f]" />
-                <span className="text-sm font-semibold text-foreground">
-                  {m}
-                </span>
-              </label>
-            ))}
-          </div>
 
           {showMidtransPanel && createdOrder && (
-            <div className="mt-6 rounded-2xl border border-[rgba(176,125,63,0.3)] bg-[rgba(176,125,63,0.06)] p-5">
+            <div className="mt-6 rounded-2xl border border-[rgba(209,213,219,0.3)] bg-[rgba(209,213,219,0.06)] p-5">
               <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
                 Pembayaran Midtrans
               </div>
@@ -889,7 +884,7 @@ export default function OrderPage() {
                       value={`Coffidoor-QRIS:${createdOrder.id}:${createdOrder.total}`}
                       size={180}
                       bgColor="#ffffff"
-                      fgColor="#1a1a1a"
+                      fgColor="#111113"
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">
@@ -901,13 +896,13 @@ export default function OrderPage() {
                   <div className="mb-2 text-xs text-muted-foreground uppercase tracking-wider">
                     Nomor Virtual Account
                   </div>
-                  <div className="flex items-center justify-between gap-3 rounded-xl bg-[rgba(140,95,40,0.08)] border border-[rgba(140,95,40,0.2)] px-4 py-3">
+                  <div className="flex items-center justify-between gap-3 rounded-xl bg-[rgba(156,163,175,0.08)] border border-[rgba(156,163,175,0.2)] px-4 py-3">
                     <div className="font-black text-foreground text-lg tracking-widest select-all">
                       {vaNumber(createdOrder.id)}
                     </div>
                     <button
                       onClick={() => navigator.clipboard?.writeText(vaNumber(createdOrder.id))}
-                      className="text-xs font-semibold rounded-full px-3 py-2 bg-[#b07d3f] text-[#1a1a1a]"
+                      className="text-xs font-semibold rounded-full px-3 py-2 bg-[#d1d5db] text-[#111113]"
                     >
                       Salin
                     </button>
@@ -922,7 +917,7 @@ export default function OrderPage() {
               <button
                 onClick={confirmPayment}
                 disabled={submitting}
-                className="mt-4 w-full bg-[#b07d3f] text-[#1a1a1a] font-black px-6 py-3 rounded-full text-sm hover:bg-[#c9974f] transition-colors disabled:opacity-60"
+                className="mt-4 w-full bg-[#d1d5db] text-[#111113] font-black px-6 py-3 rounded-full text-sm hover:bg-[#f3f4f6] transition-colors disabled:opacity-60"
               >
                 {submitting ? "Memproses..." : "Bayar Sekarang"}
               </button>
@@ -984,7 +979,7 @@ export default function OrderPage() {
           <span className="font-semibold text-foreground">
             Total Pembayaran
           </span>
-          <span className="font-black text-lg text-[#b07d3f]">
+          <span className="font-black text-lg text-[#d1d5db]">
             {formatRupiah(discountedSubtotal)}
           </span>
         </div>
@@ -1006,7 +1001,7 @@ export default function OrderPage() {
             <button
               onClick={placeOrder}
               disabled={submitting}
-              className="flex-1 bg-[#b07d3f] text-[#1a1a1a] font-black px-6 py-3 rounded-full text-sm hover:bg-[#c9974f] transition-colors disabled:opacity-60"
+              className="flex-1 bg-[#d1d5db] text-[#111113] font-black px-6 py-3 rounded-full text-sm hover:bg-[#f3f4f6] transition-colors disabled:opacity-60"
             >
               {submitting ? "Menyimpan..." : "Checkout"}
             </button>
@@ -1056,7 +1051,7 @@ export default function OrderPage() {
                 value={`Coffidoor-QRIS:${createdOrder?.id}:${createdOrder?.total}`}
                 size={184}
                 bgColor="#ffffff"
-                fgColor="#1a1a1a"
+                fgColor="#111113"
               />
             </div>
             <div className="text-xs text-muted-foreground mt-3">
@@ -1071,7 +1066,7 @@ export default function OrderPage() {
             <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
               Nomor Virtual Account
             </div>
-            <div className="flex items-center justify-between gap-3 rounded-xl bg-[rgba(140,95,40,0.08)] border border-[rgba(140,95,40,0.2)] px-5 py-4">
+            <div className="flex items-center justify-between gap-3 rounded-xl bg-[rgba(156,163,175,0.08)] border border-[rgba(156,163,175,0.2)] px-5 py-4">
               <div>
                 <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">
                   Bank Digital
@@ -1086,7 +1081,7 @@ export default function OrderPage() {
                     vaNumber(createdOrder?.id ?? ""),
                   )
                 }
-                className="shrink-0 text-xs font-semibold rounded-full px-4 py-2 bg-[#b07d3f] text-[#1a1a1a] hover:bg-[#c9974f] transition-colors"
+                className="shrink-0 text-xs font-semibold rounded-full px-4 py-2 bg-[#d1d5db] text-[#111113] hover:bg-[#f3f4f6] transition-colors"
               >
                 Salin
               </button>
@@ -1150,7 +1145,7 @@ export default function OrderPage() {
                 </div>
               </div>
             ) : (
-              <label className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-border px-4 py-3 cursor-pointer hover:border-[#b07d3f] transition-colors">
+              <label className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-border px-4 py-3 cursor-pointer hover:border-[#d1d5db] transition-colors">
                 <MdUpload className="w-4 h-4 text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">
                   {uploadingProof ? "Mengunggah..." : "Kirim Bukti Pembayaran"}
@@ -1172,7 +1167,7 @@ export default function OrderPage() {
           <span className="font-semibold text-foreground">
             Total Pembayaran
           </span>
-          <span className="font-black text-lg text-[#b07d3f]">
+          <span className="font-black text-lg text-[#d1d5db]">
             {formatRupiah(createdOrder?.total ?? discountedSubtotal)}
           </span>
         </div>
@@ -1193,7 +1188,7 @@ export default function OrderPage() {
           <button
             onClick={confirmPayment}
             disabled={submitting}
-            className="flex-1 bg-[#b07d3f] text-[#1a1a1a] font-black px-6 py-3 rounded-full text-sm hover:bg-[#c9974f] transition-colors disabled:opacity-60"
+            className="flex-1 bg-[#d1d5db] text-[#111113] font-black px-6 py-3 rounded-full text-sm hover:bg-[#f3f4f6] transition-colors disabled:opacity-60"
           >
             {submitting ? "Memproses..." : "Konfirmasi Pembayaran"}
           </button>
@@ -1204,7 +1199,7 @@ export default function OrderPage() {
 
   const renderDoneStep = () => (
     <div className="glass-card rounded-3xl p-10 text-center max-w-md mx-auto">
-      <MdCheckCircle className="w-14 h-14 text-[#b07d3f] mx-auto mb-4" />
+      <MdCheckCircle className="w-14 h-14 text-[#d1d5db] mx-auto mb-4" />
       <h2
         className="text-2xl font-black text-foreground mb-2"
         style={{ fontFamily: "'Fraunces', serif" }}
@@ -1214,7 +1209,7 @@ export default function OrderPage() {
       <p className="text-muted-foreground text-sm mb-6">
         Pesananmu sudah dikonfirmasi dan sedang diproses kafe.
       </p>
-      <div className="rounded-2xl bg-[rgba(140,95,40,0.08)] border border-[rgba(140,95,40,0.2)] p-4 text-left text-sm space-y-1.5 mb-6">
+      <div className="rounded-2xl bg-[rgba(156,163,175,0.08)] border border-[rgba(156,163,175,0.2)] p-4 text-left text-sm space-y-1.5 mb-6">
         <div className="flex justify-between">
           <span className="text-muted-foreground">No. Pesanan</span>
           <span className="font-semibold text-foreground">
@@ -1241,13 +1236,13 @@ export default function OrderPage() {
         </div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">Status</span>
-          <span className="font-semibold text-[#b07d3f]">
+          <span className="font-semibold text-[#d1d5db]">
             {createdOrder ? PAYMENT_LABEL[createdOrder.paymentStatus] : ""}
           </span>
         </div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">Total</span>
-          <span className="font-black text-[#b07d3f]">
+          <span className="font-black text-[#d1d5db]">
             {formatRupiah(createdOrder?.total ?? 0)}
           </span>
         </div>
@@ -1270,7 +1265,7 @@ export default function OrderPage() {
         </button>
         <button
           onClick={() => navigate("/order/keranjang")}
-          className="bg-[#b07d3f] text-[#1a1a1a] font-black px-5 py-3 rounded-full text-sm hover:bg-[#c9974f] transition-colors"
+          className="bg-[#d1d5db] text-[#111113] font-black px-5 py-3 rounded-full text-sm hover:bg-[#f3f4f6] transition-colors"
         >
           Lihat Keranjang
         </button>
@@ -1305,7 +1300,7 @@ export default function OrderPage() {
           </div>
           <button
             onClick={() => navigate("/order/keranjang")}
-            className="shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-full footer-glass-pill text-sm font-bold text-muted-foreground hover:text-[#b07d3f] transition-colors"
+            className="shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-full footer-glass-pill text-sm font-bold text-muted-foreground hover:text-[#d1d5db] transition-colors"
           >
             <MdReceiptLong className="w-4 h-4" />
             Keranjang
@@ -1323,7 +1318,7 @@ export default function OrderPage() {
           <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
             <button
               onClick={() => setStep("cart")}
-              className="flex items-center gap-2 bg-[#b07d3f] text-[#1a1a1a] font-black px-6 py-3 rounded-full shadow-lg hover:bg-[#c9974f] transition-colors"
+              className="flex items-center gap-2 bg-[#d1d5db] text-[#111113] font-black px-6 py-3 rounded-full shadow-lg hover:bg-[#f3f4f6] transition-colors"
             >
               <MdShoppingCart className="w-5 h-5" />
               Lihat Pesanan · {count} item

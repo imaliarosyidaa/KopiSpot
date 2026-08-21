@@ -57,7 +57,7 @@ export default function LeaderboardPage() {
                   </span>
                 )}
               </div>
-              <div className="w-12 h-12 rounded-full bg-[rgba(140,95,40,0.22)] border border-[rgba(140,95,40,0.35)] flex items-center justify-center text-[#b07d3f] font-bold overflow-hidden shrink-0">
+              <div className="w-12 h-12 rounded-full bg-[rgba(156,163,175,0.22)] border border-[rgba(156,163,175,0.35)] flex items-center justify-center text-[#d1d5db] font-bold overflow-hidden shrink-0">
                 {e.image ? (
                   <img
                     src={e.image}
@@ -81,7 +81,7 @@ export default function LeaderboardPage() {
                 </div>
                 <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-[#b07d3f]"
+                    className="h-full rounded-full bg-[#d1d5db]"
                     style={{
                       width: `${Math.round(levelProgress(e.xp, e.level) * 100)}%`,
                     }}

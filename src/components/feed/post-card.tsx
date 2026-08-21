@@ -66,7 +66,7 @@ export default function PostCard({ post, onChanged }: { post: PostItem; onChange
   return (
     <article className="glass-card rounded-3xl overflow-hidden">
       <div className="p-5 flex items-center gap-3">
-        <div className="w-11 h-11 rounded-full bg-[rgba(140,95,40,0.22)] border border-[rgba(140,95,40,0.35)] flex items-center justify-center text-[#b07d3f] font-bold text-sm overflow-hidden shrink-0">
+        <div className="w-11 h-11 rounded-full bg-[rgba(156,163,175,0.22)] border border-[rgba(156,163,175,0.35)] flex items-center justify-center text-[#d1d5db] font-bold text-sm overflow-hidden shrink-0">
           {post.author.image ? (
             <img src={post.author.image} alt="" className="w-full h-full object-cover" />
           ) : (
@@ -94,7 +94,7 @@ export default function PostCard({ post, onChanged }: { post: PostItem; onChange
         <div className="px-5 pb-3">
           <Link
             to={`/places/${post.place.id}`}
-            className="inline-flex items-center gap-1.5 text-[#b07d3f] text-xs font-semibold hover:underline"
+            className="inline-flex items-center gap-1.5 text-[#d1d5db] text-xs font-semibold hover:underline"
           >
             <MdPlace className="w-3.5 h-3.5" />
             {post.place.name} · {post.place.city}
@@ -138,7 +138,7 @@ export default function PostCard({ post, onChanged }: { post: PostItem; onChange
           <button
             onClick={handleSave}
             className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-semibold transition-colors footer-glass-pill ${
-              post.savedByMe ? "text-[#b07d3f]" : "text-muted-foreground hover:text-foreground"
+              post.savedByMe ? "text-[#d1d5db]" : "text-muted-foreground hover:text-foreground"
             }`}
           >
             {post.savedByMe ? <MdBookmark className="w-4 h-4" /> : <MdBookmarkBorder className="w-4 h-4" />}
@@ -153,12 +153,12 @@ export default function PostCard({ post, onChanged }: { post: PostItem; onChange
                 value={commentBody}
                 onChange={(e) => setCommentBody(e.target.value)}
                 placeholder="Tulis komentar..."
-                className="flex-1 rounded-full border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-[#b07d3f]"
+                className="flex-1 rounded-full border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-[#d1d5db]"
               />
               <button
                 type="submit"
                 disabled={busy}
-                className="w-9 h-9 rounded-full bg-[#b07d3f] text-[#1a1a1a] flex items-center justify-center hover:bg-[#c9974f] transition-colors disabled:opacity-60"
+                className="w-9 h-9 rounded-full bg-[#d1d5db] text-[#111113] flex items-center justify-center hover:bg-[#f3f4f6] transition-colors disabled:opacity-60"
               >
                 <MdSend className="w-4 h-4" />
               </button>
@@ -199,7 +199,7 @@ function PostComments({ postId, count }: { postId: string; count: number }) {
     <div className="flex flex-col gap-3">
       {comments.map((c) => (
         <div key={c.id} className="flex items-start gap-2.5">
-          <div className="w-7 h-7 rounded-full bg-[rgba(140,95,40,0.22)] border border-[rgba(140,95,40,0.35)] flex items-center justify-center text-[#b07d3f] font-bold text-[10px] overflow-hidden shrink-0">
+          <div className="w-7 h-7 rounded-full bg-[rgba(156,163,175,0.22)] border border-[rgba(156,163,175,0.35)] flex items-center justify-center text-[#d1d5db] font-bold text-[10px] overflow-hidden shrink-0">
             {c.user.image ? (
               <img src={c.user.image} alt="" className="w-full h-full object-cover" />
             ) : (

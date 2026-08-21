@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth-context"
 type Mode = "login" | "register"
 
 const inputClass =
-  "w-full rounded-xl border border-[rgba(140,95,40,0.25)] bg-[#f7f7f7] px-4 py-3 text-sm text-[#1a1a1a] placeholder:text-[#9a9a9a] outline-none transition-all focus:border-[#b07d3f] focus:ring-2 focus:ring-[rgba(176,125,63,0.25)]"
+  "w-full rounded-xl border border-border bg-secondary px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25"
 
 export default function AuthModal({
   open,
@@ -90,7 +90,7 @@ export default function AuthModal({
         <button
           onClick={onClose}
           aria-label="Tutup"
-          className="absolute top-4 right-4 w-8 h-8 rounded-full footer-glass-pill flex items-center justify-center text-muted-foreground hover:text-[#1a1a1a]"
+          className="absolute top-4 right-4 w-8 h-8 rounded-full footer-glass-pill flex items-center justify-center text-muted-foreground hover:text-foreground"
         >
           <svg
             className="w-4 h-4"
@@ -108,21 +108,21 @@ export default function AuthModal({
         </button>
 
         <div className="flex items-center gap-2 mb-1">
-          <span className="text-[#b07d3f]">
+          <span className="text-[#d1d5db]">
             <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
               <path d="M2 21v-2h2V5H2V3h13v2h-2v3h4l3 4v6h-2v2h-2v-2H6v2H2zm4-4h12v-4l-2-3h-4V5H6v12zm3-4h2v-2H9v2zm4 0h2v-2h-2v2z" />
             </svg>
           </span>
           <span
-            className="text-[#1a1a1a] font-black text-xl tracking-tight"
+            className="text-foreground font-black text-xl tracking-tight"
             style={{ fontFamily: "'Fraunces', serif" }}
           >
-            Coffidoor
+            coffidoor
           </span>
         </div>
 
         <h2
-          className="text-2xl font-black text-[#1a1a1a] mb-1"
+          className="text-2xl font-black text-foreground mb-1"
           style={{ fontFamily: "'Fraunces', serif" }}
         >
           {mode === "login" ? "Selamat Datang Kembali" : "Buat Akun Baru"}
@@ -140,8 +140,8 @@ export default function AuthModal({
               onClick={() => switchMode(m)}
               className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${
                 mode === m
-                  ? "bg-[#b07d3f] text-[#1a1a1a]"
-                  : "text-muted-foreground hover:text-[#1a1a1a]"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               {m === "login" ? "Masuk" : "Daftar"}
@@ -224,7 +224,7 @@ export default function AuthModal({
           <button
             type="submit"
             disabled={submitting}
-            className="mt-1 w-full rounded-full bg-[#b07d3f] text-[#1a1a1a] font-black text-sm px-6 py-3.5 hover:bg-[#c9974f] transition-colors duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="mt-1 w-full rounded-full bg-[#d1d5db] text-[#111113] font-black text-sm px-6 py-3.5 hover:bg-[#f3f4f6] transition-colors duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {submitting
               ? "Memproses..."
@@ -238,7 +238,7 @@ export default function AuthModal({
           {mode === "login" ? "Belum punya akun?" : "Sudah punya akun?"}{" "}
           <button
             onClick={() => switchMode(mode === "login" ? "register" : "login")}
-            className="text-[#b07d3f] font-bold hover:underline"
+            className="text-[#d1d5db] font-bold hover:underline"
           >
             {mode === "login" ? "Daftar di sini" : "Masuk di sini"}
           </button>

@@ -51,6 +51,8 @@ router.post("/", requireAuth, async (req, res) => {
   const note = typeof body.note === "string" ? body.note.trim() : ""
   const billingAddress =
     typeof body.billingAddress === "string" ? body.billingAddress.trim() : ""
+  const couponCode =
+    typeof body.couponCode === "string" ? body.couponCode.trim().toUpperCase() : ""
 
   if (!placeId) {
     return res.status(400).json({ error: "Kafe wajib dipilih." })
@@ -92,10 +94,14 @@ router.post("/", requireAuth, async (req, res) => {
     return res.status(400).json({ error: "Beberapa menu tidak tersedia." })
   }
 
-  const total = requested.reduce((sum, r) => {
+  const subtotal = requested.reduce((sum, r) => {
     const item = menuItems.find((m) => m.id === r.menuItemId)
     return sum + (item ? item.price * r.quantity : 0)
   }, 0)
+  const total =
+    couponCode === "KOPI10"
+      ? Math.max(1000, Math.round(subtotal * 0.9))
+      : subtotal
 
   const order = await prisma.order.create({
     data: {

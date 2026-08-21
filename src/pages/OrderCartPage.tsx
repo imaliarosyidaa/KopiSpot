@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 import {
   MdAdd,
   MdBookmarkAdd,
@@ -9,15 +9,15 @@ import {
   MdRestore,
   MdShoppingCart,
 } from "react-icons/md"
-import { ordersApi, type Order } from "@/lib/api"
+import { ordersApi, paymentsApi, type Order } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
 import AuthModal from "@/components/ui/auth-modal"
-import { useCartStore } from "@/lib/cart-store"
+import { cartCount, cartSubtotal, useCartStore } from "@/lib/cart-store"
 import { formatDate, formatRupiah } from "@/lib/format"
 import { menuImageUrl } from "@/lib/menu-images"
 
 const inputClass =
-  "w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-all focus:border-[#b07d3f] focus:ring-2 focus:ring-[rgba(176,125,63,0.25)]"
+  "w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-all focus:border-[#d1d5db] focus:ring-2 focus:ring-[rgba(209,213,219,0.25)]"
 
 const STATUS_LABEL: Record<string, string> = {
   PENDING: "Menunggu",
@@ -40,7 +40,8 @@ const actionPill =
 export default function OrderCartPage() {
   const { user, loading } = useAuth()
   const navigate = useNavigate()
-  const addToCart = useCartStore((s) => s.add)
+  const location = useLocation()
+  const sessionItems = useCartStore((state) => state.items)
   const [authOpen, setAuthOpen] = useState(false)
   const [orders, setOrders] = useState<Order[]>([])
   const [ordersError, setOrdersError] = useState<string | null>(null)
@@ -49,6 +50,7 @@ export default function OrderCartPage() {
   const [savedOrderIds, setSavedOrderIds] = useState<string[]>([])
   const [wishOrderIds, setWishOrderIds] = useState<string[]>([])
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [checkoutId, setCheckoutId] = useState<string | null>(null)
 
   const loadOrders = useCallback(async () => {
     if (!user) return
@@ -69,19 +71,61 @@ export default function OrderCartPage() {
     loadOrders()
   }, [loadOrders])
 
-  const handleCheckout = (o: Order) => {
-    o.items.forEach((it) => {
-      addToCart({
-        id: it.menuItem.id,
-        placeId: o.place.id,
-        placeName: o.place.name,
-        name: it.menuItem.name,
-        price: it.menuItem.price,
-        category: it.menuItem.category,
-        imageUrl: it.menuItem.imageUrl,
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const paymentStatus = params.get("payment")
+    const orderId = params.get("order_id")
+    if (!user || !paymentStatus || !orderId) return
+
+    if (paymentStatus === "success") {
+      ordersApi
+        .pay(orderId, "Midtrans")
+        .then(() => loadOrders())
+        .catch((err) => {
+          setOrdersError(
+            err instanceof Error
+              ? err.message
+              : "Pembayaran berhasil, tetapi status pesanan gagal diperbarui.",
+          )
+        })
+    } else {
+      setOrdersError("Pembayaran dibatalkan atau gagal. Silakan coba lagi.")
+    }
+
+    navigate("/order/keranjang", { replace: true })
+  }, [loadOrders, location.search, navigate, user])
+
+  const requireLogin = (): boolean => {
+    if (user) return true
+    setAuthOpen(true)
+    return false
+  }
+
+  const handleCheckout = async (o: Order) => {
+    if (!requireLogin() || checkoutId) return
+    setCheckoutId(o.id)
+    setOrdersError(null)
+    try {
+      const payment = await paymentsApi.create({
+        orderId: o.id,
+        amount: o.total,
+        customer: {
+          firstName: user?.name ?? "Coffidoor Customer",
+          email: user?.email ?? "customer@coffidoor.test",
+          phone: "081234567890",
+        },
       })
-    })
-    navigate("/order", { state: { step: "checkout" } })
+
+      if (!payment.redirect_url) {
+        throw new Error("Midtrans tidak mengembalikan alamat pembayaran.")
+      }
+      window.location.assign(payment.redirect_url)
+    } catch (err) {
+      setOrdersError(
+        err instanceof Error ? err.message : "Gagal membuka pembayaran Midtrans.",
+      )
+      setCheckoutId(null)
+    }
   }
 
   const moveToSaved = (id: string) => {
@@ -118,6 +162,8 @@ export default function OrderCartPage() {
   const unpaidOrders = orders.filter(
     (o) => o.paymentStatus !== "PAID" && o.status !== "CANCELLED",
   )
+  const sessionItemCount = cartCount(sessionItems)
+  const sessionSubtotal = cartSubtotal(sessionItems)
   const placeOptions = Array.from(
     new Map(unpaidOrders.map((o) => [o.place.id, o.place])).values(),
   )
@@ -158,7 +204,7 @@ export default function OrderCartPage() {
             {o.items.reduce((s, it) => s + it.quantity, 0)} item
             {o.paymentMethod ? ` · ${o.paymentMethod}` : ""}
           </span>
-          <span className="font-black text-[#b07d3f]">
+          <span className="font-black text-[#d1d5db]">
             {formatRupiah(o.total)}
           </span>
         </div>
@@ -184,7 +230,7 @@ export default function OrderCartPage() {
           )}
         </div>
         {o.note && (
-          <div className="mt-2 text-xs text-muted-foreground bg-[rgba(140,95,40,0.06)] rounded-lg px-3 py-2">
+          <div className="mt-2 text-xs text-muted-foreground bg-[rgba(156,163,175,0.06)] rounded-lg px-3 py-2">
             <MdReceiptLong className="w-3.5 h-3.5 inline mr-1" />
             Catatan: {o.note}
           </div>
@@ -214,7 +260,7 @@ export default function OrderCartPage() {
             {bucket === "saved" && (
               <button
                 onClick={() => restoreOrder(o.id)}
-                className="flex items-center gap-1 text-xs font-semibold rounded-full px-3 py-2 bg-[#b07d3f]/15 text-[#b07d3f] hover:bg-[#b07d3f]/25 transition-colors"
+                className="flex items-center gap-1 text-xs font-semibold rounded-full px-3 py-2 bg-[#d1d5db]/15 text-[#d1d5db] hover:bg-[#d1d5db]/25 transition-colors"
               >
                 <MdRestore className="w-3.5 h-3.5" />
                 Kembalikan
@@ -223,7 +269,7 @@ export default function OrderCartPage() {
             {bucket === "wish" && (
               <button
                 onClick={() => restoreOrder(o.id)}
-                className="flex items-center gap-1 text-xs font-semibold rounded-full px-3 py-2 bg-[#b07d3f]/15 text-[#b07d3f] hover:bg-[#b07d3f]/25 transition-colors"
+                className="flex items-center gap-1 text-xs font-semibold rounded-full px-3 py-2 bg-[#d1d5db]/15 text-[#d1d5db] hover:bg-[#d1d5db]/25 transition-colors"
               >
                 <MdAdd className="w-3.5 h-3.5" />
                 Pindah ke Keranjang
@@ -240,11 +286,13 @@ export default function OrderCartPage() {
             </button>
           </div>
           <button
-            onClick={() => handleCheckout(o)}
-            className="shrink-0 flex items-center gap-1.5 bg-[#b07d3f] text-[#1a1a1a] font-bold px-5 py-2.5 rounded-full text-sm hover:bg-[#c9974f] transition-colors"
+            type="button"
+            onClick={() => void handleCheckout(o)}
+            disabled={checkoutId !== null}
+            className="shrink-0 flex items-center gap-1.5 bg-[#d1d5db] text-[#111113] font-bold px-5 py-2.5 rounded-full text-sm hover:bg-[#f3f4f6] transition-colors"
           >
             <MdShoppingCart className="w-4 h-4" />
-            Checkout
+            {checkoutId === o.id ? "Membuka Midtrans..." : "Checkout"}
           </button>
         </div>
       </div>
@@ -277,28 +325,60 @@ export default function OrderCartPage() {
           </div>
           <Link
             to="/order"
-            className="shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#b07d3f] text-[#1a1a1a] font-bold text-sm hover:bg-[#c9974f] transition-colors"
+            className="shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#d1d5db] text-[#111113] font-bold text-sm hover:bg-[#f3f4f6] transition-colors"
           >
             <MdShoppingCart className="w-4 h-4" />
             Pesan Kopi
           </Link>
         </div>
 
-        {!user ? (
+        {!user && sessionItems.length > 0 ? (
           <div className="glass-card rounded-3xl p-10 text-center max-w-md mx-auto">
             <div className="text-4xl mb-3">🛒</div>
             <h2 className="text-xl font-black text-foreground mb-2">
-              Masuk untuk melihat keranjang
+              Keranjangmu
             </h2>
             <p className="text-muted-foreground text-sm mb-6">
-              Pesanan yang belum dicheckout tersimpan di akunmu.
+              {sessionItemCount} item dari {sessionItems[0].placeName} ·{" "}
+              {formatRupiah(sessionSubtotal)}
             </p>
+            <div className="mb-6 flex flex-col gap-2 text-left">
+              {sessionItems.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-3 py-2 text-sm"
+                >
+                  <span className="min-w-0 truncate text-foreground">
+                    {item.name} <span className="text-muted-foreground">× {item.quantity}</span>
+                  </span>
+                  <span className="shrink-0 font-semibold text-foreground">
+                    {formatRupiah(item.price * item.quantity)}
+                  </span>
+                </div>
+              ))}
+            </div>
             <button
-              onClick={() => setAuthOpen(true)}
-              className="bg-[#b07d3f] text-[#1a1a1a] font-black px-6 py-3 rounded-full text-sm"
+              onClick={() => navigate("/order", { state: { step: "cart" } })}
+              className="bg-[#d1d5db] text-[#111113] font-black px-6 py-3 rounded-full text-sm"
             >
-              Masuk Sekarang
+              Lanjut ke Checkout
             </button>
+          </div>
+        ) : !user ? (
+          <div className="glass-card rounded-3xl p-10 text-center max-w-md mx-auto">
+            <div className="text-4xl mb-3">🛒</div>
+            <h2 className="text-xl font-black text-foreground mb-2">
+              Keranjang kosong
+            </h2>
+            <p className="text-muted-foreground text-sm mb-6">
+              Tambahkan menu ke keranjang, lalu lanjutkan checkout tanpa perlu masuk.
+            </p>
+            <Link
+              to="/order"
+              className="bg-[#d1d5db] text-[#111113] font-black px-6 py-3 rounded-full text-sm"
+            >
+              Mulai Pesan
+            </Link>
           </div>
         ) : ordersError ? (
           <div className="text-center text-destructive py-16">
@@ -319,7 +399,7 @@ export default function OrderCartPage() {
             </p>
             <Link
               to="/order"
-              className="bg-[#b07d3f] text-[#1a1a1a] font-black px-6 py-3 rounded-full text-sm"
+              className="bg-[#d1d5db] text-[#111113] font-black px-6 py-3 rounded-full text-sm"
             >
               Mulai Pesan
             </Link>

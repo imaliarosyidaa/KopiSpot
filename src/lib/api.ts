@@ -578,6 +578,7 @@ export const ordersApi = {
     items: { menuItemId: string; quantity: number }[];
     note?: string;
     billingAddress?: string;
+    couponCode?: string;
   }) => api<Order>("/orders", { method: "POST", body: JSON.stringify(data) }),
   pay: (id: string, method: string, proofUrl?: string) =>
     api<Order>(`/orders/${id}/pay`, {

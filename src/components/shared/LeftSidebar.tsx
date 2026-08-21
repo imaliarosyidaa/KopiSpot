@@ -28,7 +28,7 @@ export default function LeftSidebar({
               onClick={() => onCategory(c.value)}
               className={`text-left px-3 py-2 rounded-lg text-sm transition-colors ${
                 activeCategory === c.value
-                  ? "bg-[#b07d3f]/15 text-[#b07d3f] font-semibold"
+                  ? "bg-[#d1d5db]/15 text-[#d1d5db] font-semibold"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted"
               }`}
             >
@@ -47,7 +47,7 @@ export default function LeftSidebar({
             onClick={() => onCity("SEMUA")}
             className={`text-left px-3 py-2 rounded-lg text-sm transition-colors ${
               activeCity === "SEMUA"
-                ? "bg-[#b07d3f]/15 text-[#b07d3f] font-semibold"
+                ? "bg-[#d1d5db]/15 text-[#d1d5db] font-semibold"
                 : "text-muted-foreground hover:text-foreground hover:bg-muted"
             }`}
           >
@@ -59,7 +59,7 @@ export default function LeftSidebar({
               onClick={() => onCity(city)}
               className={`text-left px-3 py-2 rounded-lg text-sm transition-colors ${
                 activeCity === city
-                  ? "bg-[#b07d3f]/15 text-[#b07d3f] font-semibold"
+                  ? "bg-[#d1d5db]/15 text-[#d1d5db] font-semibold"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted"
               }`}
             >

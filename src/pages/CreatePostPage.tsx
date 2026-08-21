@@ -7,7 +7,7 @@ import AuthModal from "@/components/ui/auth-modal"
 import { POST_CATEGORIES } from "@/lib/constants"
 
 const inputClass =
-  "w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-all focus:border-[#b07d3f] focus:ring-2 focus:ring-[rgba(176,125,63,0.25)]"
+  "w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-all focus:border-[#d1d5db] focus:ring-2 focus:ring-[rgba(209,213,219,0.25)]"
 
 export default function CreatePostPage() {
   const { user, loading } = useAuth()
@@ -48,11 +48,11 @@ export default function CreatePostPage() {
             Masuk untuk membuat postingan
           </h1>
           <p className="text-muted-foreground text-sm mb-6">
-            Kamu harus login dulu untuk berbagi cerita di komunitas Coffidoor.
+            Kamu harus login dulu untuk berbagi cerita di komunitas coffidoor.
           </p>
           <button
             onClick={() => setAuthOpen(true)}
-            className="bg-[#b07d3f] text-[#1a1a1a] font-black px-6 py-3 rounded-full text-sm hover:bg-[#c9974f] transition-colors"
+            className="bg-[#d1d5db] text-[#111113] font-black px-6 py-3 rounded-full text-sm hover:bg-[#f3f4f6] transition-colors"
           >
             Masuk Sekarang
           </button>
@@ -163,7 +163,7 @@ export default function CreatePostPage() {
                 onClick={() => setCategory(c.value)}
                 className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 ${
                   category === c.value
-                    ? "bg-[#b07d3f] text-[#1a1a1a]"
+                    ? "bg-[#d1d5db] text-[#111113]"
                     : "footer-glass-pill text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -208,7 +208,7 @@ export default function CreatePostPage() {
               </div>
             ))}
             {images.length < 4 && (
-              <label className="relative h-28 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-[#b07d3f] text-muted-foreground hover:text-foreground transition-colors">
+              <label className="relative h-28 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-[#d1d5db] text-muted-foreground hover:text-foreground transition-colors">
                 <MdAddPhotoAlternate className="w-5 h-5" />
                 <span className="text-[10px] font-semibold">
                   {uploading ? "Mengunggah..." : "Tambah Foto"}
@@ -235,7 +235,7 @@ export default function CreatePostPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="bg-[#b07d3f] text-[#1a1a1a] font-black px-6 py-3.5 rounded-full text-sm hover:bg-[#c9974f] transition-colors disabled:opacity-60"
+          className="bg-[#d1d5db] text-[#111113] font-black px-6 py-3.5 rounded-full text-sm hover:bg-[#f3f4f6] transition-colors disabled:opacity-60"
         >
           {submitting ? "Memposting..." : "Publikasikan"}
         </button>

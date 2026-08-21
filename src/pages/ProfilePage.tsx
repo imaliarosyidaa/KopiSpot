@@ -67,7 +67,7 @@ export default function ProfilePage() {
           <p className="text-muted-foreground text-sm mb-6">Login dulu untuk melihat postingan, lencana, dan statistikmu.</p>
           <button
             onClick={() => setAuthOpen(true)}
-            className="bg-[#b07d3f] text-[#1a1a1a] font-black px-6 py-3 rounded-full text-sm hover:bg-[#c9974f] transition-colors"
+            className="bg-[#d1d5db] text-[#111113] font-black px-6 py-3 rounded-full text-sm hover:bg-[#f3f4f6] transition-colors"
           >
             Masuk Sekarang
           </button>
@@ -82,7 +82,7 @@ export default function ProfilePage() {
       <div className="min-h-screen flex items-center justify-center px-6 pt-16">
         <div className="glass-card rounded-3xl p-10 text-center max-w-md">
           <p className="text-foreground font-semibold">{loadError}</p>
-          <button onClick={load} className="mt-4 bg-[#b07d3f] text-[#1a1a1a] font-black px-6 py-3 rounded-full text-sm">
+          <button onClick={load} className="mt-4 bg-[#d1d5db] text-[#111113] font-black px-6 py-3 rounded-full text-sm">
             Coba Lagi
           </button>
         </div>
@@ -107,14 +107,14 @@ export default function ProfilePage() {
       <div className="glass-card rounded-3xl p-6 md:p-8 mb-8">
         <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
           <div className="relative">
-            <div className="w-24 h-24 rounded-full bg-[rgba(140,95,40,0.22)] border-2 border-[rgba(140,95,40,0.4)] flex items-center justify-center text-[#b07d3f] font-black text-3xl overflow-hidden">
+            <div className="w-24 h-24 rounded-full bg-[rgba(156,163,175,0.22)] border-2 border-[rgba(156,163,175,0.4)] flex items-center justify-center text-[#d1d5db] font-black text-3xl overflow-hidden">
               {profile.image ? (
                 <img src={profile.image} alt={profile.name ?? ""} className="w-full h-full object-cover" />
               ) : (
                 initials(profile.name)
               )}
             </div>
-            <span className="absolute -bottom-1 -right-1 tag-pill bg-[#b07d3f] text-[#1a1a1a] border-0">Lv.{profile.level}</span>
+            <span className="absolute -bottom-1 -right-1 tag-pill bg-[#d1d5db] text-[#111113] border-0">Lv.{profile.level}</span>
           </div>
 
           <div className="flex-1 min-w-0">
@@ -130,7 +130,7 @@ export default function ProfilePage() {
                 Edit Profil
               </button>
             </div>
-            {profile.username && <div className="text-[#b07d3f] text-sm font-semibold">@{profile.username}</div>}
+            {profile.username && <div className="text-[#d1d5db] text-sm font-semibold">@{profile.username}</div>}
             <div className="text-muted-foreground text-sm mt-1">{profile.email}</div>
             {profile.bio && <p className="text-muted-foreground text-sm mt-2">{profile.bio}</p>}
             <div className="text-xs text-muted-foreground mt-2">Bergabung {formatDate(profile.createdAt)}</div>
@@ -139,10 +139,10 @@ export default function ProfilePage() {
           <div className="w-full md:w-56">
             <div className="flex items-end justify-between mb-1.5">
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Level {profile.level}</span>
-              <span className="text-xs font-black text-[#b07d3f]">{profile.xp.toLocaleString()} XP</span>
+              <span className="text-xs font-black text-[#d1d5db]">{profile.xp.toLocaleString()} XP</span>
             </div>
             <div className="h-2 rounded-full bg-muted overflow-hidden">
-              <div className="h-full rounded-full bg-[#b07d3f] transition-all" style={{ width: `${Math.round(progress * 100)}%` }} />
+              <div className="h-full rounded-full bg-[#d1d5db] transition-all" style={{ width: `${Math.round(progress * 100)}%` }} />
             </div>
             <div className="text-[10px] text-muted-foreground mt-1 text-right">
               {Math.round(progress * 100)}% menuju Lv.{profile.level + 1} ({nextXp.toLocaleString()} XP)
@@ -173,7 +173,7 @@ export default function ProfilePage() {
           { label: "Tersimpan", value: profile.stats.saved },
         ].map((s) => (
           <div key={s.label} className="glass-card rounded-2xl p-4 text-center">
-            <div className="text-2xl font-black text-[#b07d3f]" style={{ fontFamily: "'Fraunces', serif" }}>
+            <div className="text-2xl font-black text-[#d1d5db]" style={{ fontFamily: "'Fraunces', serif" }}>
               {s.value}
             </div>
             <div className="text-xs text-muted-foreground mt-0.5">{s.label}</div>
@@ -189,7 +189,7 @@ export default function ProfilePage() {
             onClick={() => setTab(t.key)}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all duration-300 ${
               tab === t.key
-                ? "bg-[#b07d3f] text-[#1a1a1a]"
+                ? "bg-[#d1d5db] text-[#111113]"
                 : "footer-glass-pill text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -242,7 +242,7 @@ export default function ProfilePage() {
           ) : (
             profile.comments.map((c) => (
               <div key={c.id} className="glass-card rounded-2xl p-5">
-                <Link to={`/places/${c.place.id}`} className="text-[#b07d3f] font-semibold text-sm hover:underline">
+                <Link to={`/places/${c.place.id}`} className="text-[#d1d5db] font-semibold text-sm hover:underline">
                   {c.place.name}
                 </Link>
                 <p className="text-muted-foreground text-sm mt-1.5">{c.body}</p>
@@ -261,13 +261,13 @@ export default function ProfilePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {profile.badges.map((b) => (
                 <div key={b.id} className="glass-card rounded-2xl p-5 flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-[rgba(176,125,63,0.15)] border border-[rgba(176,125,63,0.3)] flex items-center justify-center text-3xl shrink-0">
+                  <div className="w-14 h-14 rounded-2xl bg-[rgba(209,213,219,0.15)] border border-[rgba(209,213,219,0.3)] flex items-center justify-center text-3xl shrink-0">
                     {b.icon}
                   </div>
                   <div>
                     <div className="font-bold text-foreground">{b.name}</div>
                     <div className="text-sm text-muted-foreground">{b.description}</div>
-                    <div className="text-xs text-[#b07d3f] font-semibold mt-1">+{b.xpReward} XP</div>
+                    <div className="text-xs text-[#d1d5db] font-semibold mt-1">+{b.xpReward} XP</div>
                   </div>
                 </div>
               ))}
@@ -316,7 +316,7 @@ function EmptyState({ text, cta, ctaTo }: { text: string; cta?: string; ctaTo?: 
     <div className="glass-card rounded-3xl p-12 text-center">
       <p className="text-muted-foreground text-sm">{text}</p>
       {cta && ctaTo && (
-        <Link to={ctaTo} className="inline-block mt-4 bg-[#b07d3f] text-[#1a1a1a] font-black px-6 py-3 rounded-full text-sm">
+        <Link to={ctaTo} className="inline-block mt-4 bg-[#d1d5db] text-[#111113] font-black px-6 py-3 rounded-full text-sm">
           {cta}
         </Link>
       )}
@@ -325,7 +325,7 @@ function EmptyState({ text, cta, ctaTo }: { text: string; cta?: string; ctaTo?: 
 }
 
 const fieldClass =
-  "w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-[#b07d3f] focus:ring-2 focus:ring-[rgba(176,125,63,0.25)]";
+  "w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-[#d1d5db] focus:ring-2 focus:ring-[rgba(209,213,219,0.25)]";
 
 function EditProfile({ onDone }: { onDone: () => void }) {
   const { user } = useAuth();
@@ -368,7 +368,7 @@ function EditProfile({ onDone }: { onDone: () => void }) {
   return (
     <form onSubmit={handleSubmit} className="mt-6 pt-6 border-t border-border flex flex-col gap-4">
       <div className="flex items-center gap-4">
-        <div className="w-16 h-16 rounded-full bg-[rgba(140,95,40,0.22)] border border-[rgba(140,95,40,0.35)] flex items-center justify-center text-[#b07d3f] font-bold text-lg overflow-hidden shrink-0">
+        <div className="w-16 h-16 rounded-full bg-[rgba(156,163,175,0.22)] border border-[rgba(156,163,175,0.35)] flex items-center justify-center text-[#d1d5db] font-bold text-lg overflow-hidden shrink-0">
           {image ? (
             <img src={image} alt="" className="w-full h-full object-cover" />
           ) : (
@@ -395,7 +395,7 @@ function EditProfile({ onDone }: { onDone: () => void }) {
       </div>
       {error && <p className="text-sm text-destructive">{error}</p>}
       <div className="flex gap-3">
-        <button type="submit" disabled={saving} className="bg-[#b07d3f] text-[#1a1a1a] font-black px-6 py-3 rounded-full text-sm hover:bg-[#c9974f] disabled:opacity-60">
+        <button type="submit" disabled={saving} className="bg-[#d1d5db] text-[#111113] font-black px-6 py-3 rounded-full text-sm hover:bg-[#f3f4f6] disabled:opacity-60">
           {saving ? "Menyimpan..." : "Simpan"}
         </button>
         <button type="button" onClick={onDone} className="footer-glass-pill px-6 py-3 rounded-full text-sm font-semibold text-muted-foreground hover:text-foreground">
@@ -438,7 +438,7 @@ function ChangePassword({ onDone }: { onDone: () => void }) {
       {error && <p className="text-sm text-destructive">{error}</p>}
       {ok && <p className="text-sm text-emerald-600">{ok}</p>}
       <div className="flex gap-3">
-        <button type="submit" disabled={saving} className="bg-[#b07d3f] text-[#1a1a1a] font-black px-5 py-2.5 rounded-full text-xs hover:bg-[#c9974f] disabled:opacity-60">
+        <button type="submit" disabled={saving} className="bg-[#d1d5db] text-[#111113] font-black px-5 py-2.5 rounded-full text-xs hover:bg-[#f3f4f6] disabled:opacity-60">
           {saving ? "Menyimpan..." : "Simpan"}
         </button>
         <button type="button" onClick={onDone} className="footer-glass-pill px-5 py-2.5 rounded-full text-xs font-semibold text-muted-foreground hover:text-foreground">

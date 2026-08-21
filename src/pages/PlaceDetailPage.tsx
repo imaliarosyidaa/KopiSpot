@@ -123,7 +123,7 @@ export default function PlaceDetailPage() {
           <p className="text-muted-foreground text-sm mb-6">{error}</p>
           <button
             onClick={() => navigate("/")}
-            className="bg-[#b07d3f] text-[#1a1a1a] font-black px-6 py-3 rounded-full text-sm"
+            className="bg-[#d1d5db] text-[#111113] font-black px-6 py-3 rounded-full text-sm"
           >
             Kembali ke Beranda
           </button>
@@ -190,7 +190,7 @@ export default function PlaceDetailPage() {
           <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
             <div>
               <div className="flex items-center gap-3">
-                <span className="text-4xl font-black text-[#b07d3f]" style={{ fontFamily: "'Fraunces', serif" }}>
+                <span className="text-4xl font-black text-[#d1d5db]" style={{ fontFamily: "'Fraunces', serif" }}>
                   {place.avgRating ? place.avgRating.toFixed(1) : "—"}
                 </span>
                 <div>
@@ -222,7 +222,7 @@ export default function PlaceDetailPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {Object.entries(menuGroups).map(([group, items]) => (
               <div key={group} className="glass-card rounded-2xl p-5">
-                <h3 className="text-xs font-bold uppercase tracking-widest text-[#b07d3f] mb-3">{group}</h3>
+                <h3 className="text-xs font-bold uppercase tracking-widest text-[#d1d5db] mb-3">{group}</h3>
                 <div className="flex flex-col gap-2.5">
                   {items.map((item) => (
                     <div key={item.id} className="flex items-center justify-between gap-3">
@@ -251,7 +251,7 @@ export default function PlaceDetailPage() {
               onChange={(e) => setReviewBody(e.target.value)}
               placeholder={user ? "Tulis ulasanmu tentang kafe ini..." : "Masuk untuk menulis ulasan"}
               rows={3}
-              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-[#b07d3f] focus:ring-2 focus:ring-[rgba(176,125,63,0.25)] resize-none"
+              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-[#d1d5db] focus:ring-2 focus:ring-[rgba(209,213,219,0.25)] resize-none"
             />
             {reviewError && <p className="text-sm text-destructive mt-2">{reviewError}</p>}
             <div className="flex items-center justify-between mt-3">
@@ -259,7 +259,7 @@ export default function PlaceDetailPage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="flex items-center gap-2 bg-[#b07d3f] text-[#1a1a1a] font-black px-5 py-2.5 rounded-full text-sm hover:bg-[#c9974f] transition-colors disabled:opacity-60"
+                className="flex items-center gap-2 bg-[#d1d5db] text-[#111113] font-black px-5 py-2.5 rounded-full text-sm hover:bg-[#f3f4f6] transition-colors disabled:opacity-60"
               >
                 <MdSend className="w-4 h-4" />
                 {submitting ? "Mengirim..." : "Kirim Ulasan"}
@@ -271,7 +271,7 @@ export default function PlaceDetailPage() {
             {place.comments.map((c) => (
               <div key={c.id} className="glass-card rounded-2xl p-5 flex flex-col gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[rgba(140,95,40,0.22)] border border-[rgba(140,95,40,0.35)] flex items-center justify-center text-[#b07d3f] font-bold text-sm shrink-0 overflow-hidden">
+                  <div className="w-10 h-10 rounded-full bg-[rgba(156,163,175,0.22)] border border-[rgba(156,163,175,0.35)] flex items-center justify-center text-[#d1d5db] font-bold text-sm shrink-0 overflow-hidden">
                     {c.user.image ? (
                       <img src={c.user.image} alt="" className="w-full h-full object-cover" />
                     ) : (

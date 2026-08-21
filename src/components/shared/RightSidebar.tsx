@@ -40,7 +40,7 @@ export default function RightSidebar() {
                 )}
               </div>
               <div className="min-w-0">
-                <div className="text-sm font-semibold text-foreground group-hover:text-[#b07d3f] transition-colors truncate">
+                <div className="text-sm font-semibold text-foreground group-hover:text-[#d1d5db] transition-colors truncate">
                   {p.name}
                 </div>
                 <div className="text-xs text-muted-foreground">
@@ -59,10 +59,10 @@ export default function RightSidebar() {
         <div className="flex flex-col gap-3">
           {(data?.topContributors ?? []).map((u, i) => (
             <div key={u.id} className="flex items-center gap-3">
-              <span className="w-5 text-sm font-black text-[#b07d3f]">
+              <span className="w-5 text-sm font-black text-[#d1d5db]">
                 {i + 1}
               </span>
-              <div className="w-9 h-9 rounded-full bg-[rgba(140,95,40,0.22)] border border-[rgba(140,95,40,0.35)] flex items-center justify-center text-[#b07d3f] font-bold text-xs overflow-hidden shrink-0">
+              <div className="w-9 h-9 rounded-full bg-[rgba(156,163,175,0.22)] border border-[rgba(156,163,175,0.35)] flex items-center justify-center text-[#d1d5db] font-bold text-xs overflow-hidden shrink-0">
                 {u.image ? (
                   <img
                     src={u.image}
@@ -107,7 +107,7 @@ export default function RightSidebar() {
           {(data?.latestReviews ?? []).map((r) => (
             <div
               key={r.id}
-              className="border-l-2 border-[rgba(140,95,40,0.3)] pl-3"
+              className="border-l-2 border-[rgba(156,163,175,0.3)] pl-3"
             >
               <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
                 {r.body}
@@ -119,7 +119,7 @@ export default function RightSidebar() {
                 <span className="text-muted-foreground"> di </span>
                 <Link
                   to={`/places/${r.place.id}`}
-                  className="text-[#b07d3f] font-semibold hover:underline"
+                  className="text-[#d1d5db] font-semibold hover:underline"
                 >
                   {r.place.name}
                 </Link>

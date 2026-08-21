@@ -1,5 +1,7 @@
 import { create } from "zustand"
 
+const CART_STORAGE_KEY = "Coffidoor_session_cart"
+
 export interface CartItem {
   id: string
   placeId: string
@@ -9,6 +11,33 @@ export interface CartItem {
   category: string
   imageUrl: string | null
   quantity: number
+}
+
+interface StoredCart {
+  items: CartItem[]
+  savedForLater: CartItem[]
+  wishlist: CartItem[]
+}
+
+function readStoredCart(): StoredCart {
+  if (typeof window === "undefined") {
+    return { items: [], savedForLater: [], wishlist: [] }
+  }
+
+  try {
+    const stored = sessionStorage.getItem(CART_STORAGE_KEY)
+    if (!stored) return { items: [], savedForLater: [], wishlist: [] }
+    const parsed = JSON.parse(stored) as Partial<StoredCart>
+    return {
+      items: Array.isArray(parsed.items) ? parsed.items : [],
+      savedForLater: Array.isArray(parsed.savedForLater)
+        ? parsed.savedForLater
+        : [],
+      wishlist: Array.isArray(parsed.wishlist) ? parsed.wishlist : [],
+    }
+  } catch {
+    return { items: [], savedForLater: [], wishlist: [] }
+  }
 }
 
 interface CartState {
@@ -28,9 +57,7 @@ interface CartState {
 }
 
 export const useCartStore = create<CartState>((set) => ({
-  items: [],
-  savedForLater: [],
-  wishlist: [],
+  ...readStoredCart(),
   add: (item) =>
     set((state) => {
       const existing = state.items.find((i) => i.id === item.id)
@@ -113,6 +140,18 @@ export const useCartStore = create<CartState>((set) => ({
     set((state) => ({ wishlist: state.wishlist.filter((i) => i.id !== id) })),
   clear: () => set({ items: [] }),
 }))
+
+useCartStore.subscribe((state) => {
+  if (typeof window === "undefined") return
+  sessionStorage.setItem(
+    CART_STORAGE_KEY,
+    JSON.stringify({
+      items: state.items,
+      savedForLater: state.savedForLater,
+      wishlist: state.wishlist,
+    }),
+  )
+})
 
 export function cartCount(items: CartItem[]): number {
   return items.reduce((s, i) => s + i.quantity, 0)

@@ -29,13 +29,13 @@ function HeroMarqueeItem() {
   return (
     <div className="flex items-center space-x-12 px-6">
       <span>Kopi Terbaik Indonesia</span>{" "}
-      <span className="text-[#b07d3f]">✦</span>
+      <span className="text-[#d1d5db]">✦</span>
       <span>Tempat Aesthetic & Viral</span>{" "}
       <span className="text-[#6b6b6b]">✦</span>
       <span>Review Jujur & Terpercaya</span>{" "}
-      <span className="text-[#b07d3f]">✦</span>
+      <span className="text-[#d1d5db]">✦</span>
       <span>Foto-worthy Spots</span> <span className="text-[#6b6b6b]">✦</span>
-      <span>Work-Friendly Cafes</span> <span className="text-[#b07d3f]">✦</span>
+      <span>Work-Friendly Cafes</span> <span className="text-[#d1d5db]">✦</span>
     </div>
   )
 }
@@ -110,20 +110,20 @@ function CinematicHero({ onExplore }: { onExplore: () => void }) {
         >
           Satu Akses di
           <br />
-          Coffidoor.
+          coffidoor.
         </h1>
         <p
           ref={subRef}
           className="text-muted-foreground text-sm md:text-base mb-10 max-w-md leading-relaxed"
         >
-          Coffidoor adalah platform digital yang menjadi satu pintu bagi
+          coffidoor adalah platform digital yang menjadi satu pintu bagi
           pelanggan untuk menemukan dan memesan kopi dari berbagai UMKM kopi.
         </p>
 
         <div ref={linksRef} className="flex flex-col items-center gap-4 w-full">
           <MagneticButton
             onClick={onExplore}
-            className="bg-[#b07d3f] text-[#1a1a1a] font-black px-10 py-4 rounded-full text-sm hover:bg-[#c9974f] transition-colors duration-300 flex items-center gap-2"
+            className="bg-[#d1d5db] text-[#111113] font-black px-10 py-4 rounded-full text-sm hover:bg-[#f3f4f6] transition-colors duration-300 flex items-center gap-2"
           >
             <svg
               className="w-5 h-5"
@@ -163,7 +163,7 @@ function CinematicHero({ onExplore }: { onExplore: () => void }) {
         ].map((s) => (
           <div key={s.label} className="text-center">
             <div
-              className="text-2xl md:text-3xl font-black text-[#b07d3f]"
+              className="text-2xl md:text-3xl font-black text-[#d1d5db]"
               style={{ fontFamily: "'Fraunces', serif" }}
             >
               {s.num}
@@ -186,7 +186,7 @@ function ReviewCard({
   return (
     <div className="glass-card rounded-2xl p-5 flex flex-col gap-3">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-[rgba(140,95,40,0.22)] border border-[rgba(140,95,40,0.35)] flex items-center justify-center text-[#b07d3f] font-bold text-sm shrink-0 overflow-hidden">
+        <div className="w-10 h-10 rounded-full bg-[rgba(156,163,175,0.22)] border border-[rgba(156,163,175,0.35)] flex items-center justify-center text-[#d1d5db] font-bold text-sm shrink-0 overflow-hidden">
           {review.user.image ? (
             <img
               src={review.user.image}
@@ -271,7 +271,7 @@ export default function HomePage() {
       */}
       <section className="">
         <div className="rounded-3xl border border-border bg-card overflow-hidden relative footer-glass-pill">
-          <div className="absolute top-0 right-1/4 w-96 h-96 rounded-full bg-[#b07d3f]/10 blur-3xl pointer-events-none" />
+          <div className="absolute top-0 right-1/4 w-96 h-96 rounded-full bg-[#d1d5db]/10 blur-3xl pointer-events-none" />
 
           <div className="px-6 md:px-12 py-20 mx-auto flex flex-col md:flex-row items-center md:min-h-[520px]">
             <div className="flex-1 flex flex-col justify-center relative z-10">
@@ -286,7 +286,7 @@ export default function HomePage() {
               >
                 Eksplorasi Kafe dari
                 <br />
-                <span className="bg-gradient-to-r from-[#b07d3f] to-[#e0a45e] bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-[#d1d5db] to-[#e0a45e] bg-clip-text text-transparent">
                   Seluruh Nusantara
                 </span>
               </h2>
@@ -360,7 +360,7 @@ export default function HomePage() {
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Cari kafe atau kota..."
-              className="w-full rounded-full border border-border bg-card px-11 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-[#b07d3f] focus:ring-2 focus:ring-[rgba(176,125,63,0.25)] transition-all"
+              className="w-full rounded-full border border-border bg-card px-11 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-[#d1d5db] focus:ring-2 focus:ring-[rgba(209,213,219,0.25)] transition-all"
             />
           </div>
         </div>
@@ -386,7 +386,7 @@ export default function HomePage() {
                   }
                   className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 ${
                     activeCategory === c.value
-                      ? "bg-[#b07d3f] text-[#1a1a1a]"
+                      ? "bg-[#d1d5db] text-[#111113]"
                       : "footer-glass-pill text-muted-foreground hover:text-foreground"
                   }`}
                 >
@@ -461,7 +461,7 @@ export default function HomePage() {
             <div className="flex items-center gap-6">
               <div className="text-center">
                 <div
-                  className="text-2xl font-black text-[#b07d3f]"
+                  className="text-2xl font-black text-[#d1d5db]"
                   style={{ fontFamily: "'Fraunces', serif" }}
                 >
                   4.8
@@ -474,7 +474,7 @@ export default function HomePage() {
               <div className="w-px h-12 bg-border" />
               <div className="text-center">
                 <div
-                  className="text-2xl font-black text-[#b07d3f]"
+                  className="text-2xl font-black text-[#d1d5db]"
                   style={{ fontFamily: "'Fraunces', serif" }}
                 >
                   12K+

@@ -50,7 +50,7 @@ export default function PlaceCard({
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-[rgba(176,125,63,0.25)] to-[rgba(176,125,63,0.05)]" />
+          <div className="w-full h-full bg-gradient-to-br from-[rgba(209,213,219,0.25)] to-[rgba(209,213,219,0.05)]" />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
         {place.category && (
@@ -59,7 +59,7 @@ export default function PlaceCard({
           </div>
         )}
         <div className="absolute bottom-3 right-3">
-          <span className="bg-black/60 backdrop-blur-sm border border-[rgba(140,95,40,0.3)] text-[#b07d3f] text-xs font-bold px-3 py-1 rounded-full">
+          <span className="bg-black/60 backdrop-blur-sm border border-[rgba(156,163,175,0.3)] text-[#d1d5db] text-xs font-bold px-3 py-1 rounded-full">
             {place.openHours}
           </span>
         </div>
@@ -71,7 +71,7 @@ export default function PlaceCard({
             {place.name}
           </h3>
           <div className="flex items-center gap-1.5 shrink-0 ml-2">
-            <span className="text-[#b07d3f] font-black text-lg leading-none">
+            <span className="text-[#d1d5db] font-black text-lg leading-none">
               {place.avgRating ? place.avgRating.toFixed(1) : "—"}
             </span>
           </div>
@@ -121,8 +121,8 @@ export default function PlaceCard({
           </div>
         )}
 
-        <div className="flex items-center justify-between pt-3 border-t border-[rgba(140,95,40,0.18)]">
-          <span className="text-[#b07d3f] font-semibold text-sm">
+        <div className="flex items-center justify-between pt-3 border-t border-[rgba(156,163,175,0.18)]">
+          <span className="text-[#d1d5db] font-semibold text-sm">
             {place.price}
           </span>
           <div className="flex items-center gap-2">

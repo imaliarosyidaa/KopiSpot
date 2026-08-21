@@ -115,12 +115,12 @@ export default function FeedPage() {
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="Cari postingan, kafe, atau pengguna..."
-                className="w-full rounded-full border border-border bg-card px-10 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-[#b07d3f] focus:ring-2 focus:ring-[rgba(176,125,63,0.25)]"
+                className="w-full rounded-full border border-border bg-card px-10 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-[#d1d5db] focus:ring-2 focus:ring-[rgba(209,213,219,0.25)]"
               />
             </div>
             <Link
               to="/post/new"
-              className="flex items-center gap-2 bg-[#b07d3f] text-[#1a1a1a] font-black px-5 py-3 rounded-full text-sm hover:bg-[#c9974f] transition-colors w-fit"
+              className="flex items-center gap-2 bg-[#d1d5db] text-[#111113] font-black px-5 py-3 rounded-full text-sm hover:bg-[#f3f4f6] transition-colors w-fit"
             >
               <MdAdd className="w-4 h-4" />
               Buat Postingan
@@ -134,7 +134,7 @@ export default function FeedPage() {
                 onClick={() => setSort(s)}
                 className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 ${
                   sort === s
-                    ? "bg-[#b07d3f] text-[#1a1a1a]"
+                    ? "bg-[#d1d5db] text-[#111113]"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >

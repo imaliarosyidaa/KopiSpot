@@ -30,20 +30,24 @@ router.post("/create", requireAuth, async (req, res) => {
   const firstName =
     typeof customer.firstName === "string" && customer.firstName.trim()
       ? customer.firstName.trim()
-      : "Coffidoor Customer"
+      : "coffidoor Customer"
 
   const email =
     typeof customer.email === "string" && customer.email.trim()
       ? customer.email.trim()
-      : "customer@Coffidoor.test"
+      : "customer@coffidoor.test"
 
   const phone =
     typeof customer.phone === "string" && customer.phone.trim()
       ? customer.phone.trim()
       : "081234567890"
 
-  const grossAmount = Math.max(1000, Math.round(amount))
-  const appOrigin = (req.headers.origin || "http://localhost:8443").replace(/\/$/, "")
+  const grossAmount = Math.max(1000, Math.round(Number(order.total)))
+  const appOrigin = (
+    req.headers.origin ||
+    process.env.CLIENT_ORIGIN ||
+    "http://localhost:8443"
+  ).replace(/\/$/, "")
 
   try {
     const parameter = {
@@ -54,7 +58,7 @@ router.post("/create", requireAuth, async (req, res) => {
       item_details: [
         {
           id: order.id,
-          name: "Pesanan Coffidoor",
+          name: "Pesanan coffidoor",
           price: grossAmount,
           quantity: 1,
         },
@@ -84,7 +88,10 @@ router.post("/create", requireAuth, async (req, res) => {
   } catch (error) {
     console.error("Midtrans createTransaction error:", error)
     return res.status(400).json({
-      error: "Midtrans gagal membuat transaksi. Cek konfigurasi MIDTRANS_SERVER_KEY dan MIDTRANS_CLIENT_KEY.",
+      error:
+        error instanceof Error && error.message
+          ? `Midtrans gagal membuat transaksi: ${error.message}`
+          : "Midtrans gagal membuat transaksi. Cek konfigurasi key dan mode sandbox/production.",
     })
   }
 })

@@ -53,14 +53,14 @@ const PLACE_TABS: { key: Tab; label: string; icon: typeof MdDashboard }[] = [
 ]
 
 const inputClass =
-  "w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-all focus:border-[#b07d3f] focus:ring-2 focus:ring-[rgba(176,125,63,0.25)]"
+  "w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-all focus:border-[#d1d5db] focus:ring-2 focus:ring-[rgba(209,213,219,0.25)]"
 
 const labelClass = "block text-xs font-semibold text-muted-foreground mb-1"
 
 function statusClass(status: OrderStatus): string {
   switch (status) {
     case "PENDING":
-      return "bg-[rgba(176,125,63,0.15)] text-[#b07d3f]"
+      return "bg-[rgba(209,213,219,0.15)] text-[#d1d5db]"
     case "CONFIRMED":
       return "bg-[rgba(59,130,246,0.15)] text-blue-600"
     case "PREPARING":
@@ -437,10 +437,10 @@ export default function PagePartnerPage() {
       <div className="min-h-screen flex items-center justify-center px-6 pt-16">
         <div className="glass-card rounded-3xl p-10 text-center max-w-md">
           <div className="text-4xl mb-3">
-            <MdStore className="text-[#b07d3f] mx-auto w-12 h-12" />
+            <MdStore className="text-[#d1d5db] mx-auto w-12 h-12" />
           </div>
           <h1 className="text-xl font-black text-foreground mb-2">
-            Mitra Coffidoor
+            Mitra coffidoor
           </h1>
           <p className="text-muted-foreground text-sm mb-6">
             Masuk untuk mendaftarkan kafenya, kelola menu, lihat pesanan, dan
@@ -448,7 +448,7 @@ export default function PagePartnerPage() {
           </p>
           <button
             onClick={() => setAuthOpen(true)}
-            className="bg-[#b07d3f] text-[#1a1a1a] font-black px-6 py-3 rounded-full text-sm hover:bg-[#c9974f] transition-colors"
+            className="bg-[#d1d5db] text-[#111113] font-black px-6 py-3 rounded-full text-sm hover:bg-[#f3f4f6] transition-colors"
           >
             Masuk Sekarang
           </button>
@@ -464,7 +464,7 @@ export default function PagePartnerPage() {
     <div className="pt-24 px-6 md:px-12 max-w-6xl mx-auto pb-20">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
         <div>
-          <div className="flex items-center gap-2 text-[#b07d3f] font-black text-sm mb-2">
+          <div className="flex items-center gap-2 text-[#d1d5db] font-black text-sm mb-2">
             <MdStore className="w-5 h-5" />
             MITRA USAHA
           </div>
@@ -481,7 +481,7 @@ export default function PagePartnerPage() {
         {places.length > 0 && (
           <button
             onClick={openCreatePlace}
-            className="inline-flex items-center gap-1.5 bg-[#b07d3f] text-[#1a1a1a] font-black px-5 py-2.5 rounded-full text-sm hover:bg-[#c9974f] transition-colors"
+            className="inline-flex items-center gap-1.5 bg-[#d1d5db] text-[#111113] font-black px-5 py-2.5 rounded-full text-sm hover:bg-[#f3f4f6] transition-colors"
           >
             <MdAdd className="w-4 h-4" />
             Daftarkan Usaha Baru
@@ -496,7 +496,7 @@ export default function PagePartnerPage() {
           <p className="text-foreground font-semibold">{placesError}</p>
           <button
             onClick={() => setReloadTick((t) => t + 1)}
-            className="mt-4 bg-[#b07d3f] text-[#1a1a1a] font-black px-6 py-3 rounded-full text-sm"
+            className="mt-4 bg-[#d1d5db] text-[#111113] font-black px-6 py-3 rounded-full text-sm"
           >
             Coba Lagi
           </button>
@@ -656,7 +656,7 @@ export default function PagePartnerPage() {
             <button
               onClick={submitPlace}
               disabled={placeSaving}
-              className="bg-[#b07d3f] text-[#1a1a1a] font-black px-6 py-3 rounded-full text-sm hover:bg-[#c9974f] transition-colors disabled:opacity-60"
+              className="bg-[#d1d5db] text-[#111113] font-black px-6 py-3 rounded-full text-sm hover:bg-[#f3f4f6] transition-colors disabled:opacity-60"
             >
               {placeSaving
                 ? "Menyimpan..."
@@ -706,7 +706,7 @@ export default function PagePartnerPage() {
                   onClick={() => setTab(t.key)}
                   className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all duration-300 ${
                     tab === t.key
-                      ? "bg-[#b07d3f] text-[#1a1a1a]"
+                      ? "bg-[#d1d5db] text-[#111113]"
                       : "footer-glass-pill text-muted-foreground hover:text-foreground"
                   }`}
                 >
@@ -725,7 +725,7 @@ export default function PagePartnerPage() {
                 </h2>
                 <button
                   onClick={openCreatePlace}
-                  className="inline-flex items-center gap-1.5 footer-glass-pill px-4 py-2 rounded-full text-xs font-semibold text-[#b07d3f]"
+                  className="inline-flex items-center gap-1.5 footer-glass-pill px-4 py-2 rounded-full text-xs font-semibold text-[#d1d5db]"
                 >
                   <MdAdd className="w-4 h-4" />
                   Daftarkan Usaha
@@ -744,7 +744,7 @@ export default function PagePartnerPage() {
                         className="h-36 w-full object-cover"
                       />
                     ) : (
-                      <div className="h-36 w-full bg-[rgba(140,95,40,0.15)] flex items-center justify-center text-[#b07d3f]">
+                      <div className="h-36 w-full bg-[rgba(156,163,175,0.15)] flex items-center justify-center text-[#d1d5db]">
                         <MdStore className="w-10 h-10" />
                       </div>
                     )}
@@ -757,7 +757,7 @@ export default function PagePartnerPage() {
                           <button
                             onClick={() => openEditPlace(p)}
                             title="Edit"
-                            className="w-8 h-8 rounded-full footer-glass-pill flex items-center justify-center text-muted-foreground hover:text-[#b07d3f]"
+                            className="w-8 h-8 rounded-full footer-glass-pill flex items-center justify-center text-muted-foreground hover:text-[#d1d5db]"
                           >
                             <MdEdit className="w-4 h-4" />
                           </button>
@@ -787,7 +787,7 @@ export default function PagePartnerPage() {
                       </div>
                       <Link
                         to={`/places/${p.id}`}
-                        className="inline-block mt-4 text-[#b07d3f] text-sm font-bold hover:underline"
+                        className="inline-block mt-4 text-[#d1d5db] text-sm font-bold hover:underline"
                       >
                         Lihat Halaman Kafe →
                       </Link>
@@ -805,7 +805,7 @@ export default function PagePartnerPage() {
               </p>
               <button
                 onClick={openCreatePlace}
-                className="mt-4 bg-[#b07d3f] text-[#1a1a1a] font-black px-6 py-3 rounded-full text-sm"
+                className="mt-4 bg-[#d1d5db] text-[#111113] font-black px-6 py-3 rounded-full text-sm"
               >
                 Daftarkan Usaha Pertama
               </button>
@@ -823,7 +823,7 @@ export default function PagePartnerPage() {
               <p className="text-foreground font-semibold">{dataError}</p>
               <button
                 onClick={() => setReloadTick((t) => t + 1)}
-                className="mt-4 bg-[#b07d3f] text-[#1a1a1a] font-black px-6 py-3 rounded-full text-sm"
+                className="mt-4 bg-[#d1d5db] text-[#111113] font-black px-6 py-3 rounded-full text-sm"
               >
                 Coba Lagi
               </button>
@@ -845,7 +845,7 @@ export default function PagePartnerPage() {
                   <p className="text-xs font-semibold text-muted-foreground mb-1">
                     Pendapatan
                   </p>
-                  <p className="text-2xl font-black text-[#b07d3f]">
+                  <p className="text-2xl font-black text-[#d1d5db]">
                     {formatRupiah(dashboard.totalRevenue)}
                   </p>
                 </div>
@@ -1007,7 +1007,7 @@ export default function PagePartnerPage() {
                 </h2>
                 <button
                   onClick={openCreateMenu}
-                  className="inline-flex items-center gap-1.5 bg-[#b07d3f] text-[#1a1a1a] font-black px-4 py-2 rounded-full text-xs hover:bg-[#c9974f] transition-colors"
+                  className="inline-flex items-center gap-1.5 bg-[#d1d5db] text-[#111113] font-black px-4 py-2 rounded-full text-xs hover:bg-[#f3f4f6] transition-colors"
                 >
                   <MdAdd className="w-4 h-4" />
                   Tambah Menu
@@ -1152,7 +1152,7 @@ export default function PagePartnerPage() {
                           placeholder="https://..."
                           className={inputClass}
                         />
-                        <label className="shrink-0 cursor-pointer inline-flex items-center gap-1.5 footer-glass-pill px-4 py-3 rounded-xl text-xs font-semibold text-muted-foreground hover:text-[#b07d3f]">
+                        <label className="shrink-0 cursor-pointer inline-flex items-center gap-1.5 footer-glass-pill px-4 py-3 rounded-xl text-xs font-semibold text-muted-foreground hover:text-[#d1d5db]">
                           {uploadingMenuImage ? "Mengunggah..." : "Unggah"}
                           <MdUpload className="w-4 h-4" />
                           <input
@@ -1175,7 +1175,7 @@ export default function PagePartnerPage() {
                     <button
                       onClick={submitMenu}
                       disabled={menuSaving}
-                      className="bg-[#b07d3f] text-[#1a1a1a] font-black px-6 py-3 rounded-full text-sm hover:bg-[#c9974f] transition-colors disabled:opacity-60"
+                      className="bg-[#d1d5db] text-[#111113] font-black px-6 py-3 rounded-full text-sm hover:bg-[#f3f4f6] transition-colors disabled:opacity-60"
                     >
                       {menuSaving
                         ? "Menyimpan..."
@@ -1200,7 +1200,7 @@ export default function PagePartnerPage() {
                   </p>
                   <button
                     onClick={openCreateMenu}
-                    className="mt-4 bg-[#b07d3f] text-[#1a1a1a] font-black px-6 py-3 rounded-full text-sm"
+                    className="mt-4 bg-[#d1d5db] text-[#111113] font-black px-6 py-3 rounded-full text-sm"
                   >
                     Tambah Menu Pertama
                   </button>
@@ -1242,7 +1242,7 @@ export default function PagePartnerPage() {
                             {m.isAvailable ? "Tersedia" : "Habis"}
                           </span>
                         </div>
-                        <p className="text-[#b07d3f] font-black mt-2">
+                        <p className="text-[#d1d5db] font-black mt-2">
                           {formatRupiah(m.price)}
                         </p>
                         {m.description && (
@@ -1264,7 +1264,7 @@ export default function PagePartnerPage() {
                           <button
                             onClick={() => openEditMenu(m)}
                             title="Edit"
-                            className="w-8 h-8 rounded-full footer-glass-pill flex items-center justify-center text-muted-foreground hover:text-[#b07d3f]"
+                            className="w-8 h-8 rounded-full footer-glass-pill flex items-center justify-center text-muted-foreground hover:text-[#d1d5db]"
                           >
                             <MdEdit className="w-4 h-4" />
                           </button>
@@ -1309,7 +1309,7 @@ export default function PagePartnerPage() {
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="font-black text-[#b07d3f]">
+                          <p className="font-black text-[#d1d5db]">
                             {formatRupiah(o.total)}
                           </p>
                           <p
@@ -1366,7 +1366,7 @@ export default function PagePartnerPage() {
                             href={o.paymentProofUrl}
                             target="_blank"
                             rel="noreferrer"
-                            className="text-[#b07d3f] font-semibold hover:underline ml-1"
+                            className="text-[#d1d5db] font-semibold hover:underline ml-1"
                           >
                             (lihat bukti)
                           </a>
@@ -1379,7 +1379,7 @@ export default function PagePartnerPage() {
                             <button
                               onClick={() => nextOrderStatus(o)}
                               disabled={statusUpdatingId === o.id}
-                              className="bg-[#b07d3f] text-[#1a1a1a] font-black px-4 py-2 rounded-full text-xs hover:bg-[#c9974f] transition-colors disabled:opacity-60"
+                              className="bg-[#d1d5db] text-[#111113] font-black px-4 py-2 rounded-full text-xs hover:bg-[#f3f4f6] transition-colors disabled:opacity-60"
                             >
                               {statusUpdatingId === o.id
                                 ? "Menyimpan..."
