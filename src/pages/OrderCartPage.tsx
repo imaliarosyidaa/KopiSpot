@@ -42,6 +42,7 @@ export default function OrderCartPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const sessionItems = useCartStore((state) => state.items)
+  const clearSessionCart = useCartStore((state) => state.clear)
   const [authOpen, setAuthOpen] = useState(false)
   const [orders, setOrders] = useState<Order[]>([])
   const [ordersError, setOrdersError] = useState<string | null>(null)
@@ -51,6 +52,7 @@ export default function OrderCartPage() {
   const [wishOrderIds, setWishOrderIds] = useState<string[]>([])
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [checkoutId, setCheckoutId] = useState<string | null>(null)
+  const [paidGuestOrder, setPaidGuestOrder] = useState<Order | null>(null)
 
   const loadOrders = useCallback(async () => {
     if (!user) return
@@ -75,12 +77,20 @@ export default function OrderCartPage() {
     const params = new URLSearchParams(location.search)
     const paymentStatus = params.get("payment")
     const orderId = params.get("order_id")
-    if (!user || !paymentStatus || !orderId) return
+    if (!paymentStatus || !orderId) return
+    const guestToken =
+      typeof window !== "undefined"
+        ? sessionStorage.getItem(`Coffidoor_guest_order_${orderId}`) ?? undefined
+        : undefined
 
     if (paymentStatus === "success") {
       ordersApi
-        .pay(orderId, "Midtrans")
-        .then(() => loadOrders())
+        .pay(orderId, "Midtrans", undefined, guestToken)
+        .then((paidOrder) => {
+          setPaidGuestOrder(paidOrder)
+          clearSessionCart()
+          return loadOrders()
+        })
         .catch((err) => {
           setOrdersError(
             err instanceof Error
@@ -93,7 +103,7 @@ export default function OrderCartPage() {
     }
 
     navigate("/order/keranjang", { replace: true })
-  }, [loadOrders, location.search, navigate, user])
+  }, [clearSessionCart, loadOrders, location.search, navigate])
 
   const requireLogin = (): boolean => {
     if (user) return true
@@ -332,7 +342,31 @@ export default function OrderCartPage() {
           </Link>
         </div>
 
-        {!user && sessionItems.length > 0 ? (
+        {paidGuestOrder ? (
+          <div className="glass-card rounded-3xl p-8 text-center max-w-md mx-auto">
+            <div className="text-4xl mb-3">✓</div>
+            <h2 className="text-xl font-black text-foreground mb-2">
+              Pembayaran Berhasil
+            </h2>
+            <p className="text-muted-foreground text-sm mb-6">
+              Simpan ticket/order bill ini untuk mengambil pesananmu.
+            </p>
+            <div className="rounded-2xl border border-border bg-card p-4 text-left text-sm space-y-2">
+              <div className="flex justify-between gap-3">
+                <span className="text-muted-foreground">No. Ticket</span>
+                <span className="font-black text-foreground">#{paidGuestOrder.id.slice(-8)}</span>
+              </div>
+              <div className="flex justify-between gap-3">
+                <span className="text-muted-foreground">Kafe</span>
+                <span className="font-semibold text-foreground text-right">{paidGuestOrder.place.name}</span>
+              </div>
+              <div className="flex justify-between gap-3">
+                <span className="text-muted-foreground">Total</span>
+                <span className="font-black text-primary">{formatRupiah(paidGuestOrder.total)}</span>
+              </div>
+            </div>
+          </div>
+        ) : !user && sessionItems.length > 0 ? (
           <div className="glass-card rounded-3xl p-10 text-center max-w-md mx-auto">
             <div className="text-4xl mb-3">🛒</div>
             <h2 className="text-xl font-black text-foreground mb-2">

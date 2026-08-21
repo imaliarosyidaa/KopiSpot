@@ -1,14 +1,16 @@
 import { Router } from "express"
 import snap from "../midtrans.js"
 import { prisma } from "../db.js"
-import { requireAuth } from "../auth.js"
+import { optionalAuth } from "../auth.js"
 
 const router = Router()
 
-router.post("/create", requireAuth, async (req, res) => {
+router.post("/create", optionalAuth, async (req, res) => {
   const orderId = typeof req.body?.orderId === "string" ? req.body.orderId.trim() : ""
   const amount = Number(req.body?.amount ?? 0)
   const customer = req.body?.customer || {}
+  const guestToken =
+    typeof req.body?.guestToken === "string" ? req.body.guestToken.trim() : ""
 
   if (!orderId) {
     return res.status(400).json({ error: "Order ID wajib diisi." })
@@ -20,10 +22,11 @@ router.post("/create", requireAuth, async (req, res) => {
 
   const order = await prisma.order.findUnique({
     where: { id: orderId },
-    select: { id: true, userId: true, total: true },
+    select: { id: true, userId: true, guestToken: true, total: true },
   })
 
-  if (!order || order.userId !== req.userId) {
+  const ownsOrder = order && (order.userId === req.userId || order.guestToken === guestToken)
+  if (!ownsOrder) {
     return res.status(404).json({ error: "Pesanan tidak ditemukan." })
   }
 

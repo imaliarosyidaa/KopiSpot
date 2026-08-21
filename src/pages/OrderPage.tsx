@@ -90,6 +90,11 @@ function billingSummary(order: Order | null): string {
   return order?.billingAddress?.replace(/\n/g, " · ") ?? "-"
 }
 
+function guestTokenFor(orderId: string): string | undefined {
+  if (typeof window === "undefined") return undefined
+  return sessionStorage.getItem(`Coffidoor_guest_order_${orderId}`) ?? undefined
+}
+
 export default function OrderPage() {
   const { user, loading } = useAuth()
   const navigate = useNavigate()
@@ -156,7 +161,7 @@ export default function OrderPage() {
 
     if (paymentStatus === "success") {
       ordersApi
-        .pay(orderId, "Midtrans")
+        .pay(orderId, "Midtrans", undefined, guestTokenFor(orderId))
         .then((paidOrder) => {
           setCreatedOrder(paidOrder)
           setStep("done")
@@ -258,7 +263,6 @@ export default function OrderPage() {
   }
 
   const placeOrder = async () => {
-    if (!requireLogin()) return
     if (items.length === 0) return
     if (
       !billing.name.trim() ||
@@ -280,6 +284,9 @@ export default function OrderPage() {
         couponCode: NEW_USER_COUPON,
       })
       setCreatedOrder(order)
+      if (order.guestToken && typeof window !== "undefined") {
+        sessionStorage.setItem(`Coffidoor_guest_order_${order.id}`, order.guestToken)
+      }
 
       const payment = await paymentsApi.create({
         orderId: order.id,
@@ -289,6 +296,7 @@ export default function OrderPage() {
           email: user?.email || "customer@coffidoor.test",
           phone: billing.phone || "081234567890",
         },
+        guestToken: order.guestToken ?? undefined,
       })
 
       if (payment.redirect_url) {
@@ -325,7 +333,6 @@ export default function OrderPage() {
   }
 
   const confirmPayment = async () => {
-    if (!requireLogin()) return
     if (!createdOrder) return
 
     if (paymentMethod === "Bayar di Kafe") {
@@ -336,6 +343,7 @@ export default function OrderPage() {
           createdOrder.id,
           paymentMethod,
           proofUrl ?? undefined,
+          guestTokenFor(createdOrder.id),
         )
         setCreatedOrder(paid)
         clear()
@@ -364,6 +372,7 @@ export default function OrderPage() {
           email: user?.email || "customer@Coffidoor.test",
           phone: billing.phone || "081234567890",
         },
+        guestToken: guestTokenFor(createdOrder.id),
       })
 
       if (payment.redirect_url) {
@@ -867,62 +876,6 @@ export default function OrderPage() {
               />
             </div>
           </div>
-        </div>
-
-        <div className="glass-card rounded-3xl p-6 md:p-8">
-
-          {showMidtransPanel && createdOrder && (
-            <div className="mt-6 rounded-2xl border border-[rgba(209,213,219,0.3)] bg-[rgba(209,213,219,0.06)] p-5">
-              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                Pembayaran Midtrans
-              </div>
-
-              {paymentMethod === "QRIS" ? (
-                <div className="flex flex-col items-center text-center">
-                  <div className="bg-white rounded-2xl p-3 inline-block mb-3">
-                    <QRCodeSVG
-                      value={`Coffidoor-QRIS:${createdOrder.id}:${createdOrder.total}`}
-                      size={180}
-                      bgColor="#ffffff"
-                      fgColor="#111113"
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Scan QRIS untuk membayar {formatRupiah(createdOrder.total)}.
-                  </p>
-                </div>
-              ) : paymentMethod.includes("Virtual Account") ? (
-                <div>
-                  <div className="mb-2 text-xs text-muted-foreground uppercase tracking-wider">
-                    Nomor Virtual Account
-                  </div>
-                  <div className="flex items-center justify-between gap-3 rounded-xl bg-[rgba(156,163,175,0.08)] border border-[rgba(156,163,175,0.2)] px-4 py-3">
-                    <div className="font-black text-foreground text-lg tracking-widest select-all">
-                      {vaNumber(createdOrder.id)}
-                    </div>
-                    <button
-                      onClick={() => navigator.clipboard?.writeText(vaNumber(createdOrder.id))}
-                      className="text-xs font-semibold rounded-full px-3 py-2 bg-[#d1d5db] text-[#111113]"
-                    >
-                      Salin
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-sm text-foreground">
-                  Lanjutkan pembayaran via {paymentMethod}. Setelah dibayar, sistem akan mengonfirmasi pesanan secara otomatis.
-                </div>
-              )}
-
-              <button
-                onClick={confirmPayment}
-                disabled={submitting}
-                className="mt-4 w-full bg-[#d1d5db] text-[#111113] font-black px-6 py-3 rounded-full text-sm hover:bg-[#f3f4f6] transition-colors disabled:opacity-60"
-              >
-                {submitting ? "Memproses..." : "Bayar Sekarang"}
-              </button>
-            </div>
-          )}
         </div>
       </div>
 

@@ -1,6 +1,7 @@
 import { Router } from "express"
+import crypto from "node:crypto"
 import { prisma } from "../db.js"
-import { requireAuth } from "../auth.js"
+import { optionalAuth, requireAuth } from "../auth.js"
 
 const router = Router()
 
@@ -44,7 +45,7 @@ router.get("/:id", requireAuth, async (req, res) => {
 })
 
 // POST /api/orders — buat pesanan (checkout) dari keranjang
-router.post("/", requireAuth, async (req, res) => {
+router.post("/", optionalAuth, async (req, res) => {
   const body = req.body || {}
   const placeId = typeof body.placeId === "string" ? body.placeId : ""
   const items = Array.isArray(body.items) ? body.items : []
@@ -53,6 +54,7 @@ router.post("/", requireAuth, async (req, res) => {
     typeof body.billingAddress === "string" ? body.billingAddress.trim() : ""
   const couponCode =
     typeof body.couponCode === "string" ? body.couponCode.trim().toUpperCase() : ""
+  const guestToken = req.userId ? null : crypto.randomBytes(32).toString("hex")
 
   if (!placeId) {
     return res.status(400).json({ error: "Kafe wajib dipilih." })
@@ -105,8 +107,9 @@ router.post("/", requireAuth, async (req, res) => {
 
   const order = await prisma.order.create({
     data: {
-      userId: req.userId,
+      userId: req.userId ?? null,
       placeId,
+      guestToken,
       total,
       note: note || null,
       billingAddress: billingAddress || null,
@@ -126,26 +129,29 @@ router.post("/", requireAuth, async (req, res) => {
     include: ORDER_INCLUDE,
   })
 
-  res.status(201).json(order)
+  res.status(201).json({ ...order, guestToken })
 })
 
 // PUT /api/orders/:id/pay — konfirmasi pembayaran pesanan
-router.put("/:id/pay", requireAuth, async (req, res) => {
+router.put("/:id/pay", optionalAuth, async (req, res) => {
   const method =
     typeof req.body?.method === "string" ? req.body.method.trim() : ""
   const proofUrl =
     typeof req.body?.proofUrl === "string" && req.body.proofUrl.trim()
       ? req.body.proofUrl.trim()
       : null
+  const guestToken =
+    typeof req.body?.guestToken === "string" ? req.body.guestToken.trim() : ""
   if (!method) {
     return res.status(400).json({ error: "Pilih metode pembayaran." })
   }
 
   const order = await prisma.order.findUnique({
     where: { id: req.params.id },
-    select: { id: true, userId: true, paymentStatus: true },
+    select: { id: true, userId: true, guestToken: true, paymentStatus: true },
   })
-  if (!order || order.userId !== req.userId) {
+  const ownsOrder = order && (order.userId === req.userId || order.guestToken === guestToken)
+  if (!ownsOrder) {
     return res.status(404).json({ error: "Pesanan tidak ditemukan." })
   }
   if (order.paymentStatus === "PAID") {

@@ -555,7 +555,8 @@ export interface OrderItem {
 
 export interface Order {
   id: string;
-  userId: string;
+  userId: string | null;
+  guestToken?: string | null;
   placeId: string;
   status: OrderStatus;
   total: number;
@@ -579,11 +580,11 @@ export const ordersApi = {
     note?: string;
     billingAddress?: string;
     couponCode?: string;
-  }) => api<Order>("/orders", { method: "POST", body: JSON.stringify(data) }),
-  pay: (id: string, method: string, proofUrl?: string) =>
+  }) => api<Order & { guestToken?: string }>("/orders", { method: "POST", body: JSON.stringify(data) }),
+  pay: (id: string, method: string, proofUrl?: string, guestToken?: string) =>
     api<Order>(`/orders/${id}/pay`, {
       method: "PUT",
-      body: JSON.stringify({ method, proofUrl: proofUrl ?? null }),
+      body: JSON.stringify({ method, proofUrl: proofUrl ?? null, guestToken }),
     }),
   remove: (id: string) => api<{ ok: boolean }>(`/orders/${id}`, { method: "DELETE" }),
 };
@@ -592,6 +593,7 @@ export const paymentsApi = {
   create: (data: {
     orderId: string;
     amount: number;
+    guestToken?: string;
     customer?: {
       firstName?: string;
       email?: string;
