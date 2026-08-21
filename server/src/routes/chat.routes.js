@@ -287,7 +287,7 @@ function notFoundReply(intent) {
 
 function fallbackReply() {
   return [
-    "Aku asisten KopiSpot ☕ Aku bisa bantu jawab seputar kalori, kadar gula, ingredients menu, waktu terbaik minum kopi, dan rekomendasi kafe.",
+    "Aku asisten Coffidoor ☕ Aku bisa bantu jawab seputar kalori, kadar gula, ingredients menu, waktu terbaik minum kopi, dan rekomendasi kafe.",
     "",
     "Coba tanya salah satu ini:",
     ...SHORTCUTS.map((s) => `• ${s}`),

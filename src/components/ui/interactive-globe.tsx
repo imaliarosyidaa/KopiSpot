@@ -314,7 +314,7 @@ export function InteractiveGlobe({
         "w-full h-full cursor-grab active:cursor-grabbing",
         className,
       )}
-      style={{ width: size, height: size }}
+      style={className ? undefined : { width: size, height: size }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}

@@ -31,7 +31,7 @@ export const useTheme = create<ThemeState>()(
       },
     }),
     {
-      name: "kopispot_theme",
+      name: "Coffidoor_theme",
       onRehydrateStorage: () => (state) => {
         if (state) applyTheme(state.theme)
       },

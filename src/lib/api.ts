@@ -1,7 +1,7 @@
 const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:4000/api";
 const API_ORIGIN = API_BASE.replace(/\/api\/?$/, "");
 
-const TOKEN_KEY = "kopispot_token";
+const TOKEN_KEY = "Coffidoor_token";
 
 export interface AuthUser {
   id: string;
@@ -585,4 +585,27 @@ export const ordersApi = {
       body: JSON.stringify({ method, proofUrl: proofUrl ?? null }),
     }),
   remove: (id: string) => api<{ ok: boolean }>(`/orders/${id}`, { method: "DELETE" }),
+};
+
+export const paymentsApi = {
+  create: (data: {
+    orderId: string;
+    amount: number;
+    customer?: {
+      firstName?: string;
+      email?: string;
+      phone?: string;
+    };
+  }) =>
+    api<{
+      success: boolean;
+      orderId: string;
+      amount: number;
+      token: string;
+      redirect_url: string;
+      paymentId: string;
+    }>("/payments/create", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 };

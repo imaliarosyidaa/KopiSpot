@@ -124,7 +124,7 @@ function figmaSiteConfiguration(config: FigmaSiteConfiguration): Plugin {
     return html.replace(`<!-- ${slotName} -->`, content)
   }
 
-  const title = config.title ?? "KopiSpot App"
+  const title = config.title ?? "Coffidoor App"
 
   const description = config.description ?? ""
 

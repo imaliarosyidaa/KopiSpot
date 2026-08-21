@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: kopispot-api
+    name: Coffidoor-api
     runtime: node
     rootDir: server
     plan: free

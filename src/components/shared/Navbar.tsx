@@ -35,7 +35,7 @@ export default function Navbar() {
             className="text-foreground font-black text-lg tracking-tight"
             style={{ fontFamily: "'Fraunces', serif" }}
           >
-            KopiSpot
+            Coffidoor
           </span>
         </Link>
 

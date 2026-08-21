@@ -20,6 +20,7 @@ import { QRCodeSVG } from "qrcode.react"
 import {
   menusApi,
   ordersApi,
+  paymentsApi,
   placesApi,
   uploadFile,
   type MenuItemOption,
@@ -54,6 +55,12 @@ const PAYMENT_LABEL: Record<string, string> = {
   UNPAID: "Belum Dibayar",
   PAID: "Lunas",
   FAILED: "Gagal",
+}
+
+const TEST_DISCOUNT_RATE = 0.9
+
+function discountedAmount(value: number): number {
+  return Math.max(1000, Math.round(value * (1 - TEST_DISCOUNT_RATE)))
 }
 
 const STEPS: { key: Step; label: string }[] = [
@@ -110,6 +117,9 @@ export default function OrderPage() {
   const [loadingMenus, setLoadingMenus] = useState(true)
   const [menuError, setMenuError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+  const [paymentRedirectState, setPaymentRedirectState] = useState<
+    "success" | "failed" | null
+  >(null)
 
   const [authOpen, setAuthOpen] = useState(false)
   const [note, setNote] = useState("")
@@ -123,6 +133,7 @@ export default function OrderPage() {
   const [billingError, setBillingError] = useState<string | null>(null)
   const [paymentMethod, setPaymentMethod] = useState(PAYMENT_METHODS[0])
   const [createdOrder, setCreatedOrder] = useState<Order | null>(null)
+  const [showMidtransPanel, setShowMidtransPanel] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [proofUrl, setProofUrl] = useState<string | null>(null)
@@ -131,6 +142,35 @@ export default function OrderPage() {
 
   const count = cartCount(items)
   const subtotal = cartSubtotal(items)
+  const discountedSubtotal = discountedAmount(subtotal)
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const paymentStatus = params.get("payment")
+    const orderId = params.get("order_id")
+
+    if (!orderId || !paymentStatus) return
+
+    setPaymentRedirectState(paymentStatus === "success" ? "success" : "failed")
+
+    if (paymentStatus === "success") {
+      ordersApi
+        .pay(orderId, "Midtrans")
+        .then((paidOrder) => {
+          setCreatedOrder(paidOrder)
+          setStep("done")
+          clear()
+        })
+        .catch(() => {
+          setError("Pembayaran Midtrans berhasil dikirim, tetapi konfirmasi lokal gagal. Silakan cek riwayat pesanan.")
+          setStep("done")
+        })
+      return
+    }
+
+    setError("Pembayaran gagal atau dibatalkan. Silakan ulang proses checkout.")
+    setStep("pay")
+  }, [clear, location.search])
 
   useEffect(() => {
     placesApi
@@ -235,7 +275,8 @@ export default function OrderPage() {
         billingAddress: buildBillingAddress(),
       })
       setCreatedOrder(order)
-      setStep("pay")
+      setShowMidtransPanel(true)
+      setStep("checkout")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal membuat pesanan.")
     } finally {
@@ -265,18 +306,51 @@ export default function OrderPage() {
   const confirmPayment = async () => {
     if (!requireLogin()) return
     if (!createdOrder) return
-    if (paymentMethod !== "Bayar di Kafe" && !proofUrl) {
-      setError("Mohon kirim bukti pembayaran terlebih dahulu.")
+
+    if (paymentMethod === "Bayar di Kafe") {
+      setError(null)
+      setSubmitting(true)
+      try {
+        const paid = await ordersApi.pay(
+          createdOrder.id,
+          paymentMethod,
+          proofUrl ?? undefined,
+        )
+        setCreatedOrder(paid)
+        clear()
+        setNote("")
+        setProofUrl(null)
+        setProofName("")
+        setStep("done")
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Gagal memproses pembayaran.",
+        )
+      } finally {
+        setSubmitting(false)
+      }
       return
     }
+
     setError(null)
     setSubmitting(true)
     try {
-      const paid = await ordersApi.pay(
-        createdOrder.id,
-        paymentMethod,
-        proofUrl ?? undefined,
-      )
+      const payment = await paymentsApi.create({
+        orderId: createdOrder.id,
+        amount: discountedSubtotal,
+        customer: {
+          firstName: billing.name || user?.name || "Coffidoor Customer",
+          email: user?.email || "customer@Coffidoor.test",
+          phone: billing.phone || "081234567890",
+        },
+      })
+
+      if (payment.redirect_url) {
+        window.location.href = payment.redirect_url
+        return
+      }
+
+      const paid = await ordersApi.pay(createdOrder.id, "Midtrans")
       setCreatedOrder(paid)
       clear()
       setNote("")
@@ -656,7 +730,7 @@ export default function OrderPage() {
                 Total
               </span>
               <span className="font-black text-lg text-[#b07d3f]">
-                {formatRupiah(subtotal)}
+                {formatRupiah(discountedSubtotal)}
               </span>
             </div>
 
@@ -801,6 +875,59 @@ export default function OrderPage() {
               </label>
             ))}
           </div>
+
+          {showMidtransPanel && createdOrder && (
+            <div className="mt-6 rounded-2xl border border-[rgba(176,125,63,0.3)] bg-[rgba(176,125,63,0.06)] p-5">
+              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                Pembayaran Midtrans
+              </div>
+
+              {paymentMethod === "QRIS" ? (
+                <div className="flex flex-col items-center text-center">
+                  <div className="bg-white rounded-2xl p-3 inline-block mb-3">
+                    <QRCodeSVG
+                      value={`Coffidoor-QRIS:${createdOrder.id}:${createdOrder.total}`}
+                      size={180}
+                      bgColor="#ffffff"
+                      fgColor="#1a1a1a"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Scan QRIS untuk membayar {formatRupiah(createdOrder.total)}.
+                  </p>
+                </div>
+              ) : paymentMethod.includes("Virtual Account") ? (
+                <div>
+                  <div className="mb-2 text-xs text-muted-foreground uppercase tracking-wider">
+                    Nomor Virtual Account
+                  </div>
+                  <div className="flex items-center justify-between gap-3 rounded-xl bg-[rgba(140,95,40,0.08)] border border-[rgba(140,95,40,0.2)] px-4 py-3">
+                    <div className="font-black text-foreground text-lg tracking-widest select-all">
+                      {vaNumber(createdOrder.id)}
+                    </div>
+                    <button
+                      onClick={() => navigator.clipboard?.writeText(vaNumber(createdOrder.id))}
+                      className="text-xs font-semibold rounded-full px-3 py-2 bg-[#b07d3f] text-[#1a1a1a]"
+                    >
+                      Salin
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-sm text-foreground">
+                  Lanjutkan pembayaran via {paymentMethod}. Setelah dibayar, sistem akan mengonfirmasi pesanan secara otomatis.
+                </div>
+              )}
+
+              <button
+                onClick={confirmPayment}
+                disabled={submitting}
+                className="mt-4 w-full bg-[#b07d3f] text-[#1a1a1a] font-black px-6 py-3 rounded-full text-sm hover:bg-[#c9974f] transition-colors disabled:opacity-60"
+              >
+                {submitting ? "Memproses..." : "Bayar Sekarang"}
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -858,7 +985,7 @@ export default function OrderPage() {
             Total Pembayaran
           </span>
           <span className="font-black text-lg text-[#b07d3f]">
-            {formatRupiah(subtotal)}
+            {formatRupiah(discountedSubtotal)}
           </span>
         </div>
 
@@ -875,13 +1002,15 @@ export default function OrderPage() {
           >
             Kembali
           </button>
-          <button
-            onClick={placeOrder}
-            disabled={submitting}
-            className="flex-1 bg-[#b07d3f] text-[#1a1a1a] font-black px-6 py-3 rounded-full text-sm hover:bg-[#c9974f] transition-colors disabled:opacity-60"
-          >
-            {submitting ? "Menyimpan..." : "Bayar"}
-          </button>
+          {!showMidtransPanel && (
+            <button
+              onClick={placeOrder}
+              disabled={submitting}
+              className="flex-1 bg-[#b07d3f] text-[#1a1a1a] font-black px-6 py-3 rounded-full text-sm hover:bg-[#c9974f] transition-colors disabled:opacity-60"
+            >
+              {submitting ? "Menyimpan..." : "Checkout"}
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -905,6 +1034,18 @@ export default function OrderPage() {
           Pesanan #{createdOrder?.id.slice(-8)} · {paymentMethod}
         </div>
 
+        {paymentRedirectState === "success" && (
+          <div className="mb-5 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-300">
+            Pembayaran berhasil diterima. Silakan tunggu proses selanjutnya dari kafe.
+          </div>
+        )}
+
+        {paymentRedirectState === "failed" && (
+          <div className="mb-5 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:text-red-300">
+            Pembayaran dibatalkan atau gagal. Anda masih bisa mencoba ulang dari tahap pembayaran.
+          </div>
+        )}
+
         {isQris && (
           <div className="rounded-2xl border border-border p-5 mb-5 flex flex-col items-center text-center">
             <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
@@ -912,7 +1053,7 @@ export default function OrderPage() {
             </div>
             <div className="bg-white rounded-2xl p-4 inline-block">
               <QRCodeSVG
-                value={`KOPISPOT-QRIS:${createdOrder?.id}:${createdOrder?.total}`}
+                value={`Coffidoor-QRIS:${createdOrder?.id}:${createdOrder?.total}`}
                 size={184}
                 bgColor="#ffffff"
                 fgColor="#1a1a1a"
@@ -1032,7 +1173,7 @@ export default function OrderPage() {
             Total Pembayaran
           </span>
           <span className="font-black text-lg text-[#b07d3f]">
-            {formatRupiah(createdOrder?.total ?? subtotal)}
+            {formatRupiah(createdOrder?.total ?? discountedSubtotal)}
           </span>
         </div>
 

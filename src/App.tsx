@@ -1,5 +1,6 @@
 import { Routes, Route } from "react-router-dom"
 import Navbar from "@/components/shared/Navbar"
+import AppFooter from "@/components/shared/AppFooter"
 import HomePage from "@/pages/HomePage"
 import PlaceDetailPage from "@/pages/PlaceDetailPage"
 import FeedPage from "@/pages/FeedPage"

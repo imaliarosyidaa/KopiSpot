@@ -17,6 +17,7 @@ import { timeAgo } from "@/lib/format"
 import { PLACE_CATEGORIES } from "@/lib/constants"
 import ChatPage from "./ChatPage"
 import { CinematicSection } from "@/components/ui/motion"
+import AppFooter from "@/components/shared/AppFooter"
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger)
@@ -109,13 +110,13 @@ function CinematicHero({ onExplore }: { onExplore: () => void }) {
         >
           Satu Akses di
           <br />
-          Pintu Kopi.
+          Coffidoor.
         </h1>
         <p
           ref={subRef}
           className="text-muted-foreground text-sm md:text-base mb-10 max-w-md leading-relaxed"
         >
-          Pintu Kopi adalah platform digital yang menjadi satu pintu bagi
+          Coffidoor adalah platform digital yang menjadi satu pintu bagi
           pelanggan untuk menemukan dan memesan kopi dari berbagai UMKM kopi.
         </p>
 
@@ -268,11 +269,11 @@ export default function HomePage() {
       {/*
         ── ABOUT ──
       */}
-      <section className="md:px-12 py-20 mx-auto">
+      <section className="">
         <div className="rounded-3xl border border-border bg-card overflow-hidden relative footer-glass-pill">
           <div className="absolute top-0 right-1/4 w-96 h-96 rounded-full bg-[#b07d3f]/10 blur-3xl pointer-events-none" />
 
-          <div className="flex flex-col md:flex-row items-center min-h-[520px]">
+          <div className="px-6 md:px-12 py-20 mx-auto flex flex-col md:flex-row items-center md:min-h-[520px]">
             <div className="flex-1 flex flex-col justify-center relative z-10">
               <div>
                 <span className="tag-pill mb-3 inline-block">
@@ -323,14 +324,16 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="flex-1 flex items-center justify-center">
-              <InteractiveGlobe
-                size={440}
-                className="max-w-full"
-                dotColor="rgba(176, 125, 63, ALPHA)"
-                arcColor="rgba(176, 125, 63, 0.45)"
-                markerColor="rgba(201, 151, 79, 1)"
-              />
+            <div className="flex-1 flex items-center justify-center w-full">
+              <div className="w-full max-w-[440px] aspect-square">
+                <InteractiveGlobe
+                  size={440}
+                  className="max-w-full"
+                  dotColor="rgba(176, 125, 63, ALPHA)"
+                  arcColor="rgba(176, 125, 63, 0.45)"
+                  markerColor="rgba(201, 151, 79, 1)"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -563,6 +566,9 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+
+      {/* ── FOOTER ── */}
+      <AppFooter />
     </>
   )
 }

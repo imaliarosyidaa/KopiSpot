@@ -526,7 +526,7 @@ const commentByPlace = {
 }
 
 async function main() {
-  console.log("Seeding KopiSpot database...")
+  console.log("Seeding Coffidoor database...")
 
   await prisma.userAchievement.deleteMany()
 
@@ -556,18 +556,18 @@ async function main() {
 
   await prisma.badge.deleteMany()
 
-  const password = await hash("kopispot123", 10)
+  const password = await hash("Coffidoor123", 10)
 
   const names = [
-    { name: "Dira Kusuma", email: "dira@kopispot.id" },
+    { name: "Dira Kusuma", email: "dira@Coffidoor.id" },
 
-    { name: "Rizal Firmansyah", email: "rizal@kopispot.id" },
+    { name: "Rizal Firmansyah", email: "rizal@Coffidoor.id" },
 
-    { name: "Salsabila Putri", email: "salsabila@kopispot.id" },
+    { name: "Salsabila Putri", email: "salsabila@Coffidoor.id" },
 
-    { name: "Agung Wibowo", email: "agung@kopispot.id" },
+    { name: "Agung Wibowo", email: "agung@Coffidoor.id" },
 
-    { name: "Admin KopiSpot", email: "demo@kopispot.id" },
+    { name: "Admin Coffidoor", email: "demo@Coffidoor.id" },
   ]
 
   const users = []
@@ -871,7 +871,7 @@ async function main() {
     await recomputeGamification(u.id)
   }
 
-  console.log("Seeding selesai. Demo user: demo@kopispot.id / kopispot123")
+  console.log("Seeding selesai. Demo user: demo@Coffidoor.id / Coffidoor123")
 }
 
 main()

@@ -440,7 +440,7 @@ export default function PagePartnerPage() {
             <MdStore className="text-[#b07d3f] mx-auto w-12 h-12" />
           </div>
           <h1 className="text-xl font-black text-foreground mb-2">
-            Mitra KopiSpot
+            Mitra Coffidoor
           </h1>
           <p className="text-muted-foreground text-sm mb-6">
             Masuk untuk mendaftarkan kafenya, kelola menu, lihat pesanan, dan

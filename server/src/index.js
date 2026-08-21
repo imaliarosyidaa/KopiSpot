@@ -1,3 +1,4 @@
+import "dotenv/config"
 import express from "express"
 import cors from "cors"
 import fs from "node:fs"
@@ -9,6 +10,7 @@ import feedRouter from "./routes/feed.routes.js"
 import chatRouter from "./routes/chat.routes.js"
 import menusRouter from "./routes/menus.routes.js"
 import ordersRouter from "./routes/orders.routes.js"
+import paymentsRouter from "./routes/payments.routes.js"
 import partnerRouter from "./routes/partner.routes.js"
 import uploadRouter, { UPLOAD_DIR } from "./routes/upload.routes.js"
 
@@ -34,6 +36,7 @@ app.use("/api/feed", feedRouter)
 app.use("/api/chat", chatRouter)
 app.use("/api/menus", menusRouter)
 app.use("/api/orders", ordersRouter)
+app.use("/api/payments", paymentsRouter)
 app.use("/api/partner", partnerRouter)
 app.use("/api/upload", uploadRouter)
 
@@ -49,5 +52,5 @@ app.use((err, _req, res, _next) => {
 const PORT = Number(process.env.PORT) || 4000
 
 app.listen(PORT, () => {
-  console.log(`KopiSpot API berjalan di http://localhost:${PORT}`)
+  console.log(`Coffidoor API berjalan di http://localhost:${PORT}`)
 })

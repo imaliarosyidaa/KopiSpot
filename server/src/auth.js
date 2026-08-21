@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs"
 
 const { compare, hash } = bcrypt
 
-const JWT_SECRET = process.env.JWT_SECRET || "kopispot-dev-secret-change-me"
+const JWT_SECRET = process.env.JWT_SECRET || "Coffidoor-dev-secret-change-me"
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d"
 
 export function signToken(payload) {

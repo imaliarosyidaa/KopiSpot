@@ -1,5 +1,5 @@
 @AGENTS.md
-# CLAUDE.md - KopiSpot
+# CLAUDE.md - Coffidoor
 Sebuah aplikasi web modern yang membantu pengguna menemukan kafe-kafe yang estetik, populer, dan sedang tren. Pengguna dapat menjelajahi kafe untuk belajar, bekerja, nongkrong, atau mengambil foto. Setiap halaman kafe menyertakan informasi detail, menu, ulasan, peringkat, dan konten yang dihasilkan komunitas.
 
 ---
@@ -59,7 +59,7 @@ Defined with `@custom-variant` in `global.css`.
 
 ```
 
-KopiSpot/
+Coffidoor/
 ├── .figma/
 ├── dist/
 ├── node_modules

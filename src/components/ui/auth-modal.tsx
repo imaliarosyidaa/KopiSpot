@@ -117,7 +117,7 @@ export default function AuthModal({
             className="text-[#1a1a1a] font-black text-xl tracking-tight"
             style={{ fontFamily: "'Fraunces', serif" }}
           >
-            KopiSpot
+            Coffidoor
           </span>
         </div>
 

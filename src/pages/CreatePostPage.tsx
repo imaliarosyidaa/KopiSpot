@@ -48,7 +48,7 @@ export default function CreatePostPage() {
             Masuk untuk membuat postingan
           </h1>
           <p className="text-muted-foreground text-sm mb-6">
-            Kamu harus login dulu untuk berbagi cerita di komunitas KopiSpot.
+            Kamu harus login dulu untuk berbagi cerita di komunitas Coffidoor.
           </p>
           <button
             onClick={() => setAuthOpen(true)}

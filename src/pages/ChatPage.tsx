@@ -10,7 +10,7 @@ interface ChatMessage {
 }
 
 const WELCOME =
-  "Halo! Aku asisten KopiSpot ☕\n\nAku bisa bantu jawab seputar kalori, kadar gula, ingredients menu, waktu terbaik minum kopi, dan rekomendasi kafe. Silakan pilih salah satu pertanyaan di bawah, atau tulis pertanyaanmu sendiri!"
+  "Halo! Aku asisten Coffidoor ☕\n\nAku bisa bantu jawab seputar kalori, kadar gula, ingredients menu, waktu terbaik minum kopi, dan rekomendasi kafe. Silakan pilih salah satu pertanyaan di bawah, atau tulis pertanyaanmu sendiri!"
 
 const SHORTCUTS = [
   "Berapa kalori Kopi Latte?",
@@ -72,18 +72,18 @@ export default function ChatPage() {
 
   return (
     <div className="pt-16">
-      <div className="grid grid-cols-2 mx-auto px-6 md:px-12 py-10">
-        <div className="mb-6">
-          <span className="tag-pill mb-3 inline-block">Tanya KopiSpot</span>
+      <div className="grid grid-cols-1 lg:grid-cols-2 mx-auto px-6 md:px-12 py-10">
+        <div className="mb-6 text-center lg:text-left">
+          <span className="tag-pill mb-3 inline-block">Tanya Coffidoor</span>
           <h2
-            className="text-4xl md:text-6xl font-black text-foreground leading-tight"
+            className="text-3xl sm:text-4xl md:text-6xl font-black text-foreground leading-tight"
             style={{ fontFamily: "'Fraunces', serif" }}
           >
             Asisten Kopi
           </h2>
           <p className="text-muted-foreground text-sm mt-2">
-            Chatbot sederhana Interaktif <br /> Tanyakan pertanyaan mu seputar
-            kopi dan cafe di sini
+            Chatbot sederhana Interaktif. Tanyakan pertanyaanmu seputar kopi
+            dan cafe di sini.
           </p>
         </div>
 
