@@ -1,519 +1,258 @@
-import { useCallback, useEffect, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import {
   MdAdd,
+  MdArrowForward,
   MdBookmarkAdd,
-  MdDelete,
+  MdCheck,
+  MdDeleteOutline,
   MdFavoriteBorder,
-  MdReceiptLong,
-  MdRestore,
-  MdShoppingCart,
+  MdRemove,
+  MdStorefront,
 } from "react-icons/md"
-import { ordersApi, paymentsApi, type Order } from "@/lib/api"
-import { useAuth } from "@/lib/auth-context"
-import AuthModal from "@/components/ui/auth-modal"
-import { cartCount, cartSubtotal, useCartStore } from "@/lib/cart-store"
-import { formatDate, formatRupiah } from "@/lib/format"
+import { formatRupiah } from "@/lib/format"
 import { menuImageUrl } from "@/lib/menu-images"
+import { useCartStore, type CartItem } from "@/lib/cart-store"
+import { ordersApi, type Order } from "@/lib/api"
 
-const inputClass =
-  "w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-all focus:border-[#d1d5db] focus:ring-2 focus:ring-[rgba(209,213,219,0.25)]"
+const NEW_USER_COUPON = "KOPI10"
 
-const STATUS_LABEL: Record<string, string> = {
-  PENDING: "Menunggu",
-  CONFIRMED: "Dikonfirmasi",
-  PREPARING: "Disiapkan",
-  READY: "Siap Diambil",
-  COMPLETED: "Selesai",
-  CANCELLED: "Dibatalkan",
+type StoreGroup = {
+  id: string
+  name: string
+  items: CartItem[]
 }
 
-const PAYMENT_LABEL: Record<string, string> = {
-  UNPAID: "Belum Dibayar",
-  PAID: "Lunas",
-  FAILED: "Gagal",
-}
-
-const actionPill =
-  "flex items-center gap-1 text-xs font-semibold rounded-full px-3 py-2 footer-glass-pill text-muted-foreground hover:text-foreground transition-colors"
-
-export default function OrderCartPage() {
-  const { user, loading } = useAuth()
-  const navigate = useNavigate()
-  const location = useLocation()
-  const sessionItems = useCartStore((state) => state.items)
-  const clearSessionCart = useCartStore((state) => state.clear)
-  const [authOpen, setAuthOpen] = useState(false)
-  const [orders, setOrders] = useState<Order[]>([])
-  const [ordersError, setOrdersError] = useState<string | null>(null)
-  const [loadingOrders, setLoadingOrders] = useState(false)
-  const [selectedCafe, setSelectedCafe] = useState("")
-  const [savedOrderIds, setSavedOrderIds] = useState<string[]>([])
-  const [wishOrderIds, setWishOrderIds] = useState<string[]>([])
-  const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [checkoutId, setCheckoutId] = useState<string | null>(null)
-  const [paidGuestOrder, setPaidGuestOrder] = useState<Order | null>(null)
-
-  const loadOrders = useCallback(async () => {
-    if (!user) return
-    setOrdersError(null)
-    setLoadingOrders(true)
-    try {
-      setOrders(await ordersApi.list())
-    } catch (err) {
-      setOrdersError(
-        err instanceof Error ? err.message : "Gagal memuat keranjang.",
-      )
-    } finally {
-      setLoadingOrders(false)
-    }
-  }, [user])
+function IndeterminateCheckbox({
+  checked,
+  indeterminate,
+  onChange,
+  label,
+}: {
+  checked: boolean
+  indeterminate?: boolean
+  onChange: () => void
+  label: string
+}): React.JSX.Element {
+  const ref = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    loadOrders()
-  }, [loadOrders])
+    if (ref.current) ref.current.indeterminate = Boolean(indeterminate)
+  }, [indeterminate])
+
+  return (
+    <label className="inline-flex cursor-pointer items-center gap-3">
+      <input
+        ref={ref}
+        type="checkbox"
+        checked={checked}
+        onChange={onChange}
+        aria-label={label}
+        className="h-4 w-4 accent-primary"
+      />
+      <span className="sr-only">{label}</span>
+    </label>
+  )
+}
+
+export default function OrderCartPage(): React.JSX.Element {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const items = useCartStore((state) => state.items)
+  const setItems = useCartStore((state) => state.setItems)
+  const setQuantity = useCartStore((state) => state.setQuantity)
+  const remove = useCartStore((state) => state.remove)
+  const saveForLater = useCartStore((state) => state.saveForLater)
+  const moveFromWishlist = useCartStore((state) => state.moveFromWishlist)
+  const wishlist = useCartStore((state) => state.wishlist)
+  const clear = useCartStore((state) => state.clear)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [notice, setNotice] = useState<string | null>(null)
+  const [paidOrder, setPaidOrder] = useState<Order | null>(null)
+
+  const groups = useMemo<StoreGroup[]>(() => {
+    const grouped = new Map<string, StoreGroup>()
+    items.forEach((item) => {
+      const current = grouped.get(item.placeId)
+      if (current) current.items.push(item)
+      else grouped.set(item.placeId, { id: item.placeId, name: item.placeName, items: [item] })
+    })
+    return Array.from(grouped.values())
+  }, [items])
+
+  const validItems = items
+  const allSelected = validItems.length > 0 && validItems.every((item) => selectedIds.includes(item.id))
+  const selectedItems = items.filter((item) => selectedIds.includes(item.id))
+  const selectedTotal = selectedItems.reduce((total, item) => total + item.price * item.quantity, 0)
+  const selectedCount = selectedItems.reduce((total, item) => total + item.quantity, 0)
+
+  useEffect(() => {
+    setSelectedIds((current) => current.filter((id) => items.some((item) => item.id === id)))
+  }, [items])
 
   useEffect(() => {
     const params = new URLSearchParams(location.search)
-    const paymentStatus = params.get("payment")
     const orderId = params.get("order_id")
-    if (!paymentStatus || !orderId) return
-    const guestToken =
-      typeof window !== "undefined"
-        ? sessionStorage.getItem(`Coffidoor_guest_order_${orderId}`) ?? undefined
-        : undefined
+    const payment = params.get("payment")
+    if (!orderId || !payment) return
 
-    if (paymentStatus === "success") {
+    if (payment === "success") {
+      const token = sessionStorage.getItem(`Coffidoor_guest_order_${orderId}`) ?? undefined
       ordersApi
-        .pay(orderId, "Midtrans", undefined, guestToken)
-        .then((paidOrder) => {
-          setPaidGuestOrder(paidOrder)
-          clearSessionCart()
-          return loadOrders()
+        .pay(orderId, "Midtrans", undefined, token)
+        .then((order) => {
+          setPaidOrder(order)
+          clear()
         })
-        .catch((err) => {
-          setOrdersError(
-            err instanceof Error
-              ? err.message
-              : "Pembayaran berhasil, tetapi status pesanan gagal diperbarui.",
-          )
-        })
+        .catch(() => setNotice("Pembayaran berhasil, tetapi ticket belum dapat dimuat."))
     } else {
-      setOrdersError("Pembayaran dibatalkan atau gagal. Silakan coba lagi.")
+      setNotice("Pembayaran dibatalkan. Produk tetap tersimpan di keranjang.")
     }
-
     navigate("/order/keranjang", { replace: true })
-  }, [clearSessionCart, loadOrders, location.search, navigate])
+  }, [clear, location.search, navigate])
 
-  const requireLogin = (): boolean => {
-    if (user) return true
-    setAuthOpen(true)
-    return false
-  }
+  useEffect(() => {
+    if (!notice) return
+    const timer = window.setTimeout(() => setNotice(null), 3600)
+    return () => window.clearTimeout(timer)
+  }, [notice])
 
-  const handleCheckout = async (o: Order) => {
-    if (!requireLogin() || checkoutId) return
-    setCheckoutId(o.id)
-    setOrdersError(null)
-    try {
-      const payment = await paymentsApi.create({
-        orderId: o.id,
-        amount: o.total,
-        customer: {
-          firstName: user?.name ?? "Coffidoor Customer",
-          email: user?.email ?? "customer@coffidoor.test",
-          phone: "081234567890",
-        },
-      })
-
-      if (!payment.redirect_url) {
-        throw new Error("Midtrans tidak mengembalikan alamat pembayaran.")
-      }
-      window.location.assign(payment.redirect_url)
-    } catch (err) {
-      setOrdersError(
-        err instanceof Error ? err.message : "Gagal membuka pembayaran Midtrans.",
-      )
-      setCheckoutId(null)
-    }
-  }
-
-  const moveToSaved = (id: string) => {
-    setSavedOrderIds((prev) => (prev.includes(id) ? prev : [...prev, id]))
-    setWishOrderIds((prev) => prev.filter((x) => x !== id))
-  }
-
-  const moveToWish = (id: string) => {
-    setWishOrderIds((prev) => (prev.includes(id) ? prev : [...prev, id]))
-    setSavedOrderIds((prev) => prev.filter((x) => x !== id))
-  }
-
-  const restoreOrder = (id: string) => {
-    setSavedOrderIds((prev) => prev.filter((x) => x !== id))
-    setWishOrderIds((prev) => prev.filter((x) => x !== id))
-  }
-
-  const handleDelete = async (id: string) => {
-    if (deletingId) return
-    try {
-      await ordersApi.remove(id)
-      setSavedOrderIds((prev) => prev.filter((x) => x !== id))
-      setWishOrderIds((prev) => prev.filter((x) => x !== id))
-      await loadOrders()
-    } catch (err) {
-      setOrdersError(
-        err instanceof Error ? err.message : "Gagal menghapus pesanan.",
-      )
-    } finally {
-      setDeletingId(null)
-    }
-  }
-
-  const unpaidOrders = orders.filter(
-    (o) => o.paymentStatus !== "PAID" && o.status !== "CANCELLED",
-  )
-  const sessionItemCount = cartCount(sessionItems)
-  const sessionSubtotal = cartSubtotal(sessionItems)
-  const placeOptions = Array.from(
-    new Map(unpaidOrders.map((o) => [o.place.id, o.place])).values(),
-  )
-  const cafeFiltered = selectedCafe
-    ? unpaidOrders.filter((o) => o.place.id === selectedCafe)
-    : unpaidOrders
-  const activeOrders = cafeFiltered.filter(
-    (o) => !savedOrderIds.includes(o.id) && !wishOrderIds.includes(o.id),
-  )
-  const savedOrders = cafeFiltered.filter((o) => savedOrderIds.includes(o.id))
-  const wishOrders = cafeFiltered.filter((o) => wishOrderIds.includes(o.id))
-
-  const renderOrderCard = (o: Order, bucket: "active" | "saved" | "wish") => {
-    const removing = deletingId === o.id
-    return (
-      <div key={o.id} className="glass-card rounded-2xl p-5">
-        <div className="flex items-center justify-between gap-3 mb-3">
-          <div className="min-w-0">
-            <div className="font-bold text-foreground text-sm">
-              {o.place.name}
-            </div>
-            <div className="text-xs text-muted-foreground">
-              #{o.id.slice(-8)} · {formatDate(o.createdAt)}
-            </div>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="tag-pill">
-              {o.paymentStatus === "PAID" ? "✓ " : ""}
-              {PAYMENT_LABEL[o.paymentStatus]}
-            </span>
-            <span className="tag-pill">
-              {STATUS_LABEL[o.status] ?? o.status}
-            </span>
-          </div>
-        </div>
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">
-            {o.items.reduce((s, it) => s + it.quantity, 0)} item
-            {o.paymentMethod ? ` · ${o.paymentMethod}` : ""}
-          </span>
-          <span className="font-black text-[#d1d5db]">
-            {formatRupiah(o.total)}
-          </span>
-        </div>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {o.items.slice(0, 5).map((it) => (
-            <img
-              key={it.id}
-              src={menuImageUrl(
-                it.menuItem.category,
-                it.menuItem.imageUrl,
-                it.menuItem.name,
-              )}
-              alt={it.menuItem.name}
-              title={it.menuItem.name}
-              className="w-11 h-11 rounded-xl object-cover border border-border"
-              loading="lazy"
-            />
-          ))}
-          {o.items.length > 5 && (
-            <span className="text-xs text-muted-foreground self-center">
-              +{o.items.length - 5} lainnya
-            </span>
-          )}
-        </div>
-        {o.note && (
-          <div className="mt-2 text-xs text-muted-foreground bg-[rgba(156,163,175,0.06)] rounded-lg px-3 py-2">
-            <MdReceiptLong className="w-3.5 h-3.5 inline mr-1" />
-            Catatan: {o.note}
-          </div>
-        )}
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
-          <div className="flex items-center gap-2 flex-wrap">
-            {bucket === "active" && (
-              <>
-                <button
-                  onClick={() => moveToSaved(o.id)}
-                  className={actionPill}
-                  title="Simpan untuk nanti"
-                >
-                  <MdBookmarkAdd className="w-3.5 h-3.5" />
-                  Simpan untuk Nanti
-                </button>
-                <button
-                  onClick={() => moveToWish(o.id)}
-                  className={actionPill}
-                  title="Pindahkan ke daftar keinginan"
-                >
-                  <MdFavoriteBorder className="w-3.5 h-3.5" />
-                  Wishlist
-                </button>
-              </>
-            )}
-            {bucket === "saved" && (
-              <button
-                onClick={() => restoreOrder(o.id)}
-                className="flex items-center gap-1 text-xs font-semibold rounded-full px-3 py-2 bg-[#d1d5db]/15 text-[#d1d5db] hover:bg-[#d1d5db]/25 transition-colors"
-              >
-                <MdRestore className="w-3.5 h-3.5" />
-                Kembalikan
-              </button>
-            )}
-            {bucket === "wish" && (
-              <button
-                onClick={() => restoreOrder(o.id)}
-                className="flex items-center gap-1 text-xs font-semibold rounded-full px-3 py-2 bg-[#d1d5db]/15 text-[#d1d5db] hover:bg-[#d1d5db]/25 transition-colors"
-              >
-                <MdAdd className="w-3.5 h-3.5" />
-                Pindah ke Keranjang
-              </button>
-            )}
-            <button
-              onClick={() => handleDelete(o.id)}
-              disabled={removing}
-              className="flex items-center gap-1 text-xs font-semibold rounded-full px-3 py-2 footer-glass-pill text-muted-foreground hover:text-destructive transition-colors disabled:opacity-60"
-              title="Hapus dari keranjang"
-            >
-              <MdDelete className="w-3.5 h-3.5" />
-              {removing ? "Menghapus..." : "Hapus"}
-            </button>
-          </div>
-          <button
-            type="button"
-            onClick={() => void handleCheckout(o)}
-            disabled={checkoutId !== null}
-            className="shrink-0 flex items-center gap-1.5 bg-[#d1d5db] text-[#111113] font-bold px-5 py-2.5 rounded-full text-sm hover:bg-[#f3f4f6] transition-colors"
-          >
-            <MdShoppingCart className="w-4 h-4" />
-            {checkoutId === o.id ? "Membuka Midtrans..." : "Checkout"}
-          </button>
-        </div>
-      </div>
+  const toggleItem = (id: string) => {
+    setSelectedIds((current) =>
+      current.includes(id) ? current.filter((itemId) => itemId !== id) : [...current, id],
     )
   }
 
-  if (loading) {
+  const toggleAll = () => {
+    setSelectedIds(allSelected ? [] : validItems.map((item) => item.id))
+  }
+
+  const toggleStore = (group: StoreGroup) => {
+    const groupIds = group.items.map((item) => item.id)
+    const groupSelected = groupIds.every((id) => selectedIds.includes(id))
+    setSelectedIds((current) =>
+      groupSelected
+        ? current.filter((id) => !groupIds.includes(id))
+        : Array.from(new Set([...current, ...groupIds])),
+    )
+  }
+
+  const removeSelected = () => {
+    if (selectedIds.length === 0) return
+    selectedIds.forEach((id) => remove(id))
+    setSelectedIds([])
+    setNotice("Produk terpilih berhasil dihapus dari keranjang.")
+  }
+
+  const checkout = () => {
+    if (selectedItems.length === 0) {
+      setNotice("Pilih minimal satu produk untuk checkout.")
+      return
+    }
+    const storeIds = Array.from(new Set(selectedItems.map((item) => item.placeId)))
+    if (storeIds.length > 1) {
+      setNotice("Checkout saat ini hanya dapat dilakukan untuk satu toko. Pilih satu toko terlebih dahulu.")
+      return
+    }
+    setItems(selectedItems)
+    navigate("/order", { state: { step: "cart" } })
+  }
+
+  if (paidOrder) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-16 text-muted-foreground animate-pulse">
-        Memuat...
+      <div className="min-h-screen px-4 pb-20 pt-28 sm:px-6">
+        <div className="glass-card mx-auto max-w-lg rounded-3xl p-8 text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600">
+            <MdCheck className="h-8 w-8" />
+          </div>
+          <h1 className="text-2xl font-black text-foreground" style={{ fontFamily: "'Fraunces', serif" }}>
+            Pembayaran Berhasil
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">Simpan ticket ini untuk mengambil pesananmu.</p>
+          <div className="mt-6 space-y-3 rounded-2xl border border-border bg-card p-4 text-left text-sm">
+            <div className="flex justify-between gap-4"><span className="text-muted-foreground">No. Ticket</span><strong>#{paidOrder.id.slice(-8)}</strong></div>
+            <div className="flex justify-between gap-4"><span className="text-muted-foreground">Kafe</span><strong>{paidOrder.place.name}</strong></div>
+            <div className="flex justify-between gap-4"><span className="text-muted-foreground">Total</span><strong className="text-primary">{formatRupiah(paidOrder.total)}</strong></div>
+          </div>
+          <Link to="/" className="mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">Kembali ke Beranda <MdArrowForward /></Link>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="pt-16">
-      <div className="max-w-5xl mx-auto px-6 md:px-12 py-10">
-        <div className="flex items-start justify-between gap-4 mb-6">
+    <div className="min-h-screen bg-background pb-40 pt-24 sm:pb-32">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <span className="tag-pill mb-3 inline-block">Keranjang</span>
-            <h1
-              className="text-3xl md:text-4xl font-black text-foreground"
-              style={{ fontFamily: "'Fraunces', serif" }}
-            >
-              Keranjang Pesanan
-            </h1>
-            <p className="text-muted-foreground text-sm mt-2">
-              Pesanan yang belum dicheckout, menunggu untuk dibayar.
-            </p>
+            <span className="tag-pill mb-3 inline-block">Marketplace</span>
+            <h1 className="text-3xl font-black text-foreground sm:text-4xl" style={{ fontFamily: "'Fraunces', serif" }}>Keranjang</h1>
+            <p className="mt-2 text-sm text-muted-foreground">Periksa produk pilihanmu sebelum menyelesaikan pesanan.</p>
           </div>
-          <Link
-            to="/order"
-            className="shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#d1d5db] text-[#111113] font-bold text-sm hover:bg-[#f3f4f6] transition-colors"
-          >
-            <MdShoppingCart className="w-4 h-4" />
-            Pesan Kopi
-          </Link>
+          <Link to="/order" className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2.5 text-sm font-semibold text-foreground transition hover:border-primary hover:text-primary"><MdAdd /> Tambah Produk</Link>
         </div>
 
-        {paidGuestOrder ? (
-          <div className="glass-card rounded-3xl p-8 text-center max-w-md mx-auto">
-            <div className="text-4xl mb-3">✓</div>
-            <h2 className="text-xl font-black text-foreground mb-2">
-              Pembayaran Berhasil
-            </h2>
-            <p className="text-muted-foreground text-sm mb-6">
-              Simpan ticket/order bill ini untuk mengambil pesananmu.
-            </p>
-            <div className="rounded-2xl border border-border bg-card p-4 text-left text-sm space-y-2">
-              <div className="flex justify-between gap-3">
-                <span className="text-muted-foreground">No. Ticket</span>
-                <span className="font-black text-foreground">#{paidGuestOrder.id.slice(-8)}</span>
-              </div>
-              <div className="flex justify-between gap-3">
-                <span className="text-muted-foreground">Kafe</span>
-                <span className="font-semibold text-foreground text-right">{paidGuestOrder.place.name}</span>
-              </div>
-              <div className="flex justify-between gap-3">
-                <span className="text-muted-foreground">Total</span>
-                <span className="font-black text-primary">{formatRupiah(paidGuestOrder.total)}</span>
-              </div>
-            </div>
-          </div>
-        ) : !user && sessionItems.length > 0 ? (
-          <div className="glass-card rounded-3xl p-10 text-center max-w-md mx-auto">
-            <div className="text-4xl mb-3">🛒</div>
-            <h2 className="text-xl font-black text-foreground mb-2">
-              Keranjangmu
-            </h2>
-            <p className="text-muted-foreground text-sm mb-6">
-              {sessionItemCount} item dari {sessionItems[0].placeName} ·{" "}
-              {formatRupiah(sessionSubtotal)}
-            </p>
-            <div className="mb-6 flex flex-col gap-2 text-left">
-              {sessionItems.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-3 py-2 text-sm"
-                >
-                  <span className="min-w-0 truncate text-foreground">
-                    {item.name} <span className="text-muted-foreground">× {item.quantity}</span>
-                  </span>
-                  <span className="shrink-0 font-semibold text-foreground">
-                    {formatRupiah(item.price * item.quantity)}
-                  </span>
-                </div>
-              ))}
-            </div>
-            <button
-              onClick={() => navigate("/order", { state: { step: "cart" } })}
-              className="bg-[#d1d5db] text-[#111113] font-black px-6 py-3 rounded-full text-sm"
-            >
-              Lanjut ke Checkout
-            </button>
-          </div>
-        ) : !user ? (
-          <div className="glass-card rounded-3xl p-10 text-center max-w-md mx-auto">
-            <div className="text-4xl mb-3">🛒</div>
-            <h2 className="text-xl font-black text-foreground mb-2">
-              Keranjang kosong
-            </h2>
-            <p className="text-muted-foreground text-sm mb-6">
-              Tambahkan menu ke keranjang, lalu lanjutkan checkout tanpa perlu masuk.
-            </p>
-            <Link
-              to="/order"
-              className="bg-[#d1d5db] text-[#111113] font-black px-6 py-3 rounded-full text-sm"
-            >
-              Mulai Pesan
-            </Link>
-          </div>
-        ) : ordersError ? (
-          <div className="text-center text-destructive py-16">
-            {ordersError}
-          </div>
-        ) : loadingOrders ? (
-          <div className="text-center text-muted-foreground animate-pulse py-16">
-            Memuat keranjang...
-          </div>
-        ) : unpaidOrders.length === 0 ? (
-          <div className="glass-card rounded-3xl p-10 text-center max-w-md mx-auto">
-            <div className="text-4xl mb-3">☕</div>
-            <h2 className="text-xl font-black text-foreground mb-2">
-              Keranjang kosong
-            </h2>
-            <p className="text-muted-foreground text-sm mb-6">
-              Tidak ada pesanan yang menunggu checkout. Yuk pesan kopi sekarang.
-            </p>
-            <Link
-              to="/order"
-              className="bg-[#d1d5db] text-[#111113] font-black px-6 py-3 rounded-full text-sm"
-            >
-              Mulai Pesan
-            </Link>
+        {notice && <div role="status" className="mb-5 rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-semibold text-foreground">{notice}</div>}
+
+        {items.length === 0 ? (
+          <div className="glass-card rounded-3xl px-6 py-16 text-center">
+            <MdStorefront className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+            <h2 className="text-xl font-black text-foreground">Keranjang masih kosong</h2>
+            <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">Tambahkan kopi favoritmu dan produk akan tersimpan selama sesi ini.</p>
+            <Link to="/order" className="mt-6 inline-flex rounded-full bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">Mulai Belanja</Link>
           </div>
         ) : (
-          <>
-            <div className="mb-6">
-              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
-                Pilih Kafe
-              </label>
-              <select
-                value={selectedCafe}
-                onChange={(e) => setSelectedCafe(e.target.value)}
-                className={`${inputClass} max-w-md`}
-              >
-                <option value="">Semua Kafe</option>
-                {placeOptions.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} · {p.city}
-                  </option>
-                ))}
-              </select>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between rounded-2xl border border-border bg-card/70 px-4 py-3">
+              <div className="flex items-center gap-3"><IndeterminateCheckbox checked={allSelected} indeterminate={selectedIds.length > 0 && !allSelected} onChange={toggleAll} label="Pilih semua produk" /><span className="text-sm font-bold text-foreground">Pilih Semua</span><span className="text-xs text-muted-foreground">({items.length} produk)</span></div>
+              <button type="button" onClick={removeSelected} disabled={selectedIds.length === 0} className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground transition hover:text-destructive disabled:cursor-not-allowed disabled:opacity-40"><MdDeleteOutline className="h-5 w-5" /> Hapus</button>
             </div>
 
-            {cafeFiltered.length === 0 ? (
-              <div className="text-center text-muted-foreground py-16">
-                Tidak ada pesanan yang belum dicheckout dari kafe ini.
-              </div>
-            ) : (
-              <div className="flex flex-col gap-6">
-                {activeOrders.length > 0 && (
-                  <div>
-                    <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                      <MdShoppingCart className="w-4 h-4" />
-                      Siap Checkout ({activeOrders.length})
-                    </div>
-                    <div className="flex flex-col gap-4">
-                      {activeOrders.map((o) => renderOrderCard(o, "active"))}
-                    </div>
+            {groups.map((group) => {
+              const groupIds = group.items.map((item) => item.id)
+              const selectedInGroup = groupIds.filter((id) => selectedIds.includes(id)).length
+              return (
+                <section key={group.id} className="overflow-hidden rounded-2xl border border-border bg-card/60 shadow-sm">
+                  <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-5">
+                    <div className="flex items-center gap-3"><IndeterminateCheckbox checked={selectedInGroup === group.items.length} indeterminate={selectedInGroup > 0 && selectedInGroup < group.items.length} onChange={() => toggleStore(group)} label={`Pilih semua produk dari ${group.name}`} /><MdStorefront className="h-5 w-5 text-primary" /><strong className="text-sm text-foreground">{group.name}</strong><span className="hidden text-xs text-muted-foreground sm:inline">Voucher toko tersedia</span></div>
+                    <Link to={`/places/${group.id}`} className="text-xs font-bold text-primary hover:underline">Kunjungi Toko</Link>
+                  </header>
+                  <div className="divide-y divide-border">
+                    {group.items.map((item) => {
+                      const checked = selectedIds.includes(item.id)
+                      return (
+                        <article key={item.id} className={`grid grid-cols-[auto_1fr] gap-3 px-4 py-4 transition sm:grid-cols-[auto_84px_1fr_auto] sm:items-center sm:gap-4 sm:px-5 ${checked ? "bg-primary/4.5" : ""}`}>
+                          <IndeterminateCheckbox checked={checked} onChange={() => toggleItem(item.id)} label={`Pilih ${item.name}`} />
+                          <img src={menuImageUrl(item.category, item.imageUrl, item.name)} alt={item.name} className="h-20 w-20 rounded-xl border border-border object-cover sm:h-21 sm:w-21" loading="lazy" />
+                          <div className="min-w-0">
+                            <h3 className="truncate text-sm font-bold text-foreground sm:text-base">{item.name}</h3>
+                            <p className="mt-1 text-xs text-muted-foreground">Variasi standar · Tersedia</p>
+                            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                              <span className="rounded-md bg-primary/10 px-2 py-1 font-bold text-primary">Voucher {NEW_USER_COUPON}</span>
+                              <button type="button" onClick={() => saveForLater(item.id)} className="inline-flex items-center gap-1 text-muted-foreground hover:text-primary"><MdBookmarkAdd /> Simpan</button>
+                              <button type="button" onClick={() => remove(item.id)} className="inline-flex items-center gap-1 text-muted-foreground hover:text-destructive"><MdDeleteOutline /> Hapus</button>
+                            </div>
+                          </div>
+                          <div className="col-start-2 flex items-center justify-between gap-4 sm:col-auto sm:flex-col sm:items-end">
+                            <div className="text-right"><div className="text-xs text-muted-foreground">Harga satuan</div><div className="font-black text-primary">{formatRupiah(item.price)}</div></div>
+                            <div className="flex items-center rounded-lg border border-border bg-background"><button type="button" onClick={() => setQuantity(item.id, Math.max(1, item.quantity - 1))} className="flex h-8 w-8 items-center justify-center text-muted-foreground hover:text-foreground" aria-label={`Kurangi ${item.name}`}><MdRemove /></button><span className="flex h-8 min-w-8 items-center justify-center border-x border-border px-2 text-sm font-bold">{item.quantity}</span><button type="button" onClick={() => setQuantity(item.id, item.quantity + 1)} className="flex h-8 w-8 items-center justify-center text-muted-foreground hover:text-foreground" aria-label={`Tambah ${item.name}`}><MdAdd /></button></div>
+                            <div className="text-right"><div className="text-xs text-muted-foreground">Subtotal</div><div className="font-black text-foreground">{formatRupiah(item.price * item.quantity)}</div></div>
+                          </div>
+                        </article>
+                      )
+                    })}
                   </div>
-                )}
+                  <div className="flex items-center justify-between border-t border-border bg-primary/[0.035] px-4 py-3 text-xs sm:px-5"><span className="text-muted-foreground">Voucher toko <strong className="text-primary">{NEW_USER_COUPON}</strong> aktif saat checkout</span><span className="font-bold text-foreground">{group.items.length} produk</span></div>
+                </section>
+              )
+            })}
 
-                {savedOrders.length > 0 && (
-                  <div>
-                    <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                      <MdBookmarkAdd className="w-4 h-4" />
-                      Simpan untuk Nanti ({savedOrders.length})
-                    </div>
-                    <div className="flex flex-col gap-4">
-                      {savedOrders.map((o) => renderOrderCard(o, "saved"))}
-                    </div>
-                  </div>
-                )}
-
-                {wishOrders.length > 0 && (
-                  <div>
-                    <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                      <MdFavoriteBorder className="w-4 h-4" />
-                      Daftar Keinginan ({wishOrders.length})
-                    </div>
-                    <div className="flex flex-col gap-4">
-                      {wishOrders.map((o) => renderOrderCard(o, "wish"))}
-                    </div>
-                  </div>
-                )}
-
-                {activeOrders.length === 0 &&
-                  savedOrders.length === 0 &&
-                  wishOrders.length === 0 && (
-                    <div className="text-center text-muted-foreground py-16">
-                      Tidak ada pesanan yang belum dicheckout dari kafe ini.
-                    </div>
-                  )}
-              </div>
-            )}
-          </>
+            {wishlist.length > 0 && <section className="rounded-2xl border border-border bg-card/50 px-4 py-4"><div className="mb-3 flex items-center gap-2 text-sm font-bold text-foreground"><MdFavoriteBorder className="text-primary" /> Wishlist ({wishlist.length})</div><div className="flex flex-wrap gap-2">{wishlist.map((item) => <button type="button" key={item.id} onClick={() => moveFromWishlist(item.id)} className="rounded-xl border border-border px-3 py-2 text-left text-xs hover:border-primary"><span className="block font-bold text-foreground">{item.name}</span><span className="text-muted-foreground">Pindahkan ke keranjang</span></button>)}</div></section>}
+          </div>
         )}
       </div>
 
-      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
+      {items.length > 0 && <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 py-3 shadow-[0_-12px_30px_rgba(17,17,19,0.08)] backdrop-blur-xl sm:py-4"><div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 sm:px-6 lg:px-8"><div className="flex items-center gap-2"><IndeterminateCheckbox checked={allSelected} indeterminate={selectedIds.length > 0 && !allSelected} onChange={toggleAll} label="Pilih semua produk" /><span className="hidden text-sm text-foreground sm:inline">Pilih Semua</span></div><button type="button" onClick={removeSelected} disabled={selectedIds.length === 0} className="hidden text-sm font-semibold text-muted-foreground hover:text-destructive disabled:opacity-40 sm:inline">Hapus</button><div className="ml-auto text-right"><div className="text-xs text-muted-foreground">{selectedCount} item terpilih</div><div className="text-lg font-black text-primary">{formatRupiah(selectedTotal)}</div></div><button type="button" onClick={checkout} disabled={selectedItems.length === 0} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-primary px-5 text-sm font-black text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40">Checkout <MdArrowForward /></button></div></div>}
     </div>
   )
 }

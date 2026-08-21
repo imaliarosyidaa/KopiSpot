@@ -45,6 +45,7 @@ interface CartState {
   savedForLater: CartItem[]
   wishlist: CartItem[]
   add: (item: Omit<CartItem, "quantity">) => void
+  setItems: (items: CartItem[]) => void
   setQuantity: (id: string, quantity: number) => void
   remove: (id: string) => void
   saveForLater: (id: string) => void
@@ -68,13 +69,9 @@ export const useCartStore = create<CartState>((set) => ({
           ),
         }
       }
-      // Pesanan hanya boleh berisi menu dari satu kafe.
-      const base =
-        state.items.length > 0 && state.items[0].placeId !== item.placeId
-          ? []
-          : state.items
-      return { items: [...base, { ...item, quantity: 1 }] }
+      return { items: [...state.items, { ...item, quantity: 1 }] }
     }),
+  setItems: (items) => set({ items }),
   setQuantity: (id, quantity) =>
     set((state) => ({
       items:
@@ -99,12 +96,8 @@ export const useCartStore = create<CartState>((set) => ({
     set((state) => {
       const item = state.savedForLater.find((i) => i.id === id)
       if (!item) return state
-      const base =
-        state.items.length > 0 && state.items[0].placeId !== item.placeId
-          ? []
-          : state.items
       return {
-        items: [...base, item],
+        items: [...state.items, item],
         savedForLater: state.savedForLater.filter((i) => i.id !== id),
       }
     }),
@@ -127,12 +120,8 @@ export const useCartStore = create<CartState>((set) => ({
     set((state) => {
       const item = state.wishlist.find((i) => i.id === id)
       if (!item) return state
-      const base =
-        state.items.length > 0 && state.items[0].placeId !== item.placeId
-          ? []
-          : state.items
       return {
-        items: [...base, item],
+        items: [...state.items, item],
         wishlist: state.wishlist.filter((i) => i.id !== id),
       }
     }),

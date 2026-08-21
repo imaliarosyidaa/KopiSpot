@@ -221,11 +221,6 @@ export default function OrderPage() {
   }, [notice])
 
   const handleAdd = (m: MenuItemOption) => {
-    if (items.length > 0 && items[0].placeId !== m.place.id) {
-      setNotice(
-        `Keranjang diganti — pesanan hanya bisa berisi menu dari ${m.place.name}.`,
-      )
-    }
     add({
       id: m.id,
       placeId: m.place.id,
