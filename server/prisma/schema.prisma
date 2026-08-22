@@ -203,12 +203,14 @@ model Rating {
   value     Int
   userId    String
   placeId   String
+  orderId   String?
   createdAt DateTime @default(now())
 
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
   place Place @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  order Order? @relation(fields: [orderId], references: [id], onDelete: SetNull)
 
-  @@unique([userId, placeId])
+  @@unique([orderId])
   @@map("ratings")
 }
 
@@ -286,6 +288,7 @@ model Order {
   user  User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
   place Place       @relation(fields: [placeId], references: [id], onDelete: Cascade)
   items OrderItem[]
+  ratings Rating[]
 
   @@map("orders")
 }

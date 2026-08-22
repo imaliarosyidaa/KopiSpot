@@ -300,9 +300,9 @@ export const placesApi = {
     api(`/places/${id}`, { method: "PUT", body: JSON.stringify(data) }),
   remove: (id: string) =>
     api<{ ok: boolean }>(`/places/${id}`, { method: "DELETE" }),
-  rate: (id: string, value: number) =>
-    api(`/places/${id}/rate`, { method: "POST", body: JSON.stringify({ value }) }),
-  comment: (id: string, body: string, rating?: number) =>
+  rate: (id: string, value: number, orderId: string) =>
+    api(`/places/${id}/rate`, { method: "POST", body: JSON.stringify({ value, orderId }) }),
+  comment: (id: string, body: string, rating?: number, orderId?: string) =>
     api<{
       id: string;
       body: string;
@@ -313,7 +313,7 @@ export const placesApi = {
       user: { id: string; name: string | null; image: string | null };
     }>(`/places/${id}/comments`, {
       method: "POST",
-      body: JSON.stringify({ body, ...(rating ? { rating } : {}) }),
+      body: JSON.stringify({ body, ...(rating ? { rating } : {}), ...(orderId ? { orderId } : {}) }),
     }),
   deleteComment: (placeId: string, commentId: string) =>
     api<{ ok: boolean }>(`/places/${placeId}/comments/${commentId}`, { method: "DELETE" }),
@@ -586,6 +586,7 @@ export interface Order {
 
 export const ordersApi = {
   list: () => api<Order[]>("/orders"),
+  ratedOrderIds: () => api<string[]>("/orders/ratings"),
   detail: (id: string) => api<Order>(`/orders/${id}`),
   create: (data: {
     placeId: string;

@@ -26,7 +26,7 @@ const ORDER_TABS: { key: OrderTab; label: string }[] = [
   { key: "packed", label: "Dikemas" },
   { key: "shipped", label: "Dikirim" },
   { key: "completed", label: "Selesai" },
-  { key: "review", label: "Beri Penilaian" },
+  { key: "review", label: "Penilaian Saya" },
 ]
 
 type StoreGroup = {
@@ -84,6 +84,7 @@ export default function OrderCartPage(): React.JSX.Element {
   const [orders, setOrders] = useState<Order[]>([])
   const [ordersLoading, setOrdersLoading] = useState(false)
   const [ordersError, setOrdersError] = useState<string | null>(null)
+  const [ratedOrderIds, setRatedOrderIds] = useState<string[]>([])
   const [activeTab, setActiveTab] = useState<OrderTab>("cart")
   const [paymentOrderId, setPaymentOrderId] = useState<string | null>(null)
 
@@ -112,6 +113,7 @@ export default function OrderCartPage(): React.JSX.Element {
     try {
       const uniqueOrders = new Map((await ordersApi.list()).map((order) => [order.id, order]))
       setOrders(Array.from(uniqueOrders.values()))
+      setRatedOrderIds(await ordersApi.ratedOrderIds())
       setOrdersError(null)
     } catch (error) {
       setOrdersError(error instanceof Error ? error.message : "Gagal memuat status pesanan.")
@@ -136,14 +138,14 @@ export default function OrderCartPage(): React.JSX.Element {
   }
 
   const tabOrders = activeTab === "review"
-    ? orders.filter((order) => order.status === "COMPLETED")
+    ? orders.filter((order) => order.status === "COMPLETED" && ratedOrderIds.includes(order.id))
     : activeTab === "cart"
       ? []
       : orders.filter((order) => orderBucket(order) === activeTab)
 
   const tabCount = (tab: OrderTab): number => {
     if (tab === "cart") return items.length
-    if (tab === "review") return orders.filter((order) => order.status === "COMPLETED").length
+    if (tab === "review") return orders.filter((order) => order.status === "COMPLETED" && ratedOrderIds.includes(order.id)).length
     return orders.filter((order) => orderBucket(order) === tab).length
   }
 
@@ -293,7 +295,7 @@ export default function OrderCartPage(): React.JSX.Element {
           <div><div className="text-xs text-muted-foreground">Order #{order.id.slice(-8)}</div><div className="text-sm font-black text-foreground">Total {formatRupiah(order.total)}</div></div>
           {bucket === "unpaid" && <button type="button" onClick={() => void retryPayment(order)} disabled={paymentOrderId === order.id} className="rounded-full bg-primary px-4 py-2 text-xs font-black text-primary-foreground disabled:cursor-wait disabled:opacity-60">{paymentOrderId === order.id ? "Membuka Pembayaran..." : "Bayar Sekarang"}</button>}
           {bucket === "shipped" && <button type="button" onClick={() => setNotice("Informasi pelacakan akan tersedia setelah seller memasukkan nomor resi.")} className="rounded-full border border-border px-4 py-2 text-xs font-bold text-foreground">Lacak Pesanan</button>}
-          {(bucket === "completed" || activeTab === "review") && <button type="button" onClick={() => setNotice("Fitur penilaian produk siap digunakan.")} className="rounded-full bg-primary px-4 py-2 text-xs font-black text-primary-foreground">Beri Penilaian</button>}
+          {bucket === "completed" && !ratedOrderIds.includes(order.id) && <Link to={`/places/${order.placeId}?order_id=${encodeURIComponent(order.id)}`} className="rounded-full bg-primary px-4 py-2 text-xs font-black text-primary-foreground">Beri Penilaian</Link>}
         </div>
       </article>
     )

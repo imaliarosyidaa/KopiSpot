@@ -32,6 +32,15 @@ router.get("/", requireAuth, async (req, res) => {
   res.json(orders)
 })
 
+// GET /api/orders/ratings — kafe yang sudah dinilai oleh pengguna
+router.get("/ratings", requireAuth, async (req, res) => {
+  const ratings = await prisma.rating.findMany({
+    where: { userId: req.userId },
+    select: { orderId: true },
+  })
+  res.json(ratings.map((rating) => rating.orderId).filter(Boolean))
+})
+
 // GET /api/orders/:id — detail pesanan (hanya pemilik)
 router.get("/:id", requireAuth, async (req, res) => {
   const order = await prisma.order.findUnique({

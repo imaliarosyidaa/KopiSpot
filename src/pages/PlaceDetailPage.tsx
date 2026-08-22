@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { MdArrowBack, MdCheckCircle, MdDelete, MdSend } from "react-icons/md";
 import { placesApi } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
@@ -38,6 +38,8 @@ interface PlaceDetail {
 
 export default function PlaceDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
+  const orderId = searchParams.get("order_id") ?? "";
   const navigate = useNavigate();
   const { user } = useAuth();
   const [place, setPlace] = useState<PlaceDetail | null>(null);
@@ -98,7 +100,7 @@ export default function PlaceDetailPage() {
     }
     try {
       const previousValue = reviewRating || place?.comments.find((comment) => comment.user.id === user.id)?.rating || null;
-      await placesApi.rate(id, value);
+      await placesApi.rate(id, value, orderId);
       updateRatingSummary(value, previousValue);
       setReviewRating(value);
     } catch (e) {
@@ -125,7 +127,7 @@ export default function PlaceDetailPage() {
     setSubmitting(true);
     setReviewError(null);
     try {
-      const createdReview = await placesApi.comment(id, body, reviewRating);
+      const createdReview = await placesApi.comment(id, body, reviewRating, orderId);
       setReviewBody("");
       setPlace((current) => {
         if (!current) return current;

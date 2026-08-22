@@ -253,28 +253,24 @@ router.post("/:id/view", async (req, res) => {
 
 router.post("/:id/rate", requireAuth, async (req, res) => {
   const value = Number(req.body?.value)
+  const orderId = typeof req.body?.orderId === "string" ? req.body.orderId.trim() : ""
 
   if (!Number.isInteger(value) || value < 1 || value > 5) {
     return res.status(400).json({ error: "Rating harus antara 1 sampai 5." })
   }
 
-  const exists = await prisma.place.findUnique({
-    where: { id: req.params.id },
-
+  const order = await prisma.order.findFirst({
+    where: { id: orderId, userId: req.userId, placeId: req.params.id, status: "COMPLETED" },
     select: { id: true },
   })
 
-  if (!exists) {
-    return res.status(404).json({ error: "Tempat tidak ditemukan." })
+  if (!order) {
+    return res.status(400).json({ error: "Pesanan selesai yang akan dinilai tidak ditemukan." })
   }
 
   const rating = await prisma.rating.upsert({
-    where: {
-      userId_placeId: { userId: req.userId, placeId: req.params.id },
-    },
-
-    create: { userId: req.userId, placeId: req.params.id, value },
-
+    where: { orderId },
+    create: { userId: req.userId, placeId: req.params.id, orderId, value },
     update: { value },
   })
 
@@ -306,6 +302,7 @@ router.get("/:id/comments", async (req, res) => {
 router.post("/:id/comments", requireAuth, async (req, res) => {
   const text = typeof req.body?.body === "string" ? req.body.body.trim() : ""
   const rating = req.body?.rating == null ? null : Number(req.body.rating)
+  const orderId = typeof req.body?.orderId === "string" ? req.body.orderId.trim() : ""
 
   if (!text) {
     return res.status(400).json({ error: "Komentar tidak boleh kosong." })
@@ -329,6 +326,17 @@ router.post("/:id/comments", requireAuth, async (req, res) => {
     return res.status(404).json({ error: "Tempat tidak ditemukan." })
   }
 
+  let order = null
+  if (rating !== null) {
+    order = await prisma.order.findFirst({
+      where: { id: orderId, userId: req.userId, placeId: req.params.id, status: "COMPLETED" },
+      select: { id: true },
+    })
+    if (!order) {
+      return res.status(400).json({ error: "Pesanan selesai yang akan dinilai tidak ditemukan." })
+    }
+  }
+
   const existingComment = await prisma.comment.findFirst({
     where: { placeId: req.params.id, userId: req.userId },
     orderBy: { createdAt: "asc" },
@@ -346,8 +354,8 @@ router.post("/:id/comments", requireAuth, async (req, res) => {
 
   if (rating !== null) {
     await prisma.rating.upsert({
-      where: { userId_placeId: { userId: req.userId, placeId: req.params.id } },
-      create: { userId: req.userId, placeId: req.params.id, value: rating },
+      where: { orderId },
+      create: { userId: req.userId, placeId: req.params.id, orderId, value: rating },
       update: { value: rating },
     })
   }
