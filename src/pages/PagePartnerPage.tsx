@@ -945,7 +945,7 @@ export default function PagePartnerPage() {
                         >
                           <div>
                             <p className="text-sm font-semibold text-foreground">
-                              {o.user.name ?? "Pengguna"}
+                              {o.user?.name ?? "Pengguna"}
                             </p>
                             <p className="text-xs text-muted-foreground">
                               {timeAgo(o.createdAt)}
@@ -1302,7 +1302,7 @@ export default function PagePartnerPage() {
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
                           <p className="font-black text-foreground">
-                            {o.user.name ?? "Pengguna"}
+                            {o.user?.name ?? "Pengguna"}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             {formatDate(o.createdAt)} · {timeAgo(o.createdAt)}

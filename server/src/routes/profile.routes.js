@@ -58,6 +58,10 @@ router.get("/me", requireAuth, async (req, res) => {
 
       posts: {
         include: {
+          author: {
+            select: { id: true, name: true, username: true, image: true, xp: true, level: true },
+          },
+
           place: {
             select: { id: true, name: true, city: true, imageUrl: true },
           },

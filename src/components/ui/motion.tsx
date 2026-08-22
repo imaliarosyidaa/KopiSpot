@@ -2,7 +2,10 @@ import * as React from "react"
 import { useEffect, useRef } from "react"
 import { gsap } from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
+import { useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/lib/auth-context"
+import AuthModal from "@/components/ui/auth-modal"
 
 // Register ScrollTrigger safely for React
 if (typeof window !== "undefined") {
@@ -223,10 +226,13 @@ const MarqueeItem = () => (
 )
 
 export function CinematicSection() {
+  const navigate = useNavigate()
+  const { user } = useAuth()
   const wrapperRef = useRef<HTMLDivElement>(null)
   const giantTextRef = useRef<HTMLDivElement>(null)
   const headingRef = useRef<HTMLHeadingElement>(null)
   const linksRef = useRef<HTMLDivElement>(null)
+  const [authOpen, setAuthOpen] = React.useState(false)
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -272,6 +278,14 @@ export function CinematicSection() {
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
+  const handlePartnerClick = () => {
+    if (user) {
+      navigate("/mitra")
+      return
+    }
+    setAuthOpen(true)
   }
 
   return (
@@ -327,8 +341,8 @@ export function CinematicSection() {
               {/* App Store Links (Primary) */}
               <div className="flex flex-wrap justify-center gap-4 w-full">
                 <MagneticButton
-                  as="a"
-                  href="#"
+                  type="button"
+                  onClick={handlePartnerClick}
                   className="footer-glass-pill px-10 py-5 rounded-full text-foreground font-bold text-sm md:text-base flex items-center gap-3 group"
                 >
                   <svg
@@ -353,6 +367,7 @@ export function CinematicSection() {
           </div>
         </footer>
       </div>
+      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
     </>
   )
 }

@@ -6,6 +6,8 @@ import MagneticButton from "@/components/ui/magnetic-button"
 import PlaceCard from "@/components/ui/place-card"
 import StarRating from "@/components/ui/star-rating"
 import InteractiveGlobe from "@/components/ui/interactive-globe"
+import { TestimonialsColumn, type Testimonial } from "@/components/ui/testimonials-columns-1"
+import ImageGallery, { type FeatureGalleryItem } from "@/components/ui/image-gallery"
 import LeftSidebar from "@/components/shared/LeftSidebar"
 import {
   feedApi,
@@ -175,43 +177,6 @@ function CinematicHero({ onExplore }: { onExplore: () => void }) {
   )
 }
 
-// ─── REVIEW CARD ─────────────────────────────────────────────────────────────
-
-function ReviewCard({
-  review,
-}: {
-  review: FeedRight["latestReviews"][number]
-}) {
-  return (
-    <div className="glass-card rounded-2xl p-5 flex flex-col gap-3">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-[rgba(156,163,175,0.22)] border border-[rgba(156,163,175,0.35)] flex items-center justify-center text-[#d1d5db] font-bold text-sm shrink-0 overflow-hidden">
-          {review.user.image ? (
-            <img
-              src={review.user.image}
-              alt=""
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            (review.user.name || "?")[0].toUpperCase()
-          )}
-        </div>
-        <div>
-          <div className="font-semibold text-foreground text-sm">
-            {review.user.name}
-          </div>
-          <div className="text-muted-foreground text-xs">
-            {timeAgo(review.createdAt)}
-          </div>
-        </div>
-      </div>
-      <p className="text-muted-foreground text-sm leading-relaxed">
-        {review.body}
-      </p>
-    </div>
-  )
-}
-
 // ─── PAGE ────────────────────────────────────────────────────────────────────
 
 export default function HomePage() {
@@ -261,9 +226,50 @@ export default function HomePage() {
     document.getElementById("places")?.scrollIntoView({ behavior: "smooth" })
   }
 
+  const featureItems: FeatureGalleryItem[] = [
+    {
+      name: "Jelajah Kafe",
+      description: "Temukan spot kopi favorit di berbagai kota.",
+      image: "https://images.unsplash.com/photo-1445116572660-236099ec97a0?q=80&w=900&auto=format&fit=crop",
+      href: "/#places",
+    },
+    {
+      name: "Pesan Kopi",
+      description: "Pesan menu favorit tanpa berpindah platform.",
+      image: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?q=80&w=900&auto=format&fit=crop",
+      href: "/order",
+    },
+    {
+      name: "Komunitas",
+      description: "Bagikan pengalaman dan rekomendasi terbaikmu.",
+      image: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?q=80&w=900&auto=format&fit=crop",
+      href: "/feed",
+    },
+    {
+      name: "Wishlist",
+      description: "Simpan menu dan kafe yang ingin kamu kunjungi.",
+      image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=900&auto=format&fit=crop",
+      href: "/wishlist",
+    },
+    {
+      name: "Profil Kamu",
+      description: "Kumpulkan ulasan, postingan, dan pencapaian.",
+      image: "https://images.unsplash.com/photo-1511988617509-a57c8a288659?q=80&w=900&auto=format&fit=crop",
+      href: "/profile",
+    },
+    {
+      name: "Mitra Kopi",
+      description: "Bawa usaha kopimu bertemu lebih banyak pelanggan.",
+      image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?q=80&w=900&auto=format&fit=crop",
+      href: "/mitra",
+    },
+  ]
+
   return (
     <>
       <CinematicHero onExplore={scrollToPlaces} />
+
+      <ImageGallery items={featureItems} />
 
       {/*
         ── ABOUT ──
@@ -559,11 +565,30 @@ export default function HomePage() {
             Pengguna
           </h2>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          {(feed?.latestReviews ?? []).map((r) => (
-            <ReviewCard key={r.id} review={r} />
-          ))}
-        </div>
+        {(() => {
+          const testimonials: Testimonial[] = (feed?.latestReviews ?? []).map((review) => ({
+            text: review.body,
+            image: review.user.image,
+            name: review.user.name ?? "Pengguna",
+            role: timeAgo(review.createdAt),
+          }))
+          const columnSize = Math.ceil(testimonials.length / 3)
+          const firstColumn = testimonials.slice(0, columnSize)
+          const secondColumn = testimonials.slice(columnSize, columnSize * 2)
+          const thirdColumn = testimonials.slice(columnSize * 2)
+
+          return testimonials.length === 0 ? (
+            <div className="glass-card rounded-2xl p-8 text-center text-sm text-muted-foreground">
+              Belum ada ulasan terbaru.
+            </div>
+          ) : (
+            <div className="testimonials-viewport flex max-h-[740px] justify-center gap-4 overflow-hidden sm:gap-6">
+              <TestimonialsColumn testimonials={firstColumn} duration={15} />
+              <TestimonialsColumn testimonials={secondColumn.length ? secondColumn : firstColumn} className="hidden md:block" duration={19} />
+              <TestimonialsColumn testimonials={thirdColumn.length ? thirdColumn : firstColumn} className="hidden lg:block" duration={17} />
+            </div>
+          )
+        })()}
       </section>
 
       {/* ── FOOTER ── */}

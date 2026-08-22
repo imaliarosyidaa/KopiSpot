@@ -24,7 +24,7 @@ export default function LogoLight({
       <rect
         width={width}
         height={height}
-        fill="url(#pattern0_191_2)"
+        fill="url(#pattern0_187_2)"
       />
 <defs>
 <pattern id="pattern0_187_2" patternContentUnits="objectBoundingBox" width="1" height="1">

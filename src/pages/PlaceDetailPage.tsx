@@ -5,7 +5,8 @@ import { placesApi } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import StarRating from "@/components/ui/star-rating";
 import AuthModal from "@/components/ui/auth-modal";
-import { formatRupiah, formatDate, initials, timeAgo } from "@/lib/format";
+import { TestimonialsColumn, type Testimonial } from "@/components/ui/testimonials-columns-1";
+import { formatRupiah, formatDate, timeAgo } from "@/lib/format";
 
 interface PlaceDetail {
   id: string;
@@ -145,6 +146,19 @@ export default function PlaceDetailPage() {
     return acc;
   }, {});
 
+  const testimonials: Testimonial[] = place.comments.map((comment) => ({
+    id: comment.id,
+    text: comment.body,
+    image: comment.user.image,
+    name: comment.user.name ?? "Pengguna",
+    role: timeAgo(comment.createdAt),
+    onDelete: user?.id === comment.user.id ? () => handleDeleteReview(comment.id) : undefined,
+  }));
+  const columnSize = Math.ceil(testimonials.length / 3);
+  const firstColumn = testimonials.slice(0, columnSize);
+  const secondColumn = testimonials.slice(columnSize, columnSize * 2);
+  const thirdColumn = testimonials.slice(columnSize * 2);
+
   return (
     <div className="pt-16">
       {/* Header */}
@@ -267,40 +281,17 @@ export default function PlaceDetailPage() {
             </div>
           </form>
 
-          <div className="flex flex-col gap-4">
-            {place.comments.map((c) => (
-              <div key={c.id} className="glass-card rounded-2xl p-5 flex flex-col gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[rgba(156,163,175,0.22)] border border-[rgba(156,163,175,0.35)] flex items-center justify-center text-[#d1d5db] font-bold text-sm shrink-0 overflow-hidden">
-                    {c.user.image ? (
-                      <img src={c.user.image} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      initials(c.user.name)
-                    )}
-                  </div>
-                  <div>
-                    <div className="font-semibold text-foreground text-sm">{c.user.name ?? "Pengguna"}</div>
-                    <div className="text-muted-foreground text-xs">{timeAgo(c.createdAt)}</div>
-                  </div>
-                  {user?.id === c.user.id && (
-                    <button
-                      onClick={() => handleDeleteReview(c.id)}
-                      className="ml-auto w-8 h-8 rounded-full footer-glass-pill flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors"
-                      title="Hapus ulasan"
-                    >
-                      <MdDelete className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-                <p className="text-muted-foreground text-sm leading-relaxed">{c.body}</p>
-              </div>
-            ))}
-            {place.comments.length === 0 && (
-              <div className="glass-card rounded-2xl p-8 text-center text-muted-foreground text-sm">
-                Belum ada ulasan. Jadilah yang pertama! ✨
-              </div>
-            )}
-          </div>
+          {place.comments.length === 0 ? (
+            <div className="glass-card rounded-2xl p-8 text-center text-muted-foreground text-sm">
+              Belum ada ulasan. Jadilah yang pertama! ✨
+            </div>
+          ) : (
+            <div className="testimonials-viewport flex max-h-[740px] justify-center gap-4 overflow-hidden sm:gap-6">
+              <TestimonialsColumn testimonials={firstColumn} duration={15} />
+              <TestimonialsColumn testimonials={secondColumn.length ? secondColumn : firstColumn} className="hidden md:block" duration={19} />
+              <TestimonialsColumn testimonials={thirdColumn.length ? thirdColumn : firstColumn} className="hidden lg:block" duration={17} />
+            </div>
+          )}
         </div>
 
         <p className="text-center text-xs text-muted-foreground">
