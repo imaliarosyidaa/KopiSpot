@@ -24,11 +24,16 @@ enum PlaceCategory {
 
 enum OrderStatus {
   PENDING
+  PENDING_PAYMENT
   CONFIRMED
+  PACKED
   PREPARING
   READY
+  SHIPPED
   COMPLETED
   CANCELLED
+  EXPIRED
+  PAYMENT_FAILED
 }
 
 enum ReservationStatus {
@@ -39,6 +44,7 @@ enum ReservationStatus {
 }
 
 enum PaymentStatus {
+  PENDING
   UNPAID
   PAID
   FAILED
@@ -261,14 +267,19 @@ model Order {
   userId        String?
   placeId       String
   guestToken    String?       @unique
-  status           OrderStatus   @default(PENDING)
+  checkoutSessionId String?   @unique
+  midtransOrderId String?     @unique
+  midtransSnapToken String?
+  midtransRedirectUrl String?
+  midtransTransactionStatus String?
+  status           OrderStatus   @default(PENDING_PAYMENT)
   total            Int
   note             String?
   billingAddress   String?
   paymentMethod    String?
   paymentProofUrl  String?
   paymentTransactionId String? @unique
-  paymentStatus    PaymentStatus @default(UNPAID)
+  paymentStatus    PaymentStatus @default(PENDING)
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 

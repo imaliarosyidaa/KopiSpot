@@ -13,7 +13,7 @@ import {
 import { formatRupiah } from "@/lib/format"
 import { menuImageUrl } from "@/lib/menu-images"
 import { useCartStore, type CartItem } from "@/lib/cart-store"
-import { ordersApi, type Order } from "@/lib/api"
+import { ordersApi, paymentsApi, type Order } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
 
 const NEW_USER_COUPON = "KOPI10"
@@ -85,6 +85,7 @@ export default function OrderCartPage(): React.JSX.Element {
   const [ordersLoading, setOrdersLoading] = useState(false)
   const [ordersError, setOrdersError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<OrderTab>("cart")
+  const [paymentOrderId, setPaymentOrderId] = useState<string | null>(null)
 
   const groups = useMemo<StoreGroup[]>(() => {
     const grouped = new Map<string, StoreGroup>()
@@ -109,7 +110,8 @@ export default function OrderCartPage(): React.JSX.Element {
     }
     setOrdersLoading(true)
     try {
-      setOrders(await ordersApi.list())
+      const uniqueOrders = new Map((await ordersApi.list()).map((order) => [order.id, order]))
+      setOrders(Array.from(uniqueOrders.values()))
       setOrdersError(null)
     } catch (error) {
       setOrdersError(error instanceof Error ? error.message : "Gagal memuat status pesanan.")
@@ -126,9 +128,9 @@ export default function OrderCartPage(): React.JSX.Element {
   }, [user])
 
   const orderBucket = (order: Order): Exclude<OrderTab, "cart"> | null => {
-    if (order.paymentStatus !== "PAID" && order.status !== "CANCELLED") return "unpaid"
-    if (order.status === "CONFIRMED" || order.status === "PREPARING") return "packed"
-    if (order.status === "READY") return "shipped"
+    if (order.status === "PENDING_PAYMENT") return "unpaid"
+    if (order.status === "PACKED" || order.status === "CONFIRMED" || order.status === "PREPARING") return "packed"
+    if (order.status === "SHIPPED" || order.status === "READY") return "shipped"
     if (order.status === "COMPLETED") return "completed"
     return null
   }
@@ -145,6 +147,36 @@ export default function OrderCartPage(): React.JSX.Element {
     return orders.filter((order) => orderBucket(order) === tab).length
   }
 
+  const retryPayment = async (order: Order) => {
+    if (paymentOrderId) return
+    setPaymentOrderId(order.id)
+    setOrdersError(null)
+    try {
+      const savedPaymentUrl = sessionStorage.getItem(`Coffidoor_payment_url_${order.id}`)
+      if (savedPaymentUrl) {
+        window.location.assign(savedPaymentUrl)
+        return
+      }
+      const payment = await paymentsApi.create({
+        orderId: order.id,
+        amount: order.total,
+        customer: {
+          firstName: user?.name ?? "Coffidoor Customer",
+          email: user?.email ?? "customer@coffidoor.test",
+        },
+        guestToken: order.guestToken ?? sessionStorage.getItem(`Coffidoor_guest_order_${order.id}`) ?? undefined,
+      })
+      if (!payment.redirect_url) {
+        throw new Error("Halaman pembayaran Midtrans tidak tersedia.")
+      }
+      sessionStorage.setItem(`Coffidoor_payment_url_${order.id}`, payment.redirect_url)
+      window.location.assign(payment.redirect_url)
+    } catch (error) {
+      setOrdersError(error instanceof Error ? error.message : "Gagal membuat pembayaran Midtrans.")
+      setPaymentOrderId(null)
+    }
+  }
+
   useEffect(() => {
     setSelectedIds((current) => current.filter((id) => items.some((item) => item.id === id)))
   }, [items])
@@ -153,13 +185,34 @@ export default function OrderCartPage(): React.JSX.Element {
     const params = new URLSearchParams(location.search)
     const orderId = params.get("order_id")
     const payment = params.get("payment")
-    if (!orderId || !payment) return
+    const transactionStatus = params.get("transaction_status")
+    const isSuccess = payment === "success" || ["settlement", "capture"].includes(transactionStatus ?? "")
+    const isFailure = payment === "failed" || ["cancel", "deny", "expire"].includes(transactionStatus ?? "")
+    const isPending = payment === "pending" || transactionStatus === "pending" || params.get("action") === "back"
+    if (!orderId || (!isSuccess && !isFailure && !isPending)) return
 
-    if (payment === "success") {
+    if (isSuccess) {
       clear()
-      setNotice("Pembayaran diterima Midtrans. Status pesanan akan diperbarui setelah konfirmasi server.")
+      setNotice("Pembayaran diterima. Status pesanan sedang disinkronkan.")
+      setActiveTab("packed")
+      void (async () => {
+        for (let attempt = 0; attempt < 6; attempt += 1) {
+          await paymentsApi.syncStatus(orderId).catch(() => null)
+          const latestOrders = await ordersApi.list().catch(() => null)
+          if (latestOrders) {
+            setOrders(latestOrders)
+            setOrdersError(null)
+            if (latestOrders.some((order) => order.id === orderId && order.status === "PACKED")) break
+          }
+          await new Promise((resolve) => window.setTimeout(resolve, 2000))
+        }
+      })()
     } else {
-      setNotice("Pembayaran dibatalkan. Produk tetap tersimpan di keranjang.")
+      setActiveTab("unpaid")
+      setNotice(isPending
+        ? "Pembayaran belum selesai. Pesanan tetap tersimpan di tab Belum Bayar."
+        : "Pembayaran dibatalkan. Produk tetap tersimpan di keranjang.")
+      void loadOrders()
     }
     navigate("/order/keranjang", { replace: true })
   }, [clear, location.search, navigate])
@@ -214,7 +267,7 @@ export default function OrderCartPage(): React.JSX.Element {
   const renderOrderCard = (order: Order): React.JSX.Element => {
     const bucket = orderBucket(order)
     const statusLabel =
-      order.paymentStatus !== "PAID"
+      order.status === "PENDING_PAYMENT"
         ? "Menunggu Pembayaran"
         : bucket === "packed"
           ? "Sedang Dikemas"
@@ -238,7 +291,7 @@ export default function OrderCartPage(): React.JSX.Element {
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3 sm:px-5">
           <div><div className="text-xs text-muted-foreground">Order #{order.id.slice(-8)}</div><div className="text-sm font-black text-foreground">Total {formatRupiah(order.total)}</div></div>
-          {bucket === "unpaid" && <button type="button" onClick={() => setNotice("Gunakan transaksi Midtrans dari order ini untuk membayar kembali.")} className="rounded-full bg-primary px-4 py-2 text-xs font-black text-primary-foreground">Bayar Sekarang</button>}
+          {bucket === "unpaid" && <button type="button" onClick={() => void retryPayment(order)} disabled={paymentOrderId === order.id} className="rounded-full bg-primary px-4 py-2 text-xs font-black text-primary-foreground disabled:cursor-wait disabled:opacity-60">{paymentOrderId === order.id ? "Membuka Pembayaran..." : "Bayar Sekarang"}</button>}
           {bucket === "shipped" && <button type="button" onClick={() => setNotice("Informasi pelacakan akan tersedia setelah seller memasukkan nomor resi.")} className="rounded-full border border-border px-4 py-2 text-xs font-bold text-foreground">Lacak Pesanan</button>}
           {(bucket === "completed" || activeTab === "review") && <button type="button" onClick={() => setNotice("Fitur penilaian produk siap digunakan.")} className="rounded-full bg-primary px-4 py-2 text-xs font-black text-primary-foreground">Beri Penilaian</button>}
         </div>

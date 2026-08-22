@@ -31,11 +31,16 @@ type Tab = "ringkasan" | "usaha" | "menu" | "pesanan"
 
 const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
   PENDING: "Menunggu",
+  PENDING_PAYMENT: "Belum Bayar",
   CONFIRMED: "Dikonfirmasi",
+  PACKED: "Dikemas",
   PREPARING: "Disiapkan",
   READY: "Siap Diambil",
+  SHIPPED: "Dikirim",
   COMPLETED: "Selesai",
   CANCELLED: "Dibatalkan",
+  EXPIRED: "Kedaluwarsa",
+  PAYMENT_FAILED: "Pembayaran Gagal",
 }
 
 const MENU_CATEGORIES: { value: string; label: string }[] = [
@@ -60,32 +65,37 @@ const labelClass = "block text-xs font-semibold text-muted-foreground mb-1"
 function statusClass(status: OrderStatus): string {
   switch (status) {
     case "PENDING":
+    case "PENDING_PAYMENT":
       return "bg-[rgba(209,213,219,0.15)] text-[#d1d5db]"
     case "CONFIRMED":
+    case "PACKED":
       return "bg-[rgba(59,130,246,0.15)] text-blue-600"
     case "PREPARING":
       return "bg-[rgba(234,179,8,0.15)] text-yellow-600"
     case "READY":
+    case "SHIPPED":
       return "bg-[rgba(16,185,129,0.15)] text-emerald-600"
     case "COMPLETED":
       return "bg-[rgba(107,114,128,0.15)] text-gray-600"
     case "CANCELLED":
+    case "EXPIRED":
+    case "PAYMENT_FAILED":
       return "bg-[rgba(220,38,38,0.12)] text-destructive"
   }
 }
 
 const NEXT_STATUS: Partial<Record<OrderStatus, OrderStatus>> = {
-  PENDING: "CONFIRMED",
-  CONFIRMED: "PREPARING",
-  PREPARING: "READY",
-  READY: "COMPLETED",
+  PACKED: "SHIPPED",
+  SHIPPED: "COMPLETED",
 }
 
 const NEXT_STATUS_LABEL: Partial<Record<OrderStatus, string>> = {
-  PENDING: "Terima Pesanan",
-  CONFIRMED: "Mulai Disiapkan",
-  PREPARING: "Tandai Siap",
-  READY: "Tandai Selesai",
+  PACKED: "Tandai Dikirim",
+  SHIPPED: "Tandai Selesai",
+}
+
+function canAdvanceOrder(order: PartnerOrder): boolean {
+  return order.paymentStatus === "PAID" && Boolean(NEXT_STATUS[order.status])
 }
 
 interface PlaceFormValues {
@@ -1375,7 +1385,7 @@ export default function PagePartnerPage() {
 
                       {o.status !== "CANCELLED" && o.status !== "COMPLETED" && (
                         <div className="flex flex-wrap items-center gap-2 mt-4">
-                          {NEXT_STATUS[o.status] && (
+                          {canAdvanceOrder(o) && (
                             <button
                               onClick={() => nextOrderStatus(o)}
                               disabled={statusUpdatingId === o.id}
@@ -1385,6 +1395,11 @@ export default function PagePartnerPage() {
                                 ? "Menyimpan..."
                                 : NEXT_STATUS_LABEL[o.status]}
                             </button>
+                          )}
+                          {NEXT_STATUS[o.status] && o.paymentStatus !== "PAID" && (
+                            <span className="text-xs font-semibold text-muted-foreground">
+                              Menunggu pembayaran Midtrans
+                            </span>
                           )}
                           <button
                             onClick={() => cancelOrder(o)}

@@ -154,6 +154,7 @@ export default function OrderPage() {
       setError("Pembayaran diterima Midtrans. Status pesanan akan diperbarui setelah konfirmasi server.")
       setStep("done")
       clear()
+      void paymentsApi.syncStatus(orderId).catch(() => null)
       return
     }
 
@@ -252,6 +253,7 @@ export default function OrderPage() {
     try {
       const order = await ordersApi.create({
         placeId: items[0].placeId,
+        checkoutSessionId: crypto.randomUUID(),
         items: items.map((i) => ({ menuItemId: i.id, quantity: i.quantity })),
         note: note.trim() || undefined,
         billingAddress: buildBillingAddress(),

@@ -14,4 +14,11 @@ const snap = new midtransClient.Snap({
   clientKey: MIDTRANS_CLIENT_KEY,
 })
 
+const coreApi = new midtransClient.CoreApi({
+  isProduction: MIDTRANS_IS_PRODUCTION,
+  serverKey: MIDTRANS_SERVER_KEY,
+  clientKey: MIDTRANS_CLIENT_KEY,
+})
+
+export { coreApi }
 export default snap

@@ -1,19 +1,16 @@
-import { Link, useNavigate } from "react-router-dom"
+import { Link } from "react-router-dom"
 import { MdDeleteOutline, MdShoppingCart } from "react-icons/md"
 import { useCartStore, type CartItem } from "@/lib/cart-store"
 import { formatRupiah } from "@/lib/format"
 import { menuImageUrl } from "@/lib/menu-images"
 
 export default function WishlistPage(): React.JSX.Element {
-  const navigate = useNavigate()
   const wishlist = useCartStore((state) => state.wishlist)
   const add = useCartStore((state) => state.add)
   const removeFromWishlist = useCartStore((state) => state.removeFromWishlist)
   const addToCart = (item: CartItem) => {
     const { quantity: _quantity, ...cartItem } = item
     add(cartItem)
-    removeFromWishlist(item.id)
-    navigate("/order/keranjang")
   }
 
   return (

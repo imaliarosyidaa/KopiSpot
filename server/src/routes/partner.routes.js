@@ -9,6 +9,10 @@ const router = Router()
 const VALID_CATEGORIES = Object.values(PlaceCategory)
 const VALID_ORDER_STATUSES = Object.values(OrderStatus)
 const MENU_CATEGORIES = ["coffee", "non-coffee", "food", "dessert"]
+const NEXT_ORDER_STATUS = {
+  PACKED: "SHIPPED",
+  SHIPPED: "COMPLETED",
+}
 
 const MENU_INCLUDE_PLACE = {
   place: { select: { id: true, name: true, authorId: true } },
@@ -368,10 +372,21 @@ router.put(
 
     const order = await prisma.order.findUnique({
       where: { id: req.params.orderId },
-      select: { id: true, placeId: true },
+      select: { id: true, placeId: true, paymentStatus: true },
     })
     if (!order || order.placeId !== owned.id) {
       return res.status(404).json({ error: "Pesanan tidak ditemukan." })
+    }
+    if (
+      order.paymentStatus !== "PAID" &&
+      ["PACKED", "SHIPPED", "COMPLETED"].includes(status)
+    ) {
+      return res.status(409).json({
+        error: "Pesanan belum dibayar melalui Midtrans.",
+      })
+    }
+    if (status !== "CANCELLED" && NEXT_ORDER_STATUS[order.status] !== status) {
+      return res.status(409).json({ error: "Urutan status pesanan tidak valid." })
     }
 
     const updated = await prisma.order.update({

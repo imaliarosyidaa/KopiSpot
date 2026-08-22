@@ -54,6 +54,8 @@ router.post("/", optionalAuth, async (req, res) => {
     typeof body.billingAddress === "string" ? body.billingAddress.trim() : ""
   const couponCode =
     typeof body.couponCode === "string" ? body.couponCode.trim().toUpperCase() : ""
+  const checkoutSessionId =
+    typeof body.checkoutSessionId === "string" ? body.checkoutSessionId.trim() : ""
   const shippingFee = Math.max(0, Math.floor(Number(body.shippingFee) || 0))
   const guestToken = req.userId ? null : crypto.randomBytes(32).toString("hex")
 
@@ -62,6 +64,9 @@ router.post("/", optionalAuth, async (req, res) => {
   }
   if (items.length === 0) {
     return res.status(400).json({ error: "Pesanan minimal berisi satu menu." })
+  }
+  if (!checkoutSessionId || checkoutSessionId.length > 100) {
+    return res.status(400).json({ error: "Checkout session wajib diisi." })
   }
   if (note.length > 500) {
     return res.status(400).json({ error: "Catatan maksimal 500 karakter." })
@@ -78,6 +83,17 @@ router.post("/", optionalAuth, async (req, res) => {
   })
   if (!place) {
     return res.status(404).json({ error: "Kafe tidak ditemukan." })
+  }
+
+  const existingOrder = await prisma.order.findUnique({
+    where: { checkoutSessionId },
+    include: ORDER_INCLUDE,
+  })
+  if (existingOrder) {
+    if (existingOrder.userId !== req.userId) {
+      return res.status(409).json({ error: "Checkout session sudah digunakan." })
+    }
+    return res.status(200).json({ ...existingOrder, guestToken: existingOrder.guestToken })
   }
 
   const requested = items.map((item) => ({
@@ -106,29 +122,42 @@ router.post("/", optionalAuth, async (req, res) => {
       ? Math.max(1000, Math.round(subtotal * 0.9) + shippingFee)
       : subtotal + shippingFee
 
-  const order = await prisma.order.create({
-    data: {
-      userId: req.userId ?? null,
-      placeId,
-      guestToken,
-      total,
-      note: note || null,
-      billingAddress: billingAddress || null,
-      status: "PENDING",
-      paymentStatus: "UNPAID",
-      items: {
-        create: requested.map((r) => {
-          const item = menuItems.find((m) => m.id === r.menuItemId)
-          return {
-            menuItemId: r.menuItemId,
-            quantity: r.quantity,
-            price: item.price,
-          }
-        }),
+  let order
+  try {
+    order = await prisma.order.create({
+      data: {
+        userId: req.userId ?? null,
+        placeId,
+        guestToken,
+        checkoutSessionId,
+        total,
+        note: note || null,
+        billingAddress: billingAddress || null,
+        status: "PENDING_PAYMENT",
+        paymentStatus: "PENDING",
+        items: {
+          create: requested.map((r) => {
+            const item = menuItems.find((m) => m.id === r.menuItemId)
+            return {
+              menuItemId: r.menuItemId,
+              quantity: r.quantity,
+              price: item.price,
+            }
+          }),
+        },
       },
-    },
-    include: ORDER_INCLUDE,
-  })
+      include: ORDER_INCLUDE,
+    })
+  } catch (error) {
+    if (error?.code !== "P2002") throw error
+    order = await prisma.order.findUnique({
+      where: { checkoutSessionId },
+      include: ORDER_INCLUDE,
+    })
+    if (!order || order.userId !== req.userId) {
+      return res.status(409).json({ error: "Checkout session sudah digunakan." })
+    }
+  }
 
   res.status(201).json({ ...order, guestToken })
 })
@@ -165,7 +194,7 @@ router.put("/:id/pay", optionalAuth, async (req, res) => {
       paymentMethod: method,
       paymentProofUrl: proofUrl,
       paymentStatus: "PAID",
-      status: "CONFIRMED",
+      status: "PACKED",
     },
     include: ORDER_INCLUDE,
   })

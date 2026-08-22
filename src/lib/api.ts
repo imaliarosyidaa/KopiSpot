@@ -554,8 +554,8 @@ export const menusApi = {
   },
 };
 
-export type OrderStatus = "PENDING" | "CONFIRMED" | "PREPARING" | "READY" | "COMPLETED" | "CANCELLED";
-export type PaymentStatus = "UNPAID" | "PAID" | "FAILED";
+export type OrderStatus = "PENDING" | "PENDING_PAYMENT" | "CONFIRMED" | "PACKED" | "PREPARING" | "READY" | "SHIPPED" | "COMPLETED" | "CANCELLED" | "EXPIRED" | "PAYMENT_FAILED";
+export type PaymentStatus = "PENDING" | "UNPAID" | "PAID" | "FAILED";
 
 export interface OrderItem {
   id: string;
@@ -589,6 +589,7 @@ export const ordersApi = {
   detail: (id: string) => api<Order>(`/orders/${id}`),
   create: (data: {
     placeId: string;
+    checkoutSessionId: string;
     items: { menuItemId: string; quantity: number }[];
     note?: string;
     billingAddress?: string;
@@ -604,6 +605,10 @@ export const ordersApi = {
 };
 
 export const paymentsApi = {
+  syncStatus: (orderId: string, guestToken?: string) =>
+    api<{ paymentStatus: PaymentStatus }>(
+      `/payments/status/${orderId}${guestToken ? `?guestToken=${encodeURIComponent(guestToken)}` : ""}`,
+    ),
   create: (data: {
     orderId: string;
     amount: number;
