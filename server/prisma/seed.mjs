@@ -559,15 +559,15 @@ async function main() {
   const password = await hash("Coffidoor123", 10)
 
   const names = [
-    { name: "Dira Kusuma", email: "dira@Coffidoor.id" },
+    { name: "Dira Kusuma", email: "dira@coffidoor.id" },
 
-    { name: "Rizal Firmansyah", email: "rizal@Coffidoor.id" },
+    { name: "Rizal Firmansyah", email: "rizal@coffidoor.id" },
 
-    { name: "Salsabila Putri", email: "salsabila@Coffidoor.id" },
+    { name: "Salsabila Putri", email: "salsabila@coffidoor.id" },
 
-    { name: "Agung Wibowo", email: "agung@Coffidoor.id" },
+    { name: "Agung Wibowo", email: "agung@coffidoor.id" },
 
-    { name: "Admin Coffidoor", email: "demo@Coffidoor.id" },
+    { name: "Admin Coffidoor", email: "demo@coffidoor.id" },
   ]
 
   const users = []
@@ -871,7 +871,7 @@ async function main() {
     await recomputeGamification(u.id)
   }
 
-  console.log("Seeding selesai. Demo user: demo@Coffidoor.id / Coffidoor123")
+  console.log("Seeding selesai. Demo user: demo@coffidoor.id / Coffidoor123")
 }
 
 main()

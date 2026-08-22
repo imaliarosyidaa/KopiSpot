@@ -74,8 +74,13 @@ router.post("/login", async (req, res) => {
     return res.status(400).json({ error: "Email dan password wajib diisi." })
   }
 
-  const user = await prisma.user.findUnique({
-    where: { email: String(email).trim().toLowerCase() },
+  const user = await prisma.user.findFirst({
+    where: {
+      email: {
+        equals: String(email).trim(),
+        mode: "insensitive",
+      },
+    },
   })
 
   if (!user || !(await compare(String(password), user.password))) {

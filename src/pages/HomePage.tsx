@@ -155,6 +155,7 @@ function CinematicHero({ onExplore }: { onExplore: () => void }) {
           </div>
         </div>
       </div>
+      
 
       <div className="relative z-10 w-full max-w-2xl mx-auto px-6 pb-12 grid grid-cols-3 gap-6">
         {[
@@ -269,8 +270,44 @@ export default function HomePage() {
     <>
       <CinematicHero onExplore={scrollToPlaces} />
 
-      <ImageGallery items={featureItems} />
+        {/* ── MARQUEE DIVIDER (X) ── */}
+        <div className="w-full overflow-hidden absolute z-20 top-[750px] md:py-36">
+          {/* Marquee 1 — Kanan ke Kiri (Default) */}
+          <div className="absolute left-1/2 top-1/2 w-[160vw] -translate-x-1/2 -translate-y-1/2 rotate-5 border-y border-border bg-card/95 py-3 shadow-lg">
+            <div className="flex w-max animate-marquee text-xs font-bold tracking-[0.25em] text-muted-foreground uppercase">
+              {[1, 2].map((i) => (
+                <div key={i} className="flex items-center gap-10 px-10">
+                  <span>Kopi Specialty</span><span className="text-primary">✦</span>
+                  <span>Latte Art</span><span className="text-primary">✦</span>
+                  <span>Aesthetic Interior</span><span className="text-primary">✦</span>
+                  <span>Work From Cafe</span><span className="text-primary">✦</span>
+                  <span>Hidden Gems</span><span className="text-primary">✦</span>
+                  <span>Instagramable Spots</span><span className="text-primary">✦</span>
+                </div>
+              ))}
+            </div>
+          </div>
 
+          {/* Marquee 2 — Kiri ke Kanan (Reverse) */}
+          <div className="absolute left-1/2 top-1/2 w-[160vw] -translate-x-1/2 -translate-y-1/2 -rotate-5 border-y border-border bg-card/95 py-3 shadow-lg">
+            <div className="flex w-max animate-marquee-reverse text-xs font-bold tracking-[0.25em] text-muted-foreground uppercase">
+              {[1, 2].map((i) => (
+                <div key={i} className="flex items-center gap-10 px-10">
+                  <span>Kopi Specialty</span><span className="text-primary">✦</span>
+                  <span>Latte Art</span><span className="text-primary">✦</span>
+                  <span>Aesthetic Interior</span><span className="text-primary">✦</span>
+                  <span>Work From Cafe</span><span className="text-primary">✦</span>
+                  <span>Hidden Gems</span><span className="text-primary">✦</span>
+                  <span>Instagramable Spots</span><span className="text-primary">✦</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+<div className="mt-24">
+      <ImageGallery items={featureItems} />
+</div>
       {/*
         ── ABOUT ──
       */}
