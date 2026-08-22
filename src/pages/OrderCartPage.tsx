@@ -6,19 +6,30 @@ import {
   MdBookmarkAdd,
   MdCheck,
   MdDeleteOutline,
+  MdEdit,
   MdFavoriteBorder,
   MdRemove,
   MdStorefront,
 } from "react-icons/md"
-import { formatRupiah } from "@/lib/format"
+import { formatDate, formatRupiah } from "@/lib/format"
 import { menuImageUrl } from "@/lib/menu-images"
 import { useCartStore, type CartItem } from "@/lib/cart-store"
-import { ordersApi, paymentsApi, type Order } from "@/lib/api"
+import {
+  ApiError,
+  ordersApi,
+  paymentsApi,
+  reviewsApi,
+  type Order,
+  type PendingReview,
+  type Review,
+} from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
+import ReviewModal from "@/components/ui/review-modal"
+import StarRating from "@/components/ui/star-rating"
 
 const NEW_USER_COUPON = "KOPI10"
 
-type OrderTab = "cart" | "unpaid" | "packed" | "shipped" | "completed" | "review"
+type OrderTab = "cart" | "unpaid" | "packed" | "shipped" | "completed" | "penilaian" | "review"
 
 const ORDER_TABS: { key: OrderTab; label: string }[] = [
   { key: "cart", label: "Keranjang" },
@@ -26,6 +37,7 @@ const ORDER_TABS: { key: OrderTab; label: string }[] = [
   { key: "packed", label: "Dikemas" },
   { key: "shipped", label: "Dikirim" },
   { key: "completed", label: "Selesai" },
+  { key: "penilaian", label: "Penilaian" },
   { key: "review", label: "Penilaian Saya" },
 ]
 
@@ -84,9 +96,17 @@ export default function OrderCartPage(): React.JSX.Element {
   const [orders, setOrders] = useState<Order[]>([])
   const [ordersLoading, setOrdersLoading] = useState(false)
   const [ordersError, setOrdersError] = useState<string | null>(null)
-  const [ratedOrderIds, setRatedOrderIds] = useState<string[]>([])
+  const [pendingReviews, setPendingReviews] = useState<PendingReview[]>([])
+  const [myReviews, setMyReviews] = useState<Review[]>([])
+  const [reviewsLoading, setReviewsLoading] = useState(false)
+  const [reviewsError, setReviewsError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<OrderTab>("cart")
   const [paymentOrderId, setPaymentOrderId] = useState<string | null>(null)
+  const [reviewModal, setReviewModal] = useState<
+    { mode: "create"; pending: PendingReview } | { mode: "edit"; review: Review } | null
+  >(null)
+  const [reviewSubmitting, setReviewSubmitting] = useState(false)
+  const [reviewError, setReviewError] = useState<string | null>(null)
 
   const groups = useMemo<StoreGroup[]>(() => {
     const grouped = new Map<string, StoreGroup>()
@@ -107,13 +127,14 @@ export default function OrderCartPage(): React.JSX.Element {
   const loadOrders = async () => {
     if (!user) {
       setOrders([])
+      setPendingReviews([])
+      setMyReviews([])
       return
     }
     setOrdersLoading(true)
     try {
       const uniqueOrders = new Map((await ordersApi.list()).map((order) => [order.id, order]))
       setOrders(Array.from(uniqueOrders.values()))
-      setRatedOrderIds(await ordersApi.ratedOrderIds())
       setOrdersError(null)
     } catch (error) {
       setOrdersError(error instanceof Error ? error.message : "Gagal memuat status pesanan.")
@@ -122,8 +143,24 @@ export default function OrderCartPage(): React.JSX.Element {
     }
   }
 
+  const loadReviews = async () => {
+    if (!user) return
+    setReviewsLoading(true)
+    try {
+      const [pending, mine] = await Promise.all([reviewsApi.pending(), reviewsApi.mine()])
+      setPendingReviews(pending)
+      setMyReviews(mine)
+      setReviewsError(null)
+    } catch (error) {
+      setReviewsError(error instanceof Error ? error.message : "Gagal memuat ulasan.")
+    } finally {
+      setReviewsLoading(false)
+    }
+  }
+
   useEffect(() => {
     void loadOrders()
+    void loadReviews()
     if (!user) return
     const interval = window.setInterval(() => void loadOrders(), 15000)
     return () => window.clearInterval(interval)
@@ -137,16 +174,14 @@ export default function OrderCartPage(): React.JSX.Element {
     return null
   }
 
-  const tabOrders = activeTab === "review"
-    ? orders.filter((order) => order.status === "COMPLETED" && ratedOrderIds.includes(order.id))
-    : activeTab === "cart"
-      ? []
-      : orders.filter((order) => orderBucket(order) === activeTab)
+  const statusOrders = (tab: OrderTab): Order[] =>
+    orders.filter((order) => orderBucket(order) === tab)
 
   const tabCount = (tab: OrderTab): number => {
     if (tab === "cart") return items.length
-    if (tab === "review") return orders.filter((order) => order.status === "COMPLETED" && ratedOrderIds.includes(order.id)).length
-    return orders.filter((order) => orderBucket(order) === tab).length
+    if (tab === "penilaian") return pendingReviews.length
+    if (tab === "review") return myReviews.length
+    return statusOrders(tab).length
   }
 
   const retryPayment = async (order: Order) => {
@@ -295,11 +330,186 @@ export default function OrderCartPage(): React.JSX.Element {
           <div><div className="text-xs text-muted-foreground">Order #{order.id.slice(-8)}</div><div className="text-sm font-black text-foreground">Total {formatRupiah(order.total)}</div></div>
           {bucket === "unpaid" && <button type="button" onClick={() => void retryPayment(order)} disabled={paymentOrderId === order.id} className="rounded-full bg-primary px-4 py-2 text-xs font-black text-primary-foreground disabled:cursor-wait disabled:opacity-60">{paymentOrderId === order.id ? "Membuka Pembayaran..." : "Bayar Sekarang"}</button>}
           {bucket === "shipped" && <button type="button" onClick={() => setNotice("Informasi pelacakan akan tersedia setelah seller memasukkan nomor resi.")} className="rounded-full border border-border px-4 py-2 text-xs font-bold text-foreground">Lacak Pesanan</button>}
-          {bucket === "completed" && !ratedOrderIds.includes(order.id) && <Link to={`/places/${order.placeId}?order_id=${encodeURIComponent(order.id)}`} className="rounded-full bg-primary px-4 py-2 text-xs font-black text-primary-foreground">Beri Penilaian</Link>}
+          {bucket === "completed" && (
+            <button
+              type="button"
+              onClick={() => setActiveTab("penilaian")}
+              className="rounded-full bg-primary px-4 py-2 text-xs font-black text-primary-foreground"
+            >
+              Beri Penilaian
+            </button>
+          )}
         </div>
       </article>
     )
   }
+
+  const openCreate = (pending: PendingReview) => {
+    setReviewError(null)
+    setReviewModal({ mode: "create", pending })
+  }
+
+  const openEdit = (review: Review) => {
+    setReviewError(null)
+    setReviewModal({ mode: "edit", review })
+  }
+
+  const closeReviewModal = () => {
+    setReviewModal(null)
+    setReviewError(null)
+    setReviewSubmitting(false)
+  }
+
+  const handleReviewSubmit = async (data: {
+    rating: number
+    comment: string
+    images: string[]
+  }) => {
+    if (!reviewModal) return
+    setReviewSubmitting(true)
+    setReviewError(null)
+    try {
+      if (reviewModal.mode === "create") {
+        const p = reviewModal.pending
+        const created = await reviewsApi.create({
+          orderItemId: p.orderItem.id,
+          orderId: p.order.id,
+          rating: data.rating,
+          comment: data.comment,
+          images: data.images,
+        })
+        setMyReviews((prev) => [created, ...prev])
+        setPendingReviews((prev) => prev.filter((x) => x.orderItem.id !== p.orderItem.id))
+      } else {
+        const r = reviewModal.review
+        const updated = await reviewsApi.update(r.id, data)
+        setMyReviews((prev) => prev.map((x) => (x.id === r.id ? updated : x)))
+      }
+      closeReviewModal()
+    } catch (err) {
+      setReviewError(
+        err instanceof ApiError ? err.message : "Gagal menyimpan penilaian.",
+      )
+    } finally {
+      setReviewSubmitting(false)
+    }
+  }
+
+  const handleDeleteReview = async (review: Review) => {
+    if (!window.confirm("Hapus penilaian ini? Produk akan kembali ke tab Penilaian.")) {
+      return
+    }
+    try {
+      await reviewsApi.remove(review.id)
+      setMyReviews((prev) => prev.filter((x) => x.id !== review.id))
+      const restored: PendingReview = {
+        orderItem: review.orderItem,
+        order: review.order,
+      }
+      setPendingReviews((prev) => [restored, ...prev])
+    } catch (err) {
+      setReviewsError(
+        err instanceof ApiError ? err.message : "Gagal menghapus penilaian.",
+      )
+    }
+  }
+
+  const renderPendingCard = (p: PendingReview): React.JSX.Element => (
+    <article key={p.orderItem.id} className="overflow-hidden rounded-2xl border border-border bg-card/70">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-5">
+        <div className="flex items-center gap-2">
+          <MdStorefront className="text-primary" />
+          <strong className="text-sm text-foreground">{p.order.place.name}</strong>
+        </div>
+        <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
+          Belum dinilai
+        </span>
+      </div>
+      <div className="flex items-center gap-3 px-4 py-4 sm:px-5">
+        <img
+          src={menuImageUrl(p.orderItem.menuItem.category, p.orderItem.menuItem.imageUrl, p.orderItem.menuItem.name)}
+          alt={p.orderItem.menuItem.name}
+          className="h-16 w-16 rounded-xl object-cover"
+        />
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-sm font-bold text-foreground">{p.orderItem.menuItem.name}</div>
+          <div className="text-xs text-muted-foreground">
+            {p.orderItem.quantity > 1 ? `×${p.orderItem.quantity}` : "Variasi standar"}
+          </div>
+        </div>
+        <strong className="text-sm text-primary">{formatRupiah(p.orderItem.price * p.orderItem.quantity)}</strong>
+      </div>
+      <div className="flex items-center justify-between border-t border-border px-4 py-3 sm:px-5">
+        <div className="text-xs text-muted-foreground">Order #{p.order.id.slice(-8)}</div>
+        <button
+          type="button"
+          onClick={() => openCreate(p)}
+          className="rounded-full bg-primary px-4 py-2 text-xs font-black text-primary-foreground"
+        >
+          Beri Penilaian
+        </button>
+      </div>
+    </article>
+  )
+
+  const renderMyReviewCard = (r: Review): React.JSX.Element => (
+    <article key={r.id} className="overflow-hidden rounded-2xl border border-border bg-card/70">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-5">
+        <div className="flex items-center gap-2">
+          <MdStorefront className="text-primary" />
+          <strong className="text-sm text-foreground">{r.order.place.name}</strong>
+        </div>
+        <span className="text-xs text-muted-foreground">{formatDate(r.createdAt)}</span>
+      </div>
+      <div className="flex items-center gap-3 px-4 py-4 sm:px-5">
+        <img
+          src={menuImageUrl(r.orderItem.menuItem.category, r.orderItem.menuItem.imageUrl, r.orderItem.menuItem.name)}
+          alt={r.orderItem.menuItem.name}
+          className="h-16 w-16 rounded-xl object-cover"
+        />
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-sm font-bold text-foreground">{r.orderItem.menuItem.name}</div>
+          <div className="mt-1">
+            <StarRating rating={r.rating} size="h-4 w-4" />
+          </div>
+        </div>
+      </div>
+      {r.comment && (
+        <p className="px-4 pb-2 text-sm text-foreground sm:px-5">"{r.comment}"</p>
+      )}
+      {r.images.length > 0 && (
+        <div className="flex flex-wrap gap-2 px-4 pb-3 sm:px-5">
+          {r.images.map((src, i) => (
+            <img
+              key={src}
+              src={src}
+              alt={`Foto ulasan ${i + 1}`}
+              className="h-16 w-16 rounded-xl object-cover border border-border"
+            />
+          ))}
+        </div>
+      )}
+      <div className="flex items-center gap-3 border-t border-border px-4 py-3 sm:px-5">
+        <div className="text-xs text-muted-foreground">Order #{r.order.id.slice(-8)}</div>
+        <div className="ml-auto flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => openEdit(r)}
+            className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs font-bold text-foreground hover:border-primary hover:text-primary"
+          >
+            <MdEdit className="h-3.5 w-3.5" /> Edit
+          </button>
+          <button
+            type="button"
+            onClick={() => void handleDeleteReview(r)}
+            className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs font-bold text-muted-foreground hover:border-destructive hover:text-destructive"
+          >
+            <MdDeleteOutline className="h-3.5 w-3.5" /> Hapus
+          </button>
+        </div>
+      </div>
+    </article>
+  )
 
   if (paidOrder) {
     return (
@@ -345,14 +555,29 @@ export default function OrderCartPage(): React.JSX.Element {
 
         {notice && <div role="status" className="mb-5 rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-semibold text-foreground">{notice}</div>}
 
-        {activeTab !== "cart" ? (
+        {activeTab === "cart" ? null : activeTab === "penilaian" ? (
+          <div className="space-y-4">
+            {reviewsError && <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">{reviewsError}</div>}
+            {reviewsLoading && <div className="py-10 text-center text-sm text-muted-foreground">Memuat penilaian...</div>}
+            {!reviewsLoading && pendingReviews.length === 0 && <div className="glass-card rounded-3xl px-6 py-16 text-center"><MdStorefront className="mx-auto mb-4 h-12 w-12 text-muted-foreground" /><h2 className="text-xl font-black text-foreground">Belum Ada Produk untuk Dinilai</h2><p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">Semua pesanan kamu yang sudah selesai sudah dinilai.</p></div>}
+            {!reviewsLoading && pendingReviews.map(renderPendingCard)}
+          </div>
+        ) : activeTab === "review" ? (
+          <div className="space-y-4">
+            {reviewsError && <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">{reviewsError}</div>}
+            {reviewsLoading && <div className="py-10 text-center text-sm text-muted-foreground">Memuat penilaian...</div>}
+            {!reviewsLoading && myReviews.length === 0 && <div className="glass-card rounded-3xl px-6 py-16 text-center"><MdStorefront className="mx-auto mb-4 h-12 w-12 text-muted-foreground" /><h2 className="text-xl font-black text-foreground">Belum Ada Penilaian</h2><p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">Produk yang sudah kamu nilai akan muncul di sini.</p></div>}
+            {!reviewsLoading && myReviews.map(renderMyReviewCard)}
+          </div>
+        ) : (
           <div className="space-y-4">
             {ordersError && <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">{ordersError}</div>}
             {ordersLoading && <div className="py-10 text-center text-sm text-muted-foreground">Memuat status pesanan...</div>}
-            {!ordersLoading && tabOrders.length === 0 && <div className="glass-card rounded-3xl px-6 py-16 text-center"><MdStorefront className="mx-auto mb-4 h-12 w-12 text-muted-foreground" /><h2 className="text-xl font-black text-foreground">Belum ada pesanan di tab ini</h2><p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">Status pesanan akan berpindah otomatis mengikuti pembaruan dari backend dan seller.</p></div>}
-            {!ordersLoading && tabOrders.map(renderOrderCard)}
+            {!ordersLoading && statusOrders(activeTab).length === 0 && <div className="glass-card rounded-3xl px-6 py-16 text-center"><MdStorefront className="mx-auto mb-4 h-12 w-12 text-muted-foreground" /><h2 className="text-xl font-black text-foreground">Belum ada pesanan di tab ini</h2><p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">Status pesanan akan berpindah otomatis mengikuti pembaruan dari backend dan seller.</p></div>}
+            {!ordersLoading && statusOrders(activeTab).map(renderOrderCard)}
           </div>
-        ) : items.length === 0 ? (
+        )}
+        {activeTab === "cart" && items.length === 0 ? (
           <div className="glass-card rounded-3xl px-6 py-16 text-center">
             <MdStorefront className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
             <h2 className="text-xl font-black text-foreground">Keranjang masih kosong</h2>
@@ -411,6 +636,52 @@ export default function OrderCartPage(): React.JSX.Element {
       </div>
 
       {activeTab === "cart" && items.length > 0 && <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 py-3 shadow-[0_-12px_30px_rgba(17,17,19,0.08)] backdrop-blur-xl sm:py-4"><div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 sm:px-6 lg:px-8"><div className="flex items-center gap-2"><IndeterminateCheckbox checked={allSelected} indeterminate={selectedIds.length > 0 && !allSelected} onChange={toggleAll} label="Pilih semua produk" /><span className="hidden text-sm text-foreground sm:inline">Pilih Semua</span></div><button type="button" onClick={removeSelected} disabled={selectedIds.length === 0} className="hidden text-sm font-semibold text-muted-foreground hover:text-destructive disabled:opacity-40 sm:inline">Hapus</button><div className="ml-auto text-right"><div className="text-xs text-muted-foreground">{selectedCount} item terpilih</div><div className="text-lg font-black text-primary">{formatRupiah(selectedTotal)}</div></div><button type="button" onClick={checkout} disabled={selectedItems.length === 0} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-primary px-5 text-sm font-black text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40">Checkout <MdArrowForward /></button></div></div>}
+
+      {reviewModal && (
+        <ReviewModal
+          open={Boolean(reviewModal)}
+          mode={reviewModal.mode}
+          product={{
+            name:
+              reviewModal.mode === "create"
+                ? reviewModal.pending.orderItem.menuItem.name
+                : reviewModal.review.orderItem.menuItem.name,
+            imageUrl:
+              reviewModal.mode === "create"
+                ? reviewModal.pending.orderItem.menuItem.imageUrl
+                : reviewModal.review.orderItem.menuItem.imageUrl,
+            category:
+              reviewModal.mode === "create"
+                ? reviewModal.pending.orderItem.menuItem.category
+                : reviewModal.review.orderItem.menuItem.category,
+            storeName:
+              reviewModal.mode === "create"
+                ? reviewModal.pending.order.place.name
+                : reviewModal.review.order.place.name,
+            avgRating:
+              reviewModal.mode === "create"
+                ? reviewModal.pending.orderItem.menuItem.avgRating
+                : reviewModal.review.orderItem.menuItem.avgRating,
+            ratingCount:
+              reviewModal.mode === "create"
+                ? reviewModal.pending.orderItem.menuItem.ratingCount
+                : reviewModal.review.orderItem.menuItem.ratingCount,
+          }}
+          initial={
+            reviewModal.mode === "edit"
+              ? {
+                  rating: reviewModal.review.rating,
+                  comment: reviewModal.review.comment ?? "",
+                  images: reviewModal.review.images,
+                }
+              : undefined
+          }
+          submitting={reviewSubmitting}
+          error={reviewError}
+          onSubmit={handleReviewSubmit}
+          onClose={closeReviewModal}
+        />
+      )}
     </div>
   )
 }

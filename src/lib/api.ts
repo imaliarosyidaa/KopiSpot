@@ -632,3 +632,72 @@ export const paymentsApi = {
       body: JSON.stringify(data),
     }),
 };
+
+export interface ReviewMenuItem {
+  id: string;
+  name: string;
+  price: number;
+  category: string;
+  imageUrl: string | null;
+  avgRating?: number;
+  ratingCount?: number;
+}
+
+export interface ReviewOrderItem {
+  id: string;
+  quantity: number;
+  price: number;
+  menuItem: ReviewMenuItem;
+}
+
+export interface ReviewOrderRef {
+  id: string;
+  createdAt: string;
+  place: { id: string; name: string };
+}
+
+export interface Review {
+  id: string;
+  userId: string;
+  orderId: string;
+  orderItemId: string;
+  menuItemId: string;
+  placeId: string;
+  rating: number;
+  comment: string | null;
+  images: string[];
+  createdAt: string;
+  updatedAt: string;
+  orderItem: ReviewOrderItem;
+  order: ReviewOrderRef;
+}
+
+export interface PendingReview {
+  orderItem: ReviewOrderItem;
+  order: ReviewOrderRef;
+}
+
+export const reviewsApi = {
+  pending: () => api<PendingReview[]>("/reviews/pending"),
+  mine: () => api<Review[]>("/reviews/mine"),
+  create: (data: {
+    orderItemId: string;
+    orderId: string;
+    rating: number;
+    comment?: string;
+    images?: string[];
+  }) =>
+    api<Review>("/reviews", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  update: (
+    id: string,
+    data: { rating?: number; comment?: string; images?: string[] },
+  ) =>
+    api<Review>(`/reviews/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+  remove: (id: string) => api<{ ok: boolean }>(`/reviews/${id}`, { method: "DELETE" }),
+};
