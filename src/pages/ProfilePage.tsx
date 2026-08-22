@@ -102,7 +102,7 @@ export default function ProfilePage() {
   const nextXp = nextLevelXp(profile.level);
 
   return (
-    <div className="pt-24 px-6 md:px-12 max-w-4xl mx-auto pb-20">
+    <div className="pt-24 px-6 md:px-12 mx-auto pb-20">
       {/* Header */}
       <div className="glass-card rounded-3xl p-6 md:p-8 mb-8">
         <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
@@ -200,7 +200,7 @@ export default function ProfilePage() {
       </div>
 
       {tab === "postingan" && (
-        <div className="flex flex-col gap-5 max-w-2xl">
+        <div className="flex flex-col gap-5">
           {profile.posts.length === 0 ? (
             <EmptyState text="Kamu belum membuat postingan." ctaTo="/post/new" cta="Buat Postingan" />
           ) : (
@@ -210,7 +210,7 @@ export default function ProfilePage() {
       )}
 
       {tab === "tersimpan" && (
-        <div className="flex flex-col gap-5 max-w-2xl">
+        <div className="flex flex-col gap-5">
           {profile.savedPosts.length === 0 ? (
             <EmptyState text="Belum ada postingan yang kamu simpan." />
           ) : (
@@ -220,7 +220,7 @@ export default function ProfilePage() {
       )}
 
       {tab === "ulasan" && (
-        <div className="flex flex-col gap-5 max-w-2xl">
+        <div className="flex flex-col gap-5">
           <h2 className="text-lg font-black text-foreground">Rating yang diberikan</h2>
           {profile.ratings.length === 0 ? (
             <p className="text-muted-foreground text-sm">Belum ada rating.</p>

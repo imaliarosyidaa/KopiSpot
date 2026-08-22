@@ -106,7 +106,7 @@ export default function CreatePostPage() {
   }
 
   return (
-    <div className="pt-24 px-6 md:px-12 max-w-2xl mx-auto pb-20">
+    <div className="pt-24 px-6 md:px-12 lg:max-w-2xl xl:max-w-7xl mx-auto pb-20">
       <span className="tag-pill mb-3 inline-block">Buat Postingan</span>
       <h1
         className="text-4xl font-black text-foreground mb-8"

@@ -98,7 +98,7 @@ export default function FeedPage() {
   }
 
   return (
-    <div className="pt-24 px-6 md:px-12 max-w-7xl mx-auto pb-20">
+    <div className="pt-24 px-6 md:px-12 mx-auto pb-20">
       <div className="flex flex-col md:flex-row items-start gap-8">
         <LeftSidebar
           cities={cities}
@@ -143,7 +143,7 @@ export default function FeedPage() {
             ))}
           </div>
 
-          <div className="flex flex-col gap-5 max-w-2xl">
+          <div className="flex flex-col gap-5">
             {loading && page === 1 ? (
               <div className="glass-card rounded-3xl h-80 animate-pulse" />
             ) : visiblePosts.length === 0 ? (

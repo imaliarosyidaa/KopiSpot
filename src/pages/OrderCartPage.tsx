@@ -323,7 +323,7 @@ export default function OrderCartPage(): React.JSX.Element {
 
   return (
     <div className="min-h-screen bg-background pb-40 pt-24 sm:pb-32">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
             <span className="tag-pill mb-3 inline-block">Marketplace</span>

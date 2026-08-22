@@ -372,7 +372,7 @@ router.put(
 
     const order = await prisma.order.findUnique({
       where: { id: req.params.orderId },
-      select: { id: true, placeId: true, paymentStatus: true },
+      select: { id: true, placeId: true, status: true, paymentStatus: true },
     })
     if (!order || order.placeId !== owned.id) {
       return res.status(404).json({ error: "Pesanan tidak ditemukan." })

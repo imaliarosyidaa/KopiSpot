@@ -15,7 +15,7 @@ interface ImageGalleryProps {
 export default function ImageGallery({ items }: ImageGalleryProps): React.JSX.Element {
   return (
     <section className="w-full px-6 py-16 md:px-12 md:py-20">
-      <div className="mx-auto max-w-7xl">
+      <div className="mx-auto">
         <div className="flex h-[360px] w-full gap-2 overflow-hidden sm:h-[420px] md:gap-3">
           {items.map((item) => (
             <Link

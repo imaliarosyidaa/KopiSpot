@@ -1171,7 +1171,7 @@ export default function OrderPage() {
 
   return (
     <div className="pt-16">
-      <div className="max-w-5xl mx-auto px-6 md:px-12 py-10">
+      <div className="mx-auto px-6 md:px-12 py-10">
         <div className="flex items-start justify-between gap-4 mb-6">
           <div>
             <span className="tag-pill mb-3 inline-block">Pesan Kopi</span>

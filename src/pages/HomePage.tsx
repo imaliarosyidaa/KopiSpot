@@ -383,7 +383,7 @@ export default function HomePage() {
 
       <CinematicSection />
 
-      <section id="places" className="px-6 md:px-12 py-20 max-w-7xl mx-auto">
+      <section id="places" className="px-6 md:px-12 py-20 mx-auto">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
           <div>
             <span className="tag-pill mb-3 inline-block">Pilihan Editor</span>
@@ -471,7 +471,7 @@ export default function HomePage() {
       <ChatPage />
 
       {/* ── FEATURED SPOT ── */}
-      <section className="px-6 md:px-12 py-10 max-w-7xl mx-auto">
+      <section className="px-6 md:px-12 py-10 mx-auto">
         <div className="glass-card rounded-3xl overflow-hidden grid md:grid-cols-2 gap-0">
           <div className="relative h-72 md:h-auto bg-muted">
             <img
@@ -590,7 +590,7 @@ export default function HomePage() {
       </section>
 
       {/* ── REVIEWS ── */}
-      <section className="px-6 md:px-12 py-16 max-w-7xl mx-auto">
+      <section className="px-6 md:px-12 py-16 mx-auto">
         <div className="mb-10">
           <span className="tag-pill mb-3 inline-block">Kata Mereka</span>
           <h2

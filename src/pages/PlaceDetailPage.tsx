@@ -244,7 +244,7 @@ export default function PlaceDetailPage() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 md:px-12 py-12 space-y-12">
+      <div className="mx-auto px-6 md:px-12 py-12 space-y-12">
         {/* Rating + Deskripsi */}
         <div className="glass-card rounded-3xl p-6 md:p-8">
           <div className="flex flex-wrap items-center justify-between gap-4 mb-5">

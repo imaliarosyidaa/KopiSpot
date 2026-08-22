@@ -81,7 +81,7 @@ export default function AppFooter() {
       <div className="pointer-events-none absolute inset-0 z-0 footer-bg-grid" />
       <div className="pointer-events-none absolute top-1/4 left-1/4 z-0 h-72 w-72 rounded-full bg-[#d1d5db] opacity-10 blur-3xl" />
 
-      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="relative z-10 mx-auto px-4 sm:px-6 lg:px-8">
         <div className="glass-card mb-16 rounded-3xl p-8 md:p-12">
           <div className="grid items-center gap-8 md:grid-cols-2">
             <div>
