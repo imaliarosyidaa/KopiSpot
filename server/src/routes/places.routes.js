@@ -121,7 +121,7 @@ router.get("/:id", async (req, res) => {
 
       menuItems: { where: { isAvailable: true }, orderBy: { category: "asc" } },
 
-      ratings: { select: { value: true } },
+      ratings: { select: { userId: true, value: true } },
 
       _count: { select: { ratings: true, views: true, comments: true } },
     },
@@ -134,6 +134,9 @@ router.get("/:id", async (req, res) => {
   const { tagsJson, ratings, _count, ...rest } = place
 
   const values = ratings.map((r) => r.value)
+  const ratingByUser = new Map(ratings.map((rating) => [rating.userId, rating.value]))
+  const ratingBreakdown = Object.fromEntries([1, 2, 3, 4, 5].map((value) => [value, 0]))
+  for (const value of values) ratingBreakdown[value] += 1
 
   const total = values.reduce((sum, v) => sum + v, 0)
 
@@ -149,6 +152,11 @@ router.get("/:id", async (req, res) => {
     viewCount: _count.views,
 
     commentCount: _count.comments,
+    ratingBreakdown,
+    comments: rest.comments.map((comment) => ({
+      ...comment,
+      rating: ratingByUser.get(comment.userId) ?? null,
+    })),
   })
 })
 
@@ -297,6 +305,7 @@ router.get("/:id/comments", async (req, res) => {
 
 router.post("/:id/comments", requireAuth, async (req, res) => {
   const text = typeof req.body?.body === "string" ? req.body.body.trim() : ""
+  const rating = req.body?.rating == null ? null : Number(req.body.rating)
 
   if (!text) {
     return res.status(400).json({ error: "Komentar tidak boleh kosong." })
@@ -304,6 +313,10 @@ router.post("/:id/comments", requireAuth, async (req, res) => {
 
   if (text.length > 2000) {
     return res.status(400).json({ error: "Komentar maksimal 2000 karakter." })
+  }
+
+  if (rating !== null && (!Number.isInteger(rating) || rating < 1 || rating > 5)) {
+    return res.status(400).json({ error: "Rating harus antara 1 sampai 5." })
   }
 
   const exists = await prisma.place.findUnique({
@@ -316,13 +329,30 @@ router.post("/:id/comments", requireAuth, async (req, res) => {
     return res.status(404).json({ error: "Tempat tidak ditemukan." })
   }
 
-  const comment = await prisma.comment.create({
-    data: { body: text, placeId: req.params.id, userId: req.userId },
-
-    include: { user: { select: { id: true, name: true, image: true } } },
+  const existingComment = await prisma.comment.findFirst({
+    where: { placeId: req.params.id, userId: req.userId },
+    orderBy: { createdAt: "asc" },
   })
+  const comment = existingComment
+    ? await prisma.comment.update({
+        where: { id: existingComment.id },
+        data: { body: text },
+        include: { user: { select: { id: true, name: true, image: true } } },
+      })
+    : await prisma.comment.create({
+        data: { body: text, placeId: req.params.id, userId: req.userId },
+        include: { user: { select: { id: true, name: true, image: true } } },
+      })
 
-  res.status(201).json(comment)
+  if (rating !== null) {
+    await prisma.rating.upsert({
+      where: { userId_placeId: { userId: req.userId, placeId: req.params.id } },
+      create: { userId: req.userId, placeId: req.params.id, value: rating },
+      update: { value: rating },
+    })
+  }
+
+  res.status(existingComment ? 200 : 201).json({ ...comment, rating })
 })
 
 router.delete("/:id/comments/:commentId", requireAuth, async (req, res) => {
@@ -341,6 +371,9 @@ router.delete("/:id/comments/:commentId", requireAuth, async (req, res) => {
   }
 
   await prisma.comment.delete({ where: { id: req.params.commentId } })
+  await prisma.rating.deleteMany({
+    where: { placeId: req.params.id, userId: req.userId },
+  })
 
   res.json({ ok: true })
 })

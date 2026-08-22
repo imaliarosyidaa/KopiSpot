@@ -285,11 +285,13 @@ export const placesApi = {
           body: string;
           userId: string;
           createdAt: string;
+          rating: number | null;
           user: { id: string; name: string | null; image: string | null };
         }[];
         menuItems: { id: string; name: string; price: number; category: string }[];
         viewCount: number;
         commentCount: number;
+        ratingBreakdown: Record<1 | 2 | 3 | 4 | 5, number>;
       }
     >(`/places/${id}`),
   create: (data: Record<string, unknown>) =>
@@ -300,8 +302,19 @@ export const placesApi = {
     api<{ ok: boolean }>(`/places/${id}`, { method: "DELETE" }),
   rate: (id: string, value: number) =>
     api(`/places/${id}/rate`, { method: "POST", body: JSON.stringify({ value }) }),
-  comment: (id: string, body: string) =>
-    api(`/places/${id}/comments`, { method: "POST", body: JSON.stringify({ body }) }),
+  comment: (id: string, body: string, rating?: number) =>
+    api<{
+      id: string;
+      body: string;
+      placeId: string;
+      userId: string;
+      createdAt: string;
+      rating: number | null;
+      user: { id: string; name: string | null; image: string | null };
+    }>(`/places/${id}/comments`, {
+      method: "POST",
+      body: JSON.stringify({ body, ...(rating ? { rating } : {}) }),
+    }),
   deleteComment: (placeId: string, commentId: string) =>
     api<{ ok: boolean }>(`/places/${placeId}/comments/${commentId}`, { method: "DELETE" }),
   view: (id: string) => api(`/places/${id}/view`, { method: "POST" }),

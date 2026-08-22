@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { MdArrowBack, MdDelete, MdSend } from "react-icons/md";
+import { MdArrowBack, MdCheckCircle, MdDelete, MdSend } from "react-icons/md";
 import { placesApi } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import StarRating from "@/components/ui/star-rating";
 import AuthModal from "@/components/ui/auth-modal";
-import { TestimonialsColumn, type Testimonial } from "@/components/ui/testimonials-columns-1";
 import { formatRupiah, formatDate, timeAgo } from "@/lib/format";
 
 interface PlaceDetail {
@@ -24,12 +23,14 @@ interface PlaceDetail {
   cozy: boolean;
   avgRating: number;
   ratingCount: number;
+  ratingBreakdown: Record<1 | 2 | 3 | 4 | 5, number>;
   viewCount: number;
   commentCount: number;
   comments: {
     id: string;
     body: string;
     createdAt: string;
+    rating: number | null;
     user: { id: string; name: string | null; image: string | null };
   }[];
   menuItems: { id: string; name: string; price: number; category: string }[];
@@ -43,8 +44,31 @@ export default function PlaceDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [reviewBody, setReviewBody] = useState("");
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewFilter, setReviewFilter] = useState<number | null>(null);
+  const [reviewSort, setReviewSort] = useState<"relevant" | "newest" | "highest" | "lowest">("relevant");
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const updateRatingSummary = (value: number, previousValue: number | null) => {
+    setPlace((current) => {
+      if (!current) return current;
+      const breakdown = { ...current.ratingBreakdown };
+      if (previousValue) breakdown[previousValue as 1 | 2 | 3 | 4 | 5] -= 1;
+      breakdown[value as 1 | 2 | 3 | 4 | 5] += 1;
+      const ratingCount = Object.values(breakdown).reduce((sum, count) => sum + count, 0);
+      const ratingTotal = Object.entries(breakdown).reduce(
+        (sum, [rating, count]) => sum + Number(rating) * count,
+        0,
+      );
+      return {
+        ...current,
+        ratingBreakdown: breakdown,
+        ratingCount,
+        avgRating: ratingCount ? ratingTotal / ratingCount : 0,
+      };
+    });
+  };
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -73,10 +97,12 @@ export default function PlaceDetailPage() {
       return;
     }
     try {
+      const previousValue = reviewRating || place?.comments.find((comment) => comment.user.id === user.id)?.rating || null;
       await placesApi.rate(id, value);
-      await load();
-    } catch {
-      // ignore rating errors (e.g. offline)
+      updateRatingSummary(value, previousValue);
+      setReviewRating(value);
+    } catch (e) {
+      setReviewError(e instanceof Error ? e.message : "Gagal menyimpan rating.");
     }
   };
 
@@ -87,6 +113,10 @@ export default function PlaceDetailPage() {
       setAuthOpen(true);
       return;
     }
+    if (!reviewRating) {
+      setReviewError("Pilih rating bintang terlebih dahulu.");
+      return;
+    }
     const body = reviewBody.trim();
     if (!body) {
       setReviewError("Ulasan tidak boleh kosong.");
@@ -95,9 +125,17 @@ export default function PlaceDetailPage() {
     setSubmitting(true);
     setReviewError(null);
     try {
-      await placesApi.comment(id, body);
+      const createdReview = await placesApi.comment(id, body, reviewRating);
       setReviewBody("");
-      await load();
+      setPlace((current) => {
+        if (!current) return current;
+        const existingReview = current.comments.find((comment) => comment.user.id === user.id);
+        const comments = existingReview
+          ? current.comments.map((comment) => comment.id === existingReview.id ? { ...comment, ...createdReview } : comment)
+          : [createdReview, ...current.comments];
+        return { ...current, comments, commentCount: comments.length };
+      });
+      updateRatingSummary(reviewRating, place.comments.find((comment) => comment.user.id === user.id)?.rating ?? null);
     } catch (err) {
       setReviewError(err instanceof Error ? err.message : "Gagal mengirim ulasan.");
     } finally {
@@ -109,11 +147,32 @@ export default function PlaceDetailPage() {
     if (!id) return;
     try {
       await placesApi.deleteComment(id, commentId);
-      await load();
-    } catch {
-      // ignore
+      setPlace((current) => {
+        if (!current) return current;
+        const removed = current.comments.find((comment) => comment.id === commentId);
+        const comments = current.comments.filter((comment) => comment.id !== commentId);
+        if (!removed?.rating) return { ...current, comments, commentCount: comments.length };
+        const breakdown = { ...current.ratingBreakdown };
+        breakdown[removed.rating as 1 | 2 | 3 | 4 | 5] -= 1;
+        const ratingCount = Math.max(0, current.ratingCount - 1);
+        const ratingTotal = Object.entries(breakdown).reduce((sum, [rating, count]) => sum + Number(rating) * count, 0);
+        return { ...current, comments, commentCount: comments.length, ratingBreakdown: breakdown, ratingCount, avgRating: ratingCount ? ratingTotal / ratingCount : 0 };
+      });
+    } catch (e) {
+      setReviewError(e instanceof Error ? e.message : "Gagal menghapus ulasan.");
     }
   };
+
+  const filteredReviews = useMemo(() => {
+    const reviews = reviewFilter
+      ? (place?.comments ?? []).filter((comment) => comment.rating === reviewFilter)
+      : (place?.comments ?? []);
+    return [...reviews].sort((a, b) => {
+      if (reviewSort === "highest") return (b.rating ?? 0) - (a.rating ?? 0);
+      if (reviewSort === "lowest") return (a.rating ?? 0) - (b.rating ?? 0);
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+  }, [place?.comments, reviewFilter, reviewSort]);
 
   if (error) {
     return (
@@ -145,19 +204,6 @@ export default function PlaceDetailPage() {
     (acc[item.category] ??= []).push(item);
     return acc;
   }, {});
-
-  const testimonials: Testimonial[] = place.comments.map((comment) => ({
-    id: comment.id,
-    text: comment.body,
-    image: comment.user.image,
-    name: comment.user.name ?? "Pengguna",
-    role: timeAgo(comment.createdAt),
-    onDelete: user?.id === comment.user.id ? () => handleDeleteReview(comment.id) : undefined,
-  }));
-  const columnSize = Math.ceil(testimonials.length / 3);
-  const firstColumn = testimonials.slice(0, columnSize);
-  const secondColumn = testimonials.slice(columnSize, columnSize * 2);
-  const thirdColumn = testimonials.slice(columnSize * 2);
 
   return (
     <div className="pt-16">
@@ -205,19 +251,35 @@ export default function PlaceDetailPage() {
             <div>
               <div className="flex items-center gap-3">
                 <span className="text-4xl font-black text-[#d1d5db]" style={{ fontFamily: "'Fraunces', serif" }}>
-                  {place.avgRating ? place.avgRating.toFixed(1) : "—"}
+                  {place.ratingCount ? place.avgRating.toFixed(1).replace(".", ",") : "—"}
                 </span>
                 <div>
-                  <StarRating rating={Math.round(place.avgRating ?? 0)} size="w-5 h-5" />
+                  {place.ratingCount ? <StarRating rating={Math.round(place.avgRating)} size="w-5 h-5" /> : <span className="text-sm text-muted-foreground">Belum ada ulasan</span>}
                   <div className="text-muted-foreground text-xs mt-0.5">
-                    {place.ratingCount.toLocaleString()} rating
+                    {place.ratingCount.toLocaleString()} ulasan
                   </div>
                 </div>
               </div>
             </div>
             <div className="text-right">
               <div className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1">Beri ratingmu</div>
-              <StarRating rating={0} interactive size="w-7 h-7" onRate={handleRate} />
+              <StarRating rating={reviewRating} interactive size="w-7 h-7" onRate={(value) => { setReviewRating(value); void handleRate(value); }} />
+            </div>
+          </div>
+          <div className="border-t border-border pt-5 mb-5">
+            <h3 className="font-black text-foreground mb-4">Rating & Ulasan</h3>
+            <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_2fr] gap-3">
+              {[5, 4, 3, 2, 1].map((value) => {
+                const count = place.ratingBreakdown[value as 1 | 2 | 3 | 4 | 5] ?? 0;
+                const width = place.ratingCount ? `${(count / place.ratingCount) * 100}%` : "0%";
+                return (
+                  <button key={value} type="button" onClick={() => setReviewFilter(reviewFilter === value ? null : value)} className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground">
+                    <span className="w-7 text-left">{value} ★</span>
+                    <span className="h-2 flex-1 rounded-full bg-muted overflow-hidden"><span className="block h-full rounded-full bg-[#d1d5db]" style={{ width }} /></span>
+                    <span className="w-7 text-right">{count}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
           <p className="text-muted-foreground leading-relaxed">{place.description}</p>
@@ -252,24 +314,37 @@ export default function PlaceDetailPage() {
 
         {/* Ulasan */}
         <div>
-          <div className="mb-6">
+          <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-end sm:justify-between">
+            <div>
             <span className="tag-pill mb-3 inline-block">Kata Mereka</span>
             <h2 className="text-3xl md:text-4xl font-black text-foreground" style={{ fontFamily: "'Fraunces', serif" }}>
               Ulasan ({place.commentCount})
             </h2>
+            </div>
+            <select value={reviewSort} onChange={(e) => setReviewSort(e.target.value as typeof reviewSort)} className="rounded-full border border-border bg-card px-4 py-2 text-xs text-foreground outline-none">
+              <option value="relevant">Paling relevan</option>
+              <option value="newest">Terbaru</option>
+              <option value="highest">Rating tertinggi</option>
+              <option value="lowest">Rating terendah</option>
+            </select>
           </div>
 
           <form onSubmit={handleReview} className="glass-card rounded-2xl p-5 mb-6">
+            <div className="mb-3">
+              <p className="text-sm font-bold text-foreground mb-2">Bagaimana pengalaman Anda?</p>
+              <StarRating rating={reviewRating} interactive size="w-7 h-7" onRate={setReviewRating} />
+            </div>
             <textarea
               value={reviewBody}
               onChange={(e) => setReviewBody(e.target.value)}
-              placeholder={user ? "Tulis ulasanmu tentang kafe ini..." : "Masuk untuk menulis ulasan"}
+              maxLength={2000}
+              placeholder={user ? "Ceritakan pengalaman Anda dengan toko ini..." : "Masuk untuk menulis ulasan"}
               rows={3}
               className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-[#d1d5db] focus:ring-2 focus:ring-[rgba(209,213,219,0.25)] resize-none"
             />
             {reviewError && <p className="text-sm text-destructive mt-2">{reviewError}</p>}
             <div className="flex items-center justify-between mt-3">
-              <span className="text-xs text-muted-foreground">{user ? `Sebagai ${user.name ?? user.email}` : "Kamu harus login untuk berpartisipasi."}</span>
+              <span className="text-xs text-muted-foreground">{user ? `${reviewBody.length}/2000 · Sebagai ${user.name ?? user.email}` : "Kamu harus login untuk berpartisipasi."}</span>
               <button
                 type="submit"
                 disabled={submitting}
@@ -283,13 +358,32 @@ export default function PlaceDetailPage() {
 
           {place.comments.length === 0 ? (
             <div className="glass-card rounded-2xl p-8 text-center text-muted-foreground text-sm">
-              Belum ada ulasan. Jadilah yang pertama! ✨
+              <p className="font-bold text-foreground mb-1">Belum Ada Ulasan</p>
+              Jadilah pelanggan pertama yang memberikan ulasan untuk toko ini.
             </div>
+          ) : filteredReviews.length === 0 ? (
+            <div className="glass-card rounded-2xl p-8 text-center text-muted-foreground text-sm">Tidak ada ulasan dengan filter ini.</div>
           ) : (
-            <div className="testimonials-viewport flex max-h-[740px] justify-center gap-4 overflow-hidden sm:gap-6">
-              <TestimonialsColumn testimonials={firstColumn} duration={15} />
-              <TestimonialsColumn testimonials={secondColumn.length ? secondColumn : firstColumn} className="hidden md:block" duration={19} />
-              <TestimonialsColumn testimonials={thirdColumn.length ? thirdColumn : firstColumn} className="hidden lg:block" duration={17} />
+            <div className="space-y-3">
+              {filteredReviews.map((review) => (
+                <article key={review.id} className="glass-card rounded-2xl p-5">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-foreground overflow-hidden shrink-0">
+                      {review.user.image ? <img src={review.user.image} alt="" className="w-full h-full object-cover" /> : (review.user.name ?? "P").slice(0, 1).toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-bold text-sm text-foreground">{review.user.name ?? "Pengguna"}</span>
+                        <MdCheckCircle className="text-emerald-500 w-4 h-4" title="Pembelian terverifikasi" />
+                        <span className="text-xs text-muted-foreground">{timeAgo(review.createdAt)}</span>
+                        {user?.id === review.user.id && <button type="button" onClick={() => handleDeleteReview(review.id)} className="ml-auto text-xs text-muted-foreground hover:text-destructive"><MdDelete className="w-4 h-4" /></button>}
+                      </div>
+                      <StarRating rating={review.rating ?? 0} size="w-4 h-4" />
+                      <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{review.body}</p>
+                    </div>
+                  </div>
+                </article>
+              ))}
             </div>
           )}
         </div>
