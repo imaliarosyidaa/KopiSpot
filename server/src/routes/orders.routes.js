@@ -54,6 +54,7 @@ router.post("/", optionalAuth, async (req, res) => {
     typeof body.billingAddress === "string" ? body.billingAddress.trim() : ""
   const couponCode =
     typeof body.couponCode === "string" ? body.couponCode.trim().toUpperCase() : ""
+  const shippingFee = Math.max(0, Math.floor(Number(body.shippingFee) || 0))
   const guestToken = req.userId ? null : crypto.randomBytes(32).toString("hex")
 
   if (!placeId) {
@@ -102,8 +103,8 @@ router.post("/", optionalAuth, async (req, res) => {
   }, 0)
   const total =
     couponCode === "KOPI10"
-      ? Math.max(1000, Math.round(subtotal * 0.9))
-      : subtotal
+      ? Math.max(1000, Math.round(subtotal * 0.9) + shippingFee)
+      : subtotal + shippingFee
 
   const order = await prisma.order.create({
     data: {

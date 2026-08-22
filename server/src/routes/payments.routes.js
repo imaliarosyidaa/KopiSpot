@@ -1,9 +1,57 @@
 import { Router } from "express"
+import crypto from "node:crypto"
 import snap from "../midtrans.js"
 import { prisma } from "../db.js"
 import { optionalAuth } from "../auth.js"
 
 const router = Router()
+
+router.post("/notification", async (req, res) => {
+  const notification = req.body || {}
+  const orderId = typeof notification.order_id === "string" ? notification.order_id : ""
+  const statusCode = String(notification.status_code || "")
+  const grossAmount = String(notification.gross_amount || "")
+  const signature = String(notification.signature_key || "")
+  const expected = crypto
+    .createHash("sha512")
+    .update(`${orderId}${statusCode}${grossAmount}${process.env.MIDTRANS_SERVER_KEY || ""}`)
+    .digest("hex")
+
+  if (!orderId || !signature || signature !== expected) {
+    return res.status(401).json({ error: "Signature Midtrans tidak valid." })
+  }
+
+  const order = await prisma.order.findUnique({ where: { id: orderId } })
+  if (!order) return res.status(404).json({ error: "Order tidak ditemukan." })
+
+  const notifiedAmount = Math.round(Number(grossAmount))
+  if (!Number.isFinite(notifiedAmount) || notifiedAmount !== order.total) {
+    return res.status(400).json({ error: "Nominal notifikasi Midtrans tidak cocok." })
+  }
+
+  if (order.paymentStatus === "PAID") {
+    return res.json({ ok: true })
+  }
+
+  const transactionStatus = String(notification.transaction_status || "")
+  const fraudStatus = String(notification.fraud_status || "")
+  const paid = transactionStatus === "settlement" || (transactionStatus === "capture" && fraudStatus !== "deny")
+  const cancelled = ["cancel", "deny", "expire"].includes(transactionStatus)
+  const nextPaymentStatus = paid ? "PAID" : cancelled ? "FAILED" : "UNPAID"
+  const nextOrderStatus = paid ? "PREPARING" : cancelled ? "CANCELLED" : order.status
+
+  await prisma.order.update({
+    where: { id: order.id },
+    data: {
+      paymentStatus: nextPaymentStatus,
+      status: nextOrderStatus,
+      paymentMethod: "Midtrans",
+      paymentTransactionId: String(notification.transaction_id || order.paymentTransactionId || order.id),
+    },
+  })
+
+  return res.json({ ok: true })
+})
 
 router.post("/create", optionalAuth, async (req, res) => {
   const orderId = typeof req.body?.orderId === "string" ? req.body.orderId.trim() : ""

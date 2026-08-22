@@ -14,7 +14,9 @@ import {
   MdLocationOn,
   MdPhone,
 } from "react-icons/md"
-import Logo from "./logo"
+import LogoDark from "./LogoDark"
+import LogoLight from "./LogoLight"
+import { useTheme } from "@/lib/theme"
 
 const COMPANY = {
   name: "coffidoor",
@@ -65,6 +67,7 @@ const legalLinks = ["Syarat Layanan", "Kebijakan Privasi", "Cookie", "Aksesibili
 export default function AppFooter() {
   const [email, setEmail] = useState("")
   const [subscribed, setSubscribed] = useState(false)
+  const { theme } = useTheme()
 
   const handleSubscribe = (e: FormEvent) => {
     e.preventDefault()
@@ -129,7 +132,7 @@ export default function AppFooter() {
           <div className="col-span-2 lg:col-span-1">
             <Link to="/" className="flex items-center gap-2">
           <span className="flex h-9 w-[6.75rem] shrink-0 items-center text-[#d1d5db] sm:h-10 sm:w-[7.5rem]">
-            <Logo width="100%" height="100%" />
+            {theme === "dark" ? <LogoDark width="100%" height="100%" /> : <LogoLight width="100%" height="100%" />}
           </span>
             </Link>
             <p className="mt-5 text-sm leading-relaxed text-foreground/60">{COMPANY.description}</p>

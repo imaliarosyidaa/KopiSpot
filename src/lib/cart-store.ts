@@ -51,6 +51,8 @@ interface CartState {
   saveForLater: (id: string) => void
   restoreSaved: (id: string) => void
   removeSaved: (id: string) => void
+  addToWishlist: (item: Omit<CartItem, "quantity">) => void
+  toggleWishlist: (item: Omit<CartItem, "quantity">) => void
   moveToWishlist: (id: string) => void
   moveFromWishlist: (id: string) => void
   removeFromWishlist: (id: string) => void
@@ -105,6 +107,18 @@ export const useCartStore = create<CartState>((set) => ({
     set((state) => ({
       savedForLater: state.savedForLater.filter((i) => i.id !== id),
     })),
+  addToWishlist: (item) =>
+    set((state) =>
+      state.wishlist.some((wishlistItem) => wishlistItem.id === item.id)
+        ? state
+        : { wishlist: [...state.wishlist, { ...item, quantity: 1 }] },
+    ),
+  toggleWishlist: (item) =>
+    set((state) =>
+      state.wishlist.some((wishlistItem) => wishlistItem.id === item.id)
+        ? { wishlist: state.wishlist.filter((wishlistItem) => wishlistItem.id !== item.id) }
+        : { wishlist: [...state.wishlist, { ...item, quantity: 1 }] },
+    ),
   moveToWishlist: (id) =>
     set((state) => {
       const item = state.items.find((i) => i.id === id)

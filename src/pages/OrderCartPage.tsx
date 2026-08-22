@@ -14,8 +14,20 @@ import { formatRupiah } from "@/lib/format"
 import { menuImageUrl } from "@/lib/menu-images"
 import { useCartStore, type CartItem } from "@/lib/cart-store"
 import { ordersApi, type Order } from "@/lib/api"
+import { useAuth } from "@/lib/auth-context"
 
 const NEW_USER_COUPON = "KOPI10"
+
+type OrderTab = "cart" | "unpaid" | "packed" | "shipped" | "completed" | "review"
+
+const ORDER_TABS: { key: OrderTab; label: string }[] = [
+  { key: "cart", label: "Keranjang" },
+  { key: "unpaid", label: "Belum Bayar" },
+  { key: "packed", label: "Dikemas" },
+  { key: "shipped", label: "Dikirim" },
+  { key: "completed", label: "Selesai" },
+  { key: "review", label: "Beri Penilaian" },
+]
 
 type StoreGroup = {
   id: string
@@ -56,10 +68,10 @@ function IndeterminateCheckbox({
 }
 
 export default function OrderCartPage(): React.JSX.Element {
+  const { user } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const items = useCartStore((state) => state.items)
-  const setItems = useCartStore((state) => state.setItems)
   const setQuantity = useCartStore((state) => state.setQuantity)
   const remove = useCartStore((state) => state.remove)
   const saveForLater = useCartStore((state) => state.saveForLater)
@@ -69,6 +81,10 @@ export default function OrderCartPage(): React.JSX.Element {
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [notice, setNotice] = useState<string | null>(null)
   const [paidOrder, setPaidOrder] = useState<Order | null>(null)
+  const [orders, setOrders] = useState<Order[]>([])
+  const [ordersLoading, setOrdersLoading] = useState(false)
+  const [ordersError, setOrdersError] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<OrderTab>("cart")
 
   const groups = useMemo<StoreGroup[]>(() => {
     const grouped = new Map<string, StoreGroup>()
@@ -86,6 +102,49 @@ export default function OrderCartPage(): React.JSX.Element {
   const selectedTotal = selectedItems.reduce((total, item) => total + item.price * item.quantity, 0)
   const selectedCount = selectedItems.reduce((total, item) => total + item.quantity, 0)
 
+  const loadOrders = async () => {
+    if (!user) {
+      setOrders([])
+      return
+    }
+    setOrdersLoading(true)
+    try {
+      setOrders(await ordersApi.list())
+      setOrdersError(null)
+    } catch (error) {
+      setOrdersError(error instanceof Error ? error.message : "Gagal memuat status pesanan.")
+    } finally {
+      setOrdersLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    void loadOrders()
+    if (!user) return
+    const interval = window.setInterval(() => void loadOrders(), 15000)
+    return () => window.clearInterval(interval)
+  }, [user])
+
+  const orderBucket = (order: Order): Exclude<OrderTab, "cart"> | null => {
+    if (order.paymentStatus !== "PAID" && order.status !== "CANCELLED") return "unpaid"
+    if (order.status === "CONFIRMED" || order.status === "PREPARING") return "packed"
+    if (order.status === "READY") return "shipped"
+    if (order.status === "COMPLETED") return "completed"
+    return null
+  }
+
+  const tabOrders = activeTab === "review"
+    ? orders.filter((order) => order.status === "COMPLETED")
+    : activeTab === "cart"
+      ? []
+      : orders.filter((order) => orderBucket(order) === activeTab)
+
+  const tabCount = (tab: OrderTab): number => {
+    if (tab === "cart") return items.length
+    if (tab === "review") return orders.filter((order) => order.status === "COMPLETED").length
+    return orders.filter((order) => orderBucket(order) === tab).length
+  }
+
   useEffect(() => {
     setSelectedIds((current) => current.filter((id) => items.some((item) => item.id === id)))
   }, [items])
@@ -97,14 +156,8 @@ export default function OrderCartPage(): React.JSX.Element {
     if (!orderId || !payment) return
 
     if (payment === "success") {
-      const token = sessionStorage.getItem(`Coffidoor_guest_order_${orderId}`) ?? undefined
-      ordersApi
-        .pay(orderId, "Midtrans", undefined, token)
-        .then((order) => {
-          setPaidOrder(order)
-          clear()
-        })
-        .catch(() => setNotice("Pembayaran berhasil, tetapi ticket belum dapat dimuat."))
+      clear()
+      setNotice("Pembayaran diterima Midtrans. Status pesanan akan diperbarui setelah konfirmasi server.")
     } else {
       setNotice("Pembayaran dibatalkan. Produk tetap tersimpan di keranjang.")
     }
@@ -154,8 +207,43 @@ export default function OrderCartPage(): React.JSX.Element {
       setNotice("Checkout saat ini hanya dapat dilakukan untuk satu toko. Pilih satu toko terlebih dahulu.")
       return
     }
-    setItems(selectedItems)
-    navigate("/order", { state: { step: "cart" } })
+    sessionStorage.setItem("Coffidoor_checkout_items", JSON.stringify(selectedItems))
+    navigate("/order/checkout")
+  }
+
+  const renderOrderCard = (order: Order): React.JSX.Element => {
+    const bucket = orderBucket(order)
+    const statusLabel =
+      order.paymentStatus !== "PAID"
+        ? "Menunggu Pembayaran"
+        : bucket === "packed"
+          ? "Sedang Dikemas"
+          : bucket === "shipped"
+            ? "Dikirim"
+            : "Pesanan Selesai"
+    return (
+      <article key={order.id} className="overflow-hidden rounded-2xl border border-border bg-card/70">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-5">
+          <div className="flex items-center gap-2"><MdStorefront className="text-primary" /><strong className="text-sm text-foreground">{order.place.name}</strong></div>
+          <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">{statusLabel}</span>
+        </div>
+        <div className="divide-y divide-border">
+          {order.items.map((item) => (
+            <div key={item.id} className="flex items-center gap-3 px-4 py-3 sm:px-5">
+              <img src={menuImageUrl(item.menuItem.category, item.menuItem.imageUrl, item.menuItem.name)} alt={item.menuItem.name} className="h-14 w-14 rounded-xl object-cover" />
+              <div className="min-w-0 flex-1"><div className="truncate text-sm font-bold text-foreground">{item.menuItem.name}</div><div className="text-xs text-muted-foreground">Variasi standar · x{item.quantity}</div></div>
+              <strong className="text-sm text-primary">{formatRupiah(item.price * item.quantity)}</strong>
+            </div>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3 sm:px-5">
+          <div><div className="text-xs text-muted-foreground">Order #{order.id.slice(-8)}</div><div className="text-sm font-black text-foreground">Total {formatRupiah(order.total)}</div></div>
+          {bucket === "unpaid" && <button type="button" onClick={() => setNotice("Gunakan transaksi Midtrans dari order ini untuk membayar kembali.")} className="rounded-full bg-primary px-4 py-2 text-xs font-black text-primary-foreground">Bayar Sekarang</button>}
+          {bucket === "shipped" && <button type="button" onClick={() => setNotice("Informasi pelacakan akan tersedia setelah seller memasukkan nomor resi.")} className="rounded-full border border-border px-4 py-2 text-xs font-bold text-foreground">Lacak Pesanan</button>}
+          {(bucket === "completed" || activeTab === "review") && <button type="button" onClick={() => setNotice("Fitur penilaian produk siap digunakan.")} className="rounded-full bg-primary px-4 py-2 text-xs font-black text-primary-foreground">Beri Penilaian</button>}
+        </div>
+      </article>
+    )
   }
 
   if (paidOrder) {
@@ -192,9 +280,24 @@ export default function OrderCartPage(): React.JSX.Element {
           <Link to="/order" className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2.5 text-sm font-semibold text-foreground transition hover:border-primary hover:text-primary"><MdAdd /> Tambah Produk</Link>
         </div>
 
+        <div className="mb-5 flex gap-2 overflow-x-auto border-b border-border pb-1" role="tablist" aria-label="Status pesanan">
+          {ORDER_TABS.map((tab) => (
+            <button key={tab.key} type="button" role="tab" aria-selected={activeTab === tab.key} onClick={() => setActiveTab(tab.key)} className={`shrink-0 border-b-2 px-3 py-3 text-sm font-bold transition ${activeTab === tab.key ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+              {tab.label} <span className="ml-1 text-xs">({tabCount(tab.key)})</span>
+            </button>
+          ))}
+        </div>
+
         {notice && <div role="status" className="mb-5 rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-semibold text-foreground">{notice}</div>}
 
-        {items.length === 0 ? (
+        {activeTab !== "cart" ? (
+          <div className="space-y-4">
+            {ordersError && <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">{ordersError}</div>}
+            {ordersLoading && <div className="py-10 text-center text-sm text-muted-foreground">Memuat status pesanan...</div>}
+            {!ordersLoading && tabOrders.length === 0 && <div className="glass-card rounded-3xl px-6 py-16 text-center"><MdStorefront className="mx-auto mb-4 h-12 w-12 text-muted-foreground" /><h2 className="text-xl font-black text-foreground">Belum ada pesanan di tab ini</h2><p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">Status pesanan akan berpindah otomatis mengikuti pembaruan dari backend dan seller.</p></div>}
+            {!ordersLoading && tabOrders.map(renderOrderCard)}
+          </div>
+        ) : items.length === 0 ? (
           <div className="glass-card rounded-3xl px-6 py-16 text-center">
             <MdStorefront className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
             <h2 className="text-xl font-black text-foreground">Keranjang masih kosong</h2>
@@ -252,7 +355,7 @@ export default function OrderCartPage(): React.JSX.Element {
         )}
       </div>
 
-      {items.length > 0 && <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 py-3 shadow-[0_-12px_30px_rgba(17,17,19,0.08)] backdrop-blur-xl sm:py-4"><div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 sm:px-6 lg:px-8"><div className="flex items-center gap-2"><IndeterminateCheckbox checked={allSelected} indeterminate={selectedIds.length > 0 && !allSelected} onChange={toggleAll} label="Pilih semua produk" /><span className="hidden text-sm text-foreground sm:inline">Pilih Semua</span></div><button type="button" onClick={removeSelected} disabled={selectedIds.length === 0} className="hidden text-sm font-semibold text-muted-foreground hover:text-destructive disabled:opacity-40 sm:inline">Hapus</button><div className="ml-auto text-right"><div className="text-xs text-muted-foreground">{selectedCount} item terpilih</div><div className="text-lg font-black text-primary">{formatRupiah(selectedTotal)}</div></div><button type="button" onClick={checkout} disabled={selectedItems.length === 0} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-primary px-5 text-sm font-black text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40">Checkout <MdArrowForward /></button></div></div>}
+      {activeTab === "cart" && items.length > 0 && <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 py-3 shadow-[0_-12px_30px_rgba(17,17,19,0.08)] backdrop-blur-xl sm:py-4"><div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 sm:px-6 lg:px-8"><div className="flex items-center gap-2"><IndeterminateCheckbox checked={allSelected} indeterminate={selectedIds.length > 0 && !allSelected} onChange={toggleAll} label="Pilih semua produk" /><span className="hidden text-sm text-foreground sm:inline">Pilih Semua</span></div><button type="button" onClick={removeSelected} disabled={selectedIds.length === 0} className="hidden text-sm font-semibold text-muted-foreground hover:text-destructive disabled:opacity-40 sm:inline">Hapus</button><div className="ml-auto text-right"><div className="text-xs text-muted-foreground">{selectedCount} item terpilih</div><div className="text-lg font-black text-primary">{formatRupiah(selectedTotal)}</div></div><button type="button" onClick={checkout} disabled={selectedItems.length === 0} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-primary px-5 text-sm font-black text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40">Checkout <MdArrowForward /></button></div></div>}
     </div>
   )
 }

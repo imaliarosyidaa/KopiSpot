@@ -1,11 +1,13 @@
 import { useState } from "react"
 import { Link, NavLink, useNavigate } from "react-router-dom"
-import { MdAdd, MdLogout, MdShoppingCart } from "react-icons/md"
+import { MdAdd, MdFavorite, MdLogout, MdShoppingCart } from "react-icons/md"
 import { useAuth } from "@/lib/auth-context"
 import AuthModal from "@/components/ui/auth-modal"
 import ThemeSwitcher from "@/components/shared/ThemeSwitcher"
 import { cartCount, useCartStore } from "@/lib/cart-store"
-import Logo from "@/components/shared/logo"
+import LogoDark from "@/components/shared/LogoDark"
+import LogoLight from "@/components/shared/LogoLight"
+import { useTheme } from "@/lib/theme"
 
 const navItems = [
   { to: "/", label: "Beranda" },
@@ -21,14 +23,16 @@ export default function Navbar() {
   const [authOpen, setAuthOpen] = useState(false)
   const navigate = useNavigate()
   const cartItems = useCartStore((s) => s.items)
+  const wishlist = useCartStore((s) => s.wishlist)
   const cartCountTotal = cartCount(cartItems)
+  const { theme } = useTheme()
 
   return (
     <>
       <nav className="fixed top-0 left-0 right-0 z-50 flex h-16 items-center justify-between border-b border-border bg-background/85 px-4 backdrop-blur-md sm:px-6 md:px-12">
         <Link to="/" className="flex min-w-0 shrink-0 items-center gap-2.5" aria-label="coffidoor beranda">
           <span className="flex h-9 w-[6.75rem] shrink-0 items-center text-[#d1d5db] sm:h-10 sm:w-[7.5rem]">
-            <Logo width="100%" height="100%" />
+            {theme === "dark" ? <LogoDark width="100%" height="100%" /> : <LogoLight width="100%" height="100%" />}
           </span>
         </Link>
 
@@ -53,6 +57,14 @@ export default function Navbar() {
 
         <div className="flex items-center gap-3">
           <ThemeSwitcher />
+          <Link
+            to="/wishlist"
+            title="Wishlist"
+            className="relative flex h-9 w-9 items-center justify-center rounded-full footer-glass-pill text-muted-foreground transition-colors hover:text-[#d1d5db]"
+          >
+            <MdFavorite className="h-5 w-5" />
+            {wishlist.length > 0 && <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#d1d5db] px-1 text-[11px] font-black text-[#111113]">{wishlist.length}</span>}
+          </Link>
           <Link
             to="/order/keranjang"
             title="Keranjang Pesanan"

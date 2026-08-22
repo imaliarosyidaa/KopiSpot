@@ -12,8 +12,20 @@ export default function Logo({
   viewBox = "0 0 132 42",
 }: LogoProps) {
   return (
-<svg width="1937" height="618" viewBox="0 0 1937 618" fill="none" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink">
-<rect width="1937" height="618" fill="url(#pattern0_191_2)"/>
+    <svg
+      className={className}
+      width={width}
+      height={height}
+      viewBox={viewBox}
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      xmlnsXlink="http://www.w3.org/1999/xlink"
+    >
+      <rect
+        width={width}
+        height={height}
+        fill="url(#pattern0_191_2)"
+      />
 <defs>
 <pattern id="pattern0_191_2" patternContentUnits="objectBoundingBox" width="1" height="1">
 <use xlinkHref="#image0_191_2" transform="matrix(0.000807668 0 0 0.00253148 -0.143521 -0.809061)"/>

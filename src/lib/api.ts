@@ -580,6 +580,7 @@ export const ordersApi = {
     note?: string;
     billingAddress?: string;
     couponCode?: string;
+    shippingFee?: number;
   }) => api<Order & { guestToken?: string }>("/orders", { method: "POST", body: JSON.stringify(data) }),
   pay: (id: string, method: string, proofUrl?: string, guestToken?: string) =>
     api<Order>(`/orders/${id}/pay`, {

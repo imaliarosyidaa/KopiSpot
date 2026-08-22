@@ -116,8 +116,7 @@ function CinematicHero({ onExplore }: { onExplore: () => void }) {
           ref={subRef}
           className="text-muted-foreground text-sm md:text-base mb-10 max-w-md leading-relaxed"
         >
-          coffidoor adalah platform digital yang menjadi satu pintu bagi
-          pelanggan untuk menemukan dan memesan kopi dari berbagai UMKM kopi.
+          Coffidoor merupakan platform digital yang menghubungkan pelanggan dengan berbagai UMKM kopi dalam satu pintu digital.
         </p>
 
         <div ref={linksRef} className="flex flex-col items-center gap-4 w-full">

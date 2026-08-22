@@ -267,6 +267,7 @@ model Order {
   billingAddress   String?
   paymentMethod    String?
   paymentProofUrl  String?
+  paymentTransactionId String? @unique
   paymentStatus    PaymentStatus @default(UNPAID)
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt

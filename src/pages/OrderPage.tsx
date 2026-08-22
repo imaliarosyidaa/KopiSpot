@@ -29,6 +29,7 @@ import {
 } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
 import AuthModal from "@/components/ui/auth-modal"
+import MenuProductCard from "@/components/ui/menu-product-card"
 import {
   cartCount,
   cartSubtotal,
@@ -70,16 +71,6 @@ const STEPS: { key: Step; label: string }[] = [
   { key: "checkout", label: "Checkout" },
   { key: "pay", label: "Pembayaran" },
 ]
-
-function categoryLabel(value: string): string {
-  const map: Record<string, string> = {
-    coffee: "Kopi",
-    "non-coffee": "Non Kopi",
-    food: "Makanan",
-    dessert: "Dessert",
-  }
-  return map[value] ?? value
-}
 
 function vaNumber(orderId: string): string {
   const digits = orderId.replace(/\D/g, "").slice(-12)
@@ -160,17 +151,9 @@ export default function OrderPage() {
     setPaymentRedirectState(paymentStatus === "success" ? "success" : "failed")
 
     if (paymentStatus === "success") {
-      ordersApi
-        .pay(orderId, "Midtrans", undefined, guestTokenFor(orderId))
-        .then((paidOrder) => {
-          setCreatedOrder(paidOrder)
-          setStep("done")
-          clear()
-        })
-        .catch(() => {
-          setError("Pembayaran Midtrans berhasil dikirim, tetapi konfirmasi lokal gagal. Silakan cek riwayat pesanan.")
-          setStep("done")
-        })
+      setError("Pembayaran diterima Midtrans. Status pesanan akan diperbarui setelah konfirmasi server.")
+      setStep("done")
+      clear()
       return
     }
 
@@ -220,16 +203,12 @@ export default function OrderPage() {
     return () => clearTimeout(t)
   }, [notice])
 
-  const handleAdd = (m: MenuItemOption) => {
-    add({
-      id: m.id,
-      placeId: m.place.id,
-      placeName: m.place.name,
-      name: m.name,
-      price: m.price,
-      category: m.category,
-      imageUrl: m.imageUrl,
-    })
+  const handleBuyNow = (item: Omit<CartItem, "quantity">) => {
+    sessionStorage.setItem(
+      "Coffidoor_checkout_items",
+      JSON.stringify([{ ...item, quantity: 1 }]),
+    )
+    navigate("/order/checkout")
   }
 
   const requireLogin = (): boolean => {
@@ -458,56 +437,15 @@ export default function OrderPage() {
         <div className="text-center text-destructive py-16">{menuError}</div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {menus.map((m) => {
-            const qty = items.find((i) => i.id === m.id)?.quantity ?? 0
-            return (
-              <div
-                key={m.id}
-                className="glass-card rounded-2xl p-4 flex flex-col gap-3"
-              >
-                <div className="relative w-full h-32 rounded-xl overflow-hidden bg-[rgba(156,163,175,0.15)]">
-                  <img
-                    src={menuImageUrl(m.category, m.imageUrl, m.name)}
-                    alt={m.name}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                  <span className="absolute top-2 right-2 tag-pill">
-                    {categoryLabel(m.category)}
-                  </span>
-                </div>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="font-semibold text-foreground text-sm truncate">
-                      {m.name}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {m.place.name}
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-0.5">
-                      {formatRupiah(m.price)}
-                    </div>
-                  </div>
-                </div>
-                {m.description && (
-                  <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
-                    {m.description}
-                  </p>
-                )}
-                <button
-                  onClick={() => handleAdd(m)}
-                  className={`mt-auto flex items-center justify-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold transition-colors ${
-                    qty > 0
-                      ? "bg-[#d1d5db] text-[#111113]"
-                      : "footer-glass-pill text-[#d1d5db] hover:bg-[#d1d5db]/10"
-                  }`}
-                >
-                  <MdAdd className="w-4 h-4" />
-                  {qty > 0 ? `Di Keranjang · ${qty}` : "Tambah"}
-                </button>
-              </div>
-            )
-          })}
+          {menus.map((m) => (
+            <MenuProductCard
+              key={m.id}
+              menu={m}
+              quantity={items.find((i) => i.id === m.id)?.quantity ?? 0}
+              onNotice={setNotice}
+              onBuyNow={handleBuyNow}
+            />
+          ))}
           {menus.length === 0 && (
             <div className="col-span-full text-center text-muted-foreground py-16">
               Belum ada menu tersedia di kafe ini.

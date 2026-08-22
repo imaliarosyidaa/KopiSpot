@@ -10,7 +10,9 @@ import LeaderboardPage from "@/pages/LeaderboardPage"
 import ChatPage from "@/pages/ChatPage"
 import OrderPage from "@/pages/OrderPage"
 import OrderCartPage from "@/pages/OrderCartPage"
+import CheckoutPage from "@/pages/CheckoutPage"
 import PagePartnerPage from "@/pages/PagePartnerPage"
+import WishlistPage from "@/pages/WishlistPage"
 
 export default function App() {
   return (
@@ -29,6 +31,8 @@ export default function App() {
           <Route path="/chat" element={<ChatPage />} />
           <Route path="/order" element={<OrderPage />} />
           <Route path="/order/keranjang" element={<OrderCartPage />} />
+          <Route path="/wishlist" element={<WishlistPage />} />
+          <Route path="/order/checkout" element={<CheckoutPage />} />
           <Route path="/mitra" element={<PagePartnerPage />} />
           <Route path="*" element={<HomePage />} />
         </Routes>
