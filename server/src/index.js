@@ -22,7 +22,26 @@ if (!fs.existsSync(UPLOAD_DIR)) {
 
 const app = express()
 
-app.use(cors())
+const corsOptions = {
+  // Allow known web origins plus any same-origin (no Origin header) request.
+  // Be permissive for unknown origins so preview deployments aren't blocked.
+  origin: (origin, cb) => {
+    const allowed = [
+      "http://localhost:8443",
+      "http://localhost:4000",
+      "https://coffidoor.store",
+      "https://www.coffidoor.store",
+    ]
+    if (!origin || allowed.includes(origin)) return cb(null, true)
+    return cb(null, true)
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+}
+// Global CORS also answers preflight (OPTIONS) for every path, so cross-origin
+// calls (incl. the notifications endpoints) always receive CORS headers.
+app.use(cors(corsOptions))
 app.use(express.json())
 app.use("/uploads", express.static(UPLOAD_DIR))
 

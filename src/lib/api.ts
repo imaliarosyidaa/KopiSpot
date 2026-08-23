@@ -66,7 +66,20 @@ async function api<T = unknown>(path: string, options: RequestInit = {}): Promis
   };
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 10000);
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers,
+      signal: controller.signal,
+    });
+  } catch (err) {
+    window.clearTimeout(timeout);
+    throw err;
+  }
+  window.clearTimeout(timeout);
 
   if (!res.ok) {
     let message = "Terjadi kesalahan.";
