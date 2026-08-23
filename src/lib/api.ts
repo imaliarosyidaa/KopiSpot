@@ -688,13 +688,17 @@ export interface PendingReview {
 
 export const reviewsApi = {
   pending: () => api<PendingReview[]>("/reviews/pending"),
-  mine: () => api<Review[]>("/reviews/mine"),
+  mine: (guestToken?: string) =>
+    api<Review[]>(
+      `/reviews/mine${guestToken ? `?guestToken=${encodeURIComponent(guestToken)}` : ""}`,
+    ),
   create: (data: {
     orderItemId: string;
     orderId: string;
     rating: number;
     comment?: string;
     images?: string[];
+    guestToken?: string;
   }) =>
     api<Review>("/reviews", {
       method: "POST",
@@ -703,10 +707,18 @@ export const reviewsApi = {
   update: (
     id: string,
     data: { rating?: number; comment?: string; images?: string[] },
+    guestToken?: string,
   ) =>
-    api<Review>(`/reviews/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(data),
-    }),
-  remove: (id: string) => api<{ ok: boolean }>(`/reviews/${id}`, { method: "DELETE" }),
+    api<Review>(
+      `/reviews/${id}${guestToken ? `?guestToken=${encodeURIComponent(guestToken)}` : ""}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(data),
+      },
+    ),
+  remove: (id: string, guestToken?: string) =>
+    api<{ ok: boolean }>(
+      `/reviews/${id}${guestToken ? `?guestToken=${encodeURIComponent(guestToken)}` : ""}`,
+      { method: "DELETE" },
+    ),
 };

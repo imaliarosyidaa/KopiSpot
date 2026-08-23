@@ -1,6 +1,6 @@
 import { Router } from "express"
 import { prisma } from "../db.js"
-import { requireAuth } from "../auth.js"
+import { optionalAuth } from "../auth.js"
 
 const router = Router()
 
@@ -87,10 +87,19 @@ async function attachProductRating(menuItems) {
   })
 }
 
-// GET /api/reviews/pending — produk dari pesanan COMPLETED milik user yang belum dinilai
-router.get("/pending", requireAuth, async (req, res) => {
+// GET /api/reviews/pending — produk dari pesanan COMPLETED milik user/guest yang belum dinilai
+router.get("/pending", optionalAuth, async (req, res) => {
+  const guestToken =
+    typeof req.query.guestToken === "string" ? req.query.guestToken.trim() : ""
+  const ownership = req.userId
+    ? { userId: req.userId }
+    : guestToken
+      ? { guestToken }
+      : null
+  if (!ownership) return res.json([])
+
   const orders = await prisma.order.findMany({
-    where: { userId: req.userId, status: "COMPLETED" },
+    where: { ...ownership, status: "COMPLETED" },
     include: {
       place: { select: { id: true, name: true } },
       items: {
@@ -128,10 +137,19 @@ router.get("/pending", requireAuth, async (req, res) => {
   res.json(pending)
 })
 
-// GET /api/reviews/mine — seluruh ulasan milik user
-router.get("/mine", requireAuth, async (req, res) => {
+// GET /api/reviews/mine — seluruh ulasan milik user/guest
+router.get("/mine", optionalAuth, async (req, res) => {
+  const guestToken =
+    typeof req.query.guestToken === "string" ? req.query.guestToken.trim() : ""
+  const ownership = req.userId
+    ? { userId: req.userId }
+    : guestToken
+      ? { guestToken }
+      : null
+  if (!ownership) return res.json([])
+
   const reviews = await prisma.productReview.findMany({
-    where: { userId: req.userId },
+    where: ownership,
     include: REVIEW_INCLUDE,
     orderBy: { createdAt: "desc" },
   })
@@ -141,10 +159,12 @@ router.get("/mine", requireAuth, async (req, res) => {
 })
 
 // POST /api/reviews — buat ulasan (validasi kepemilikan & status COMPLETED)
-router.post("/", requireAuth, async (req, res) => {
+router.post("/", optionalAuth, async (req, res) => {
   const body = req.body || {}
   const orderItemId = typeof body.orderItemId === "string" ? body.orderItemId.trim() : ""
   const orderId = typeof body.orderId === "string" ? body.orderId.trim() : ""
+  const guestToken =
+    typeof body.guestToken === "string" ? body.guestToken.trim() : ""
   const rating = Math.floor(Number(body.rating))
   const comment =
     typeof body.comment === "string" ? body.comment.trim().slice(0, MAX_COMMENT) : null
@@ -160,14 +180,17 @@ router.post("/", requireAuth, async (req, res) => {
   const orderItem = await prisma.orderItem.findUnique({
     where: { id: orderItemId },
     include: {
-      order: { select: { id: true, userId: true, status: true, placeId: true } },
+      order: { select: { id: true, userId: true, guestToken: true, status: true, placeId: true } },
       menuItem: { select: REVIEW_MENU_ITEM_SELECT },
     },
   })
   if (!orderItem) {
     return res.status(404).json({ error: "Item pesanan tidak ditemukan." })
   }
-  if (orderItem.order.userId !== req.userId) {
+  const ownsOrder =
+    orderItem.order.userId === req.userId ||
+    (orderItem.order.guestToken != null && orderItem.order.guestToken === guestToken)
+  if (!ownsOrder) {
     return res.status(403).json({ error: "Pesanan bukan milik Anda." })
   }
   if (orderItem.order.status !== "COMPLETED") {
@@ -185,7 +208,8 @@ router.post("/", requireAuth, async (req, res) => {
   try {
     const review = await prisma.productReview.create({
       data: {
-        userId: req.userId,
+        userId: req.userId ?? null,
+        guestToken: req.userId ? null : guestToken || null,
         orderId,
         orderItemId,
         menuItemId: orderItem.menuItemId,
@@ -206,12 +230,17 @@ router.post("/", requireAuth, async (req, res) => {
 })
 
 // PUT /api/reviews/:id — edit ulasan milik sendiri
-router.put("/:id", requireAuth, async (req, res) => {
+router.put("/:id", optionalAuth, async (req, res) => {
+  const guestToken =
+    typeof req.query.guestToken === "string" ? req.query.guestToken.trim() : ""
   const review = await prisma.productReview.findUnique({ where: { id: req.params.id } })
   if (!review) {
     return res.status(404).json({ error: "Ulasan tidak ditemukan." })
   }
-  if (review.userId !== req.userId) {
+  const ownsReview =
+    review.userId === req.userId ||
+    (review.guestToken != null && review.guestToken === guestToken)
+  if (!ownsReview) {
     return res.status(403).json({ error: "Ulasan bukan milik Anda." })
   }
 
@@ -240,12 +269,17 @@ router.put("/:id", requireAuth, async (req, res) => {
 })
 
 // DELETE /api/reviews/:id — hapus ulasan milik sendiri
-router.delete("/:id", requireAuth, async (req, res) => {
+router.delete("/:id", optionalAuth, async (req, res) => {
+  const guestToken =
+    typeof req.query.guestToken === "string" ? req.query.guestToken.trim() : ""
   const review = await prisma.productReview.findUnique({ where: { id: req.params.id } })
   if (!review) {
     return res.status(404).json({ error: "Ulasan tidak ditemukan." })
   }
-  if (review.userId !== req.userId) {
+  const ownsReview =
+    review.userId === req.userId ||
+    (review.guestToken != null && review.guestToken === guestToken)
+  if (!ownsReview) {
     return res.status(403).json({ error: "Ulasan bukan milik Anda." })
   }
   await prisma.productReview.delete({ where: { id: review.id } })
