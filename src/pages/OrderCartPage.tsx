@@ -37,7 +37,6 @@ const ORDER_TABS: { key: OrderTab; label: string }[] = [
   { key: "packed", label: "Dikemas" },
   { key: "shipped", label: "Dikirim" },
   { key: "completed", label: "Selesai" },
-  { key: "penilaian", label: "Penilaian" },
   { key: "review", label: "Penilaian Saya" },
 ]
 
@@ -179,7 +178,6 @@ export default function OrderCartPage(): React.JSX.Element {
 
   const tabCount = (tab: OrderTab): number => {
     if (tab === "cart") return items.length
-    if (tab === "penilaian") return pendingReviews.length
     if (tab === "review") return myReviews.length
     return statusOrders(tab).length
   }
@@ -318,35 +316,29 @@ export default function OrderCartPage(): React.JSX.Element {
           <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">{statusLabel}</span>
         </div>
         <div className="divide-y divide-border">
-          {order.items.map((item) => (
-            <div key={item.id} className="flex items-center gap-3 px-4 py-3 sm:px-5">
-              <img src={menuImageUrl(item.menuItem.category, item.menuItem.imageUrl, item.menuItem.name)} alt={item.menuItem.name} className="h-14 w-14 rounded-xl object-cover" />
-              <div className="min-w-0 flex-1"><div className="truncate text-sm font-bold text-foreground">{item.menuItem.name}</div><div className="text-xs text-muted-foreground">Variasi standar · x{item.quantity}</div></div>
-              <strong className="text-sm text-primary">{formatRupiah(item.price * item.quantity)}</strong>
-            </div>
-          ))}
+          {order.items.map((item) => {
+            const reviewed = myReviews.some((r) => r.orderItemId === item.id)
+            return (
+              <div key={item.id} className="flex items-center gap-3 px-4 py-3 sm:px-5">
+                <img src={menuImageUrl(item.menuItem.category, item.menuItem.imageUrl, item.menuItem.name)} alt={item.menuItem.name} className="h-14 w-14 rounded-xl object-cover" />
+                <div className="min-w-0 flex-1"><div className="truncate text-sm font-bold text-foreground">{item.menuItem.name}</div><div className="text-xs text-muted-foreground">Variasi standar · x{item.quantity}</div></div>
+                <strong className="text-sm text-primary">{formatRupiah(item.price * item.quantity)}</strong>
+                {reviewed ? (
+                  <span className="cursor-not-allowed rounded-full bg-muted-foreground/10 px-4 py-2 text-xs font-black text-muted-foreground">Sudah Dinilai</span>
+                ) : (
+                  <button type="button" onClick={() => startItemReview(order, item)} className="rounded-full bg-primary px-4 py-2 text-xs font-black text-primary-foreground">Beri Penilaian</button>
+                )}
+              </div>
+            )
+          })}
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3 sm:px-5">
           <div><div className="text-xs text-muted-foreground">Order #{order.id.slice(-8)}</div><div className="text-sm font-black text-foreground">Total {formatRupiah(order.total)}</div></div>
           {bucket === "unpaid" && <button type="button" onClick={() => void retryPayment(order)} disabled={paymentOrderId === order.id} className="rounded-full bg-primary px-4 py-2 text-xs font-black text-primary-foreground disabled:cursor-wait disabled:opacity-60">{paymentOrderId === order.id ? "Membuka Pembayaran..." : "Bayar Sekarang"}</button>}
           {bucket === "shipped" && <button type="button" onClick={() => setNotice("Informasi pelacakan akan tersedia setelah seller memasukkan nomor resi.")} className="rounded-full border border-border px-4 py-2 text-xs font-bold text-foreground">Lacak Pesanan</button>}
-          {bucket === "completed" && (
-            <button
-              type="button"
-              onClick={() => setActiveTab("penilaian")}
-              className="rounded-full bg-primary px-4 py-2 text-xs font-black text-primary-foreground"
-            >
-              Beri Penilaian
-            </button>
-          )}
         </div>
       </article>
     )
-  }
-
-  const openCreate = (pending: PendingReview) => {
-    setReviewError(null)
-    setReviewModal({ mode: "create", pending })
   }
 
   const openEdit = (review: Review) => {
@@ -414,44 +406,6 @@ export default function OrderCartPage(): React.JSX.Element {
     }
   }
 
-  const renderPendingCard = (p: PendingReview): React.JSX.Element => (
-    <article key={p.orderItem.id} className="overflow-hidden rounded-2xl border border-border bg-card/70">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-5">
-        <div className="flex items-center gap-2">
-          <MdStorefront className="text-primary" />
-          <strong className="text-sm text-foreground">{p.order.place.name}</strong>
-        </div>
-        <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
-          Belum dinilai
-        </span>
-      </div>
-      <div className="flex items-center gap-3 px-4 py-4 sm:px-5">
-        <img
-          src={menuImageUrl(p.orderItem.menuItem.category, p.orderItem.menuItem.imageUrl, p.orderItem.menuItem.name)}
-          alt={p.orderItem.menuItem.name}
-          className="h-16 w-16 rounded-xl object-cover"
-        />
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-bold text-foreground">{p.orderItem.menuItem.name}</div>
-          <div className="text-xs text-muted-foreground">
-            {p.orderItem.quantity > 1 ? `×${p.orderItem.quantity}` : "Variasi standar"}
-          </div>
-        </div>
-        <strong className="text-sm text-primary">{formatRupiah(p.orderItem.price * p.orderItem.quantity)}</strong>
-      </div>
-      <div className="flex items-center justify-between border-t border-border px-4 py-3 sm:px-5">
-        <div className="text-xs text-muted-foreground">Order #{p.order.id.slice(-8)}</div>
-        <button
-          type="button"
-          onClick={() => openCreate(p)}
-          className="rounded-full bg-primary px-4 py-2 text-xs font-black text-primary-foreground"
-        >
-          Beri Penilaian
-        </button>
-      </div>
-    </article>
-  )
-
   const renderMyReviewCard = (r: Review): React.JSX.Element => (
     <article key={r.id} className="overflow-hidden rounded-2xl border border-border bg-card/70">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-5">
@@ -511,6 +465,24 @@ export default function OrderCartPage(): React.JSX.Element {
     </article>
   )
 
+  const startItemReview = (order: Order, item: Order["items"][number]) => {
+    const existing = pendingReviews.find((p) => p.orderItem.id === item.id)
+    const pending: PendingReview = existing ?? {
+      orderItem: {
+        id: item.id,
+        quantity: item.quantity,
+        price: item.price,
+        menuItem: item.menuItem,
+      },
+      order: {
+        id: order.id,
+        createdAt: order.createdAt,
+        place: order.place,
+      },
+    }
+    setReviewModal({ mode: "create", pending })
+  }
+
   if (paidOrder) {
     return (
       <div className="min-h-screen px-4 pb-20 pt-28 sm:px-6">
@@ -555,14 +527,7 @@ export default function OrderCartPage(): React.JSX.Element {
 
         {notice && <div role="status" className="mb-5 rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-semibold text-foreground">{notice}</div>}
 
-        {activeTab === "cart" ? null : activeTab === "penilaian" ? (
-          <div className="space-y-4">
-            {reviewsError && <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">{reviewsError}</div>}
-            {reviewsLoading && <div className="py-10 text-center text-sm text-muted-foreground">Memuat penilaian...</div>}
-            {!reviewsLoading && pendingReviews.length === 0 && <div className="glass-card rounded-3xl px-6 py-16 text-center"><MdStorefront className="mx-auto mb-4 h-12 w-12 text-muted-foreground" /><h2 className="text-xl font-black text-foreground">Belum Ada Produk untuk Dinilai</h2><p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">Semua pesanan kamu yang sudah selesai sudah dinilai.</p></div>}
-            {!reviewsLoading && pendingReviews.map(renderPendingCard)}
-          </div>
-        ) : activeTab === "review" ? (
+        {activeTab === "cart" ? null : activeTab === "review" ? (
           <div className="space-y-4">
             {reviewsError && <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">{reviewsError}</div>}
             {reviewsLoading && <div className="py-10 text-center text-sm text-muted-foreground">Memuat penilaian...</div>}
