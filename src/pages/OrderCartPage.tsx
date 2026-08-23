@@ -33,6 +33,7 @@ import {
   type ReviewOrderRef,
 } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
+import { useNotifications } from "@/lib/notification-context"
 import { getGuestToken } from "@/lib/guest"
 
 const NEW_USER_COUPON = "KOPI10"
@@ -329,6 +330,7 @@ export default function OrderCartPage(): React.JSX.Element {
   const navigate = useNavigate()
   const location = useLocation()
   const { user } = useAuth()
+  const { refresh: refreshNotifications } = useNotifications()
   const items = useCartStore((state) => state.items)
   const setQuantity = useCartStore((state) => state.setQuantity)
   const remove = useCartStore((state) => state.remove)
@@ -419,6 +421,7 @@ export default function OrderCartPage(): React.JSX.Element {
         .finally(() => {
           void loadOrders()
           void loadReviews()
+          refreshNotifications()
         })
     } else {
       setNotice(

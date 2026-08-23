@@ -3,6 +3,7 @@ import { OrderStatus, PlaceCategory, Role } from "@prisma/client"
 import { prisma } from "../db.js"
 import { requireAuth } from "../auth.js"
 import { parseTags } from "../serialize.js"
+import { notifyOrderStatus, safe } from "../notifications.js"
 
 const router = Router()
 
@@ -409,6 +410,7 @@ router.put(
         },
       },
     })
+    void safe(notifyOrderStatus(updated, status))
     res.json(updated)
   },
 )

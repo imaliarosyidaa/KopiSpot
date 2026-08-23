@@ -3,6 +3,7 @@ import crypto from "node:crypto"
 import snap, { coreApi } from "../midtrans.js"
 import { prisma } from "../db.js"
 import { optionalAuth } from "../auth.js"
+import { notifyPaymentSuccess, notifyOrderStatus, safe } from "../notifications.js"
 
 const router = Router()
 
@@ -97,7 +98,7 @@ async function applyMidtransStatus({ orderId, transactionStatus, fraudStatus, tr
     if (!order) return null
     if (order.paymentStatus === "PAID" && (!paid || order.status === "PACKED")) return order
 
-    return tx.order.update({
+    const updated = await tx.order.update({
       where: { id: orderId },
       data: {
         paymentStatus: paid ? "PAID" : cancelled || expired ? "FAILED" : "PENDING",
@@ -107,6 +108,16 @@ async function applyMidtransStatus({ orderId, transactionStatus, fraudStatus, tr
         ...(paid || cancelled || expired ? { paymentTransactionId: transactionId } : {}),
       },
     })
+
+    if (paid) {
+      await safe(notifyPaymentSuccess(updated))
+      await safe(notifyOrderStatus(updated, "PACKED"))
+    } else if (cancelled) {
+      await safe(notifyOrderStatus(updated, "CANCELLED"))
+    } else if (expired) {
+      await safe(notifyOrderStatus(updated, "EXPIRED"))
+    }
+    return updated
   })
 }
 

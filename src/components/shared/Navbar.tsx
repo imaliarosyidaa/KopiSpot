@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom"
-import { MdAdd, MdFavorite, MdHome, MdLogout, MdPerson, MdReceiptLong, MdShoppingCart, MdStorefront } from "react-icons/md"
+import { MdAdd, MdFavorite, MdHome, MdLogout, MdNotifications, MdPerson, MdReceiptLong, MdShoppingCart, MdStorefront } from "react-icons/md"
+import { useNotifications } from "@/lib/notification-context"
 import { useAuth } from "@/lib/auth-context"
 import AuthModal from "@/components/ui/auth-modal"
 import ThemeSwitcher from "@/components/shared/ThemeSwitcher"
@@ -30,6 +31,7 @@ export default function Navbar() {
   const [authOpen, setAuthOpen] = useState(false)
   const navigate = useNavigate()
   const { pathname } = useLocation()
+  const { count, items, open, setOpen, markRead, markAllRead } = useNotifications()
   const cartItems = useCartStore((s) => s.items)
   const wishlist = useCartStore((s) => s.wishlist)
   const cartCountTotal = cartCount(cartItems)
@@ -77,6 +79,68 @@ export default function Navbar() {
             <MdFavorite className="h-5 w-5" />
             {wishlist.length > 0 && <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#d1d5db] px-1 text-[11px] font-black text-[#111113]">{wishlist.length}</span>}
           </Link>
+
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setOpen(!open)}
+              title="Notifikasi"
+              aria-label="Notifikasi"
+              className="relative flex h-9 w-9 items-center justify-center rounded-full footer-glass-pill text-muted-foreground transition-colors hover:text-[#d1d5db]"
+            >
+              <MdNotifications className="h-5 w-5" />
+              {count > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#d1d5db] px-1 text-[11px] font-black text-[#111113]">
+                  {count > 99 ? "99+" : count}
+                </span>
+              )}
+            </button>
+
+            {open && (
+              <>
+                <div className="fixed inset-0 z-[55]" onClick={() => setOpen(false)} />
+                <div className="absolute right-0 z-[56] mt-2 w-[20rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
+                  <div className="flex items-center justify-between border-b border-border px-4 py-3">
+                    <strong className="text-sm font-black text-foreground">Notifikasi</strong>
+                    <button
+                      type="button"
+                      onClick={() => markAllRead()}
+                      className="text-xs font-bold text-primary hover:underline"
+                    >
+                      Tandai Semua Dibaca
+                    </button>
+                  </div>
+                  <div className="max-h-[24rem] overflow-y-auto">
+                    {items.length === 0 ? (
+                      <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+                        Belum ada notifikasi.
+                      </div>
+                    ) : (
+                      items.map((n) => (
+                        <button
+                          key={n.id}
+                          type="button"
+                          onClick={() => markRead(n.id)}
+                          className={`flex w-full items-start gap-3 border-b border-border px-4 py-3 text-left transition-colors hover:bg-primary/5 ${
+                            n.isRead ? "opacity-60" : ""
+                          }`}
+                        >
+                          <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${n.isRead ? "bg-transparent" : "bg-[#d1d5db]"}`} />
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-sm font-bold text-foreground">{n.title}</span>
+                            {n.message && <span className="mt-0.5 block text-xs text-muted-foreground">{n.message}</span>}
+                            <span className="mt-1 block text-[10px] text-muted-foreground">
+                              {new Date(n.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                            </span>
+                          </span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
           <Link
             to="/order/keranjang"
             title="Keranjang Pesanan"

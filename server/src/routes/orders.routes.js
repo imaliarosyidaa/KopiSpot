@@ -2,6 +2,7 @@ import { Router } from "express"
 import crypto from "node:crypto"
 import { prisma } from "../db.js"
 import { optionalAuth, requireAuth } from "../auth.js"
+import { notifyOrderCreated, notifyPaymentSuccess, notifyOrderStatus, safe } from "../notifications.js"
 
 const router = Router()
 
@@ -200,6 +201,7 @@ router.post("/", optionalAuth, async (req, res) => {
   }
 
   res.status(201).json({ ...order, guestToken })
+  void safe(notifyOrderCreated(order))
 })
 
 // PUT /api/orders/:id/pay — konfirmasi pembayaran pesanan
@@ -239,6 +241,8 @@ router.put("/:id/pay", optionalAuth, async (req, res) => {
     include: ORDER_INCLUDE,
   })
 
+  void safe(notifyPaymentSuccess(updated))
+  void safe(notifyOrderStatus(updated, "PACKED"))
   res.json(updated)
 })
 

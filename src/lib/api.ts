@@ -722,3 +722,38 @@ export const reviewsApi = {
       { method: "DELETE" },
     ),
 };
+
+export interface Notification {
+  id: string
+  userId: string | null
+  guestToken: string | null
+  type: string
+  title: string
+  message: string | null
+  referenceId: string | null
+  referenceType: string | null
+  isRead: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export const notificationsApi = {
+  unreadCount: (guestToken?: string) =>
+    api<{ count: number }>(
+      `/notifications/unread-count${guestToken ? `?guestToken=${encodeURIComponent(guestToken)}` : ""}`,
+    ),
+  list: (guestToken?: string) =>
+    api<Notification[]>(
+      `/notifications${guestToken ? `?guestToken=${encodeURIComponent(guestToken)}` : ""}`,
+    ),
+  markRead: (id: string, guestToken?: string) =>
+    api<Notification>(
+      `/notifications/${id}/read${guestToken ? `?guestToken=${encodeURIComponent(guestToken)}` : ""}`,
+      { method: "PATCH" },
+    ),
+  markAllRead: (guestToken?: string) =>
+    api<{ ok: boolean }>(
+      `/notifications/read-all${guestToken ? `?guestToken=${encodeURIComponent(guestToken)}` : ""}`,
+      { method: "PATCH" },
+    ),
+};

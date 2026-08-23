@@ -2,6 +2,7 @@ import { useMemo, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { MdArrowBack, MdLocationOn, MdLocalShipping, MdStorefront } from "react-icons/md"
 import { useAuth } from "@/lib/auth-context"
+import { useNotifications } from "@/lib/notification-context"
 import { getGuestToken } from "@/lib/guest"
 import { ordersApi, paymentsApi } from "@/lib/api"
 import { formatRupiah } from "@/lib/format"
@@ -23,18 +24,17 @@ function readCheckoutItems(): CartItem[] {
   }
 }
 
+  // Generate a fresh session id on every checkout attempt so a previously
+  // cached id (e.g. from a guest order in the same tab) never collides with an
+  // existing order and triggers "Checkout session sudah digunakan".
   function getCheckoutSessionId(): string {
-    const key = "Coffidoor_checkout_session"
-    const existing = sessionStorage.getItem(key)
-    if (existing) return existing
-    const value = crypto.randomUUID()
-    sessionStorage.setItem(key, value)
-    return value
+    return crypto.randomUUID()
   }
 
 export default function CheckoutPage(): React.JSX.Element {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { refresh } = useNotifications()
   const remove = useCartStore((state) => state.remove)
   const items = useMemo(readCheckoutItems, [])
   const [address, setAddress] = useState<Address>({ name: user?.name ?? "", phone: "", address: "", city: "", postalCode: "", label: "Rumah" })
@@ -83,6 +83,7 @@ export default function CheckoutPage(): React.JSX.Element {
       if (payment.redirect_url) {
         sessionStorage.setItem(`Coffidoor_payment_url_${order.id}`, payment.redirect_url)
       }
+      refresh()
       items.forEach((item) => remove(item.id))
       sessionStorage.removeItem("Coffidoor_checkout_items")
       if (payment.redirect_url) window.location.assign(payment.redirect_url)

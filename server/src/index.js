@@ -12,6 +12,7 @@ import menusRouter from "./routes/menus.routes.js"
 import ordersRouter from "./routes/orders.routes.js"
 import reviewsRouter from "./routes/reviews.routes.js"
 import paymentsRouter from "./routes/payments.routes.js"
+import notificationsRouter from "./routes/notifications.routes.js"
 import partnerRouter from "./routes/partner.routes.js"
 import uploadRouter, { UPLOAD_DIR } from "./routes/upload.routes.js"
 
@@ -39,6 +40,7 @@ app.use("/api/menus", menusRouter)
 app.use("/api/orders", ordersRouter)
 app.use("/api/reviews", reviewsRouter)
 app.use("/api/payments", paymentsRouter)
+app.use("/api/notifications", notificationsRouter)
 app.use("/api/partner", partnerRouter)
 app.use("/api/upload", uploadRouter)
 
