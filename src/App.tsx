@@ -19,7 +19,7 @@ export default function App() {
     <div className="relative w-full min-h-screen overflow-x-hidden">
       {/* Content layer — sits above the fixed cinematic footer so it is only
           revealed once the user scrolls to the bottom. */}
-      <div className="relative z-10 bg-background">
+        <div className="relative z-10 bg-background pb-16 md:pb-0">
         <Navbar />
         <Routes>
           <Route path="/" element={<HomePage />} />

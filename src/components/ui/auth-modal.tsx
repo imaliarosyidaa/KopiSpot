@@ -67,7 +67,7 @@ export default function AuthModal({
       } else {
         await register(name, email, password, username || undefined)
       }
-      onClose()
+      window.location.href = "/"
     } catch (err) {
       setError(err instanceof Error ? err.message : "Terjadi kesalahan.")
     } finally {

@@ -1,6 +1,6 @@
 import { useState } from "react"
-import { Link, NavLink, useNavigate } from "react-router-dom"
-import { MdAdd, MdFavorite, MdLogout, MdShoppingCart } from "react-icons/md"
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom"
+import { MdAdd, MdFavorite, MdHome, MdLogout, MdPerson, MdReceiptLong, MdShoppingCart, MdStorefront } from "react-icons/md"
 import { useAuth } from "@/lib/auth-context"
 import AuthModal from "@/components/ui/auth-modal"
 import ThemeSwitcher from "@/components/shared/ThemeSwitcher"
@@ -18,14 +18,26 @@ const navItems = [
   { to: "/leaderboard", label: "Peringkat" },
 ]
 
+const bottomNavItems = [
+  { to: "/", label: "Beranda", icon: MdHome },
+  { to: "/order/keranjang", label: "Keranjang", icon: MdReceiptLong },
+  { to: "/order", label: "Pesanan", icon: MdStorefront },
+  { to: "/profile", label: "Profil", icon: MdPerson },
+]
+
 export default function Navbar() {
   const { user, loading, logout } = useAuth()
   const [authOpen, setAuthOpen] = useState(false)
   const navigate = useNavigate()
+  const { pathname } = useLocation()
   const cartItems = useCartStore((s) => s.items)
   const wishlist = useCartStore((s) => s.wishlist)
   const cartCountTotal = cartCount(cartItems)
   const { theme } = useTheme()
+
+  // Hide the mobile bottom bar on pages that already own the bottom area
+  // (cart checkout bar / checkout page) to avoid overlap.
+  const showBottomNav = !pathname.startsWith("/order/keranjang") && pathname !== "/order/checkout"
 
   return (
     <>
@@ -128,6 +140,29 @@ export default function Navbar() {
       </nav>
 
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
+
+      {showBottomNav && (
+        <nav className="fixed inset-x-0 bottom-0 z-[60] flex border-t border-border bg-background/95 backdrop-blur-md md:hidden">
+          {bottomNavItems.map((item) => {
+            const Icon = item.icon
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.to === "/"}
+                className={({ isActive }) =>
+                  `flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-semibold transition-colors ${
+                    isActive ? "text-[#d1d5db]" : "text-muted-foreground"
+                  }`
+                }
+              >
+                <Icon className="h-5 w-5" />
+                {item.label}
+              </NavLink>
+            )
+          })}
+        </nav>
+      )}
     </>
   )
 }
