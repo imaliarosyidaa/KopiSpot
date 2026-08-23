@@ -28,6 +28,7 @@ import {
   type PlaceListItem,
 } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
+import { getGuestToken } from "@/lib/guest"
 import AuthModal from "@/components/ui/auth-modal"
 import MenuProductCard from "@/components/ui/menu-product-card"
 import {
@@ -82,8 +83,7 @@ function billingSummary(order: Order | null): string {
 }
 
 function guestTokenFor(orderId: string): string | undefined {
-  if (typeof window === "undefined") return undefined
-  return sessionStorage.getItem(`Coffidoor_guest_order_${orderId}`) ?? undefined
+  return getGuestToken()
 }
 
 export default function OrderPage() {
@@ -258,11 +258,9 @@ export default function OrderPage() {
         note: note.trim() || undefined,
         billingAddress: buildBillingAddress(),
         couponCode: NEW_USER_COUPON,
+        guestToken: user ? undefined : getGuestToken(),
       })
       setCreatedOrder(order)
-      if (order.guestToken && typeof window !== "undefined") {
-        sessionStorage.setItem(`Coffidoor_guest_order_${order.id}`, order.guestToken)
-      }
 
       const payment = await paymentsApi.create({
         orderId: order.id,

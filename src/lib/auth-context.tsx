@@ -7,6 +7,7 @@ import {
 } from "react"
 import type { ReactNode } from "react"
 import { authApi, clearToken, getToken, setToken, type AuthUser } from "./api"
+import { useCartStore } from "./cart-store"
 
 interface AuthContextValue {
   user: AuthUser | null
@@ -45,6 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               level: me.level,
               role: me.role,
             })
+            useCartStore.getState().setIdentity(me.id)
         } catch {
           clearToken()
         }
@@ -75,6 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const data = await authApi.login(email, password)
     setToken(data.token)
     setUser(data.user)
+    useCartStore.getState().setIdentity(data.user.id)
   }, [])
 
   const register = useCallback(
@@ -87,6 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await authApi.register(name, email, password, username)
       setToken(data.token)
       setUser(data.user)
+      useCartStore.getState().setIdentity(data.user.id)
     },
     [],
   )
@@ -94,6 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     clearToken()
     setUser(null)
+    useCartStore.getState().setIdentity(null)
   }, [])
 
   return (

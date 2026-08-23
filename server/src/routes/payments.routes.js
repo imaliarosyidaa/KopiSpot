@@ -14,7 +14,8 @@ router.get("/status/:id", optionalAuth, async (req, res) => {
     select: { id: true, userId: true, guestToken: true, total: true },
   })
 
-  const ownsOrder = order && (order.userId === req.userId || order.guestToken === guestToken)
+  const ownsOrder =
+    order && (order.userId === req.userId || order.guestToken === guestToken)
   if (!ownsOrder) {
     return res.status(404).json({ error: "Pesanan tidak ditemukan." })
   }

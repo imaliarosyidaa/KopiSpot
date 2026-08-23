@@ -22,10 +22,29 @@ const ORDER_INCLUDE = {
   place: { select: { id: true, name: true, city: true, imageUrl: true } },
 }
 
-// GET /api/orders — riwayat pesanan pengguna yang sedang login
-router.get("/", requireAuth, async (req, res) => {
+// GET /api/orders — riwayat pesanan (login -> userId, tamu -> guestToken)
+// Identitas TIDAK boleh dicampur dalam satu query (spec: tidak ada OR userId|guestToken).
+router.get("/", optionalAuth, async (req, res) => {
+  if (req.userId) {
+    const orders = await prisma.order.findMany({
+      where: { userId: req.userId },
+      include: ORDER_INCLUDE,
+      orderBy: { createdAt: "desc" },
+    })
+    return res.json(orders)
+  }
+
+  const guestTokensRaw = req.query.guestTokens
+  const guestTokens =
+    typeof guestTokensRaw === "string" && guestTokensRaw
+      ? guestTokensRaw.split(",").map((t) => t.trim()).filter(Boolean)
+      : []
+  if (guestTokens.length === 0) {
+    return res.json([])
+  }
+
   const orders = await prisma.order.findMany({
-    where: { userId: req.userId },
+    where: { guestToken: { in: guestTokens } },
     include: ORDER_INCLUDE,
     orderBy: { createdAt: "desc" },
   })
@@ -41,13 +60,21 @@ router.get("/ratings", requireAuth, async (req, res) => {
   res.json(ratings.map((rating) => rating.orderId).filter(Boolean))
 })
 
-// GET /api/orders/:id — detail pesanan (hanya pemilik)
-router.get("/:id", requireAuth, async (req, res) => {
+// GET /api/orders/:id — detail pesanan (pemilik via userId ATAU guestToken, tidak keduanya)
+router.get("/:id", optionalAuth, async (req, res) => {
+  const guestToken =
+    typeof req.query.guestToken === "string" ? req.query.guestToken.trim() : ""
   const order = await prisma.order.findUnique({
     where: { id: req.params.id },
     include: ORDER_INCLUDE,
   })
-  if (!order || order.userId !== req.userId) {
+  if (!order) {
+    return res.status(404).json({ error: "Pesanan tidak ditemukan." })
+  }
+  const ownsOrder =
+    order.userId === req.userId ||
+    (order.guestToken != null && order.guestToken === guestToken)
+  if (!ownsOrder) {
     return res.status(404).json({ error: "Pesanan tidak ditemukan." })
   }
   res.json(order)
@@ -66,7 +93,11 @@ router.post("/", optionalAuth, async (req, res) => {
   const checkoutSessionId =
     typeof body.checkoutSessionId === "string" ? body.checkoutSessionId.trim() : ""
   const shippingFee = Math.max(0, Math.floor(Number(body.shippingFee) || 0))
-  const guestToken = req.userId ? null : crypto.randomBytes(32).toString("hex")
+  const providedGuestToken =
+    typeof body.guestToken === "string" ? body.guestToken.trim() : ""
+  const guestToken = req.userId
+    ? null
+    : providedGuestToken || crypto.randomBytes(32).toString("hex")
 
   if (!placeId) {
     return res.status(400).json({ error: "Kafe wajib dipilih." })
@@ -99,7 +130,7 @@ router.post("/", optionalAuth, async (req, res) => {
     include: ORDER_INCLUDE,
   })
   if (existingOrder) {
-    if (existingOrder.userId !== req.userId) {
+    if ((existingOrder.userId ?? null) !== (req.userId ?? null)) {
       return res.status(409).json({ error: "Checkout session sudah digunakan." })
     }
     return res.status(200).json({ ...existingOrder, guestToken: existingOrder.guestToken })
@@ -163,7 +194,7 @@ router.post("/", optionalAuth, async (req, res) => {
       where: { checkoutSessionId },
       include: ORDER_INCLUDE,
     })
-    if (!order || order.userId !== req.userId) {
+    if (!order || (order.userId ?? null) !== (req.userId ?? null)) {
       return res.status(409).json({ error: "Checkout session sudah digunakan." })
     }
   }

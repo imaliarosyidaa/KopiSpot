@@ -2,6 +2,7 @@ import { useMemo, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { MdArrowBack, MdLocationOn, MdLocalShipping, MdStorefront } from "react-icons/md"
 import { useAuth } from "@/lib/auth-context"
+import { getGuestToken } from "@/lib/guest"
 import { ordersApi, paymentsApi } from "@/lib/api"
 import { formatRupiah } from "@/lib/format"
 import { menuImageUrl } from "@/lib/menu-images"
@@ -69,10 +70,10 @@ export default function CheckoutPage(): React.JSX.Element {
         couponCode: COUPON,
         shippingFee: SHIPPING_FEE,
         note: note.trim() || undefined,
-          checkoutSessionId: getCheckoutSessionId(),
+        checkoutSessionId: getCheckoutSessionId(),
         billingAddress: `${address.name} · ${address.phone}\n${address.address}\n${address.city} ${address.postalCode}`,
+        guestToken: user ? undefined : getGuestToken(),
       })
-      if (order.guestToken) sessionStorage.setItem(`Coffidoor_guest_order_${order.id}`, order.guestToken)
       const payment = await paymentsApi.create({
         orderId: order.id,
         amount: order.total,

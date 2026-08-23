@@ -1,6 +1,10 @@
 import { create } from "zustand"
+import { ensureGuestToken } from "./guest"
 
-const CART_STORAGE_KEY = "Coffidoor_session_cart"
+const userCartKey = (userId: string) => `Coffidoor_cart_user_${userId}`
+const guestCartKey = () => `Coffidoor_cart_${ensureGuestToken()}`
+
+let activeKey = guestCartKey()
 
 export interface CartItem {
   id: string
@@ -25,7 +29,7 @@ function readStoredCart(): StoredCart {
   }
 
   try {
-    const stored = sessionStorage.getItem(CART_STORAGE_KEY)
+    const stored = localStorage.getItem(activeKey)
     if (!stored) return { items: [], savedForLater: [], wishlist: [] }
     const parsed = JSON.parse(stored) as Partial<StoredCart>
     return {
@@ -57,9 +61,10 @@ interface CartState {
   moveFromWishlist: (id: string) => void
   removeFromWishlist: (id: string) => void
   clear: () => void
+  setIdentity: (userId: string | null) => void
 }
 
-export const useCartStore = create<CartState>((set) => ({
+export const useCartStore = create<CartState>((set, get) => ({
   ...readStoredCart(),
   add: (item) =>
     set((state) => {
@@ -142,12 +147,27 @@ export const useCartStore = create<CartState>((set) => ({
   removeFromWishlist: (id) =>
     set((state) => ({ wishlist: state.wishlist.filter((i) => i.id !== id) })),
   clear: () => set({ items: [] }),
+  setIdentity: (userId) => {
+    const state = get()
+    if (typeof window !== "undefined") {
+      localStorage.setItem(
+        activeKey,
+        JSON.stringify({
+          items: state.items,
+          savedForLater: state.savedForLater,
+          wishlist: state.wishlist,
+        }),
+      )
+    }
+    activeKey = userId ? userCartKey(userId) : guestCartKey()
+    set(readStoredCart())
+  },
 }))
 
 useCartStore.subscribe((state) => {
   if (typeof window === "undefined") return
-  sessionStorage.setItem(
-    CART_STORAGE_KEY,
+  localStorage.setItem(
+    activeKey,
     JSON.stringify({
       items: state.items,
       savedForLater: state.savedForLater,

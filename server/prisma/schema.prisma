@@ -271,7 +271,7 @@ model Order {
   id            String        @id @default(cuid())
   userId        String?
   placeId       String
-  guestToken    String?       @unique
+  guestToken    String?
   checkoutSessionId String?   @unique
   midtransOrderId String?     @unique
   midtransSnapToken String?

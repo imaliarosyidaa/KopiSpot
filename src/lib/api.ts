@@ -585,9 +585,17 @@ export interface Order {
 }
 
 export const ordersApi = {
-  list: () => api<Order[]>("/orders"),
+  list: (params?: { guestTokens?: string[] }) => {
+    const query = new URLSearchParams()
+    if (params?.guestTokens?.length) {
+      query.set("guestTokens", params.guestTokens.join(","))
+    }
+    const qs = query.toString()
+    return api<Order[]>(`/orders${qs ? `?${qs}` : ""}`)
+  },
   ratedOrderIds: () => api<string[]>("/orders/ratings"),
-  detail: (id: string) => api<Order>(`/orders/${id}`),
+  detail: (id: string, guestToken?: string) =>
+    api<Order>(`/orders/${id}${guestToken ? `?guestToken=${encodeURIComponent(guestToken)}` : ""}`),
   create: (data: {
     placeId: string;
     checkoutSessionId: string;
@@ -596,6 +604,7 @@ export const ordersApi = {
     billingAddress?: string;
     couponCode?: string;
     shippingFee?: number;
+    guestToken?: string;
   }) => api<Order & { guestToken?: string }>("/orders", { method: "POST", body: JSON.stringify(data) }),
   pay: (id: string, method: string, proofUrl?: string, guestToken?: string) =>
     api<Order>(`/orders/${id}/pay`, {
