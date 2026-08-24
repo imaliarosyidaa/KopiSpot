@@ -28,7 +28,7 @@ const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:8443",
   // Tambahkan regex jika ingin mengizinkan preview deployment Vercel:
-  // /\.vercel\.app$/
+  /\.vercel\.app$/,
 ];
 
 const corsOptions = {
