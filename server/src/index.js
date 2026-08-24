@@ -22,11 +22,61 @@ if (!fs.existsSync(UPLOAD_DIR)) {
 
 const app = express()
 
-app.use(cors({
-    origin: ['https://coffidoor.store', 'http://localhost:8443'],
-    credentials: true,
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-  }))
+const allowedOrigins = [
+  "https://coffidoor.store",
+  "https://www.coffidoor.store",
+  "http://localhost:5173",
+  "http://localhost:8443",
+];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    console.log("❌ CORS blocked:", origin);
+    return callback(new Error(`CORS blocked: ${origin}`));
+  },
+
+  credentials: true,
+
+  methods: [
+    "GET",
+    "HEAD",
+    "PUT",
+    "PATCH",
+    "POST",
+    "DELETE",
+    "OPTIONS",
+  ],
+
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+  ],
+
+  optionsSuccessStatus: 204,
+};
+
+app.use((req, res, next) => {
+  console.log(
+    "REQUEST:",
+    req.method,
+    req.path,
+    "ORIGIN:",
+    req.headers.origin
+  );
+
+  next();
+});
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 app.use(express.json())
 app.use("/uploads", express.static(UPLOAD_DIR))
