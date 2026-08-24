@@ -96,7 +96,14 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ error: "Terjadi kesalahan pada server." })
 })
 
-const PORT = Number(process.env.PORT) || 4000
+export default app;
+
+if (process.env.NODE_ENV !== "production") {
+  const PORT = process.env.PORT || 4000;
+  app.listen(PORT, () => {
+    console.log(`Server lokal aktif di http://localhost:${PORT}`);
+  });
+}
 
 app.listen(PORT, () => {
   console.log(`Coffidoor API berjalan di http://localhost:${PORT}`)
