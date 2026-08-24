@@ -110,7 +110,3 @@ if (process.env.NODE_ENV !== "production") {
     console.log(`Server lokal aktif di http://localhost:${PORT}`);
   });
 }
-
-app.listen(PORT, () => {
-  console.log(`Coffidoor API berjalan di http://localhost:${PORT}`)
-})
