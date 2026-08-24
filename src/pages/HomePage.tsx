@@ -118,7 +118,7 @@ function CinematicHero({ onExplore }: { onExplore: () => void }) {
           ref={subRef}
           className="text-muted-foreground text-sm md:text-base mb-10 max-w-md leading-relaxed"
         >
-          Coffidoor merupakan platform digital yang menghubungkan pelanggan dengan berbagai UMKM kopi dalam satu pintu digital.
+          Coffidoor merupakan platform digital yang menghubungkan pelanggan dengan berbagai UMKM coffeeshop dalam satu pintu digital.
         </p>
 
         <div ref={linksRef} className="flex flex-col items-center gap-4 w-full">
@@ -337,9 +337,9 @@ export default function HomePage() {
                 <span className="font-bold">Tahukah kamu?</span> Biaya pembuatan
                 Sistem Pemesanan Online Restoran (Restaurant Online Ordering
                 System) bisa mencapai puluhan hingga ratusan juta. Kami membantu
-                para pelaku UMKM kopi yang sedang merintis usahanya dan
+                para pelaku UMKM coffeeshop yang sedang merintis usahanya dan
                 terkendala biaya dengan membangun layanan digital satu akses
-                untuk menghubungkan UMKM kopi ke semua pelanggan.
+                untuk menghubungkan UMKM coffeeshop ke semua pelanggan.
               </p>
 
               <div className="flex items-center gap-6 flex-wrap">
