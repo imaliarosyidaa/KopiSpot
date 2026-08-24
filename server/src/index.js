@@ -16,8 +16,12 @@ import notificationsRouter from "./routes/notifications.routes.js"
 import partnerRouter from "./routes/partner.routes.js"
 import uploadRouter, { UPLOAD_DIR } from "./routes/upload.routes.js"
 
-if (!fs.existsSync(UPLOAD_DIR)) {
-  fs.mkdirSync(UPLOAD_DIR, { recursive: true })
+try {
+  if (!fs.existsSync(UPLOAD_DIR)) {
+    fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+  }
+} catch (e) {
+  console.warn("Storage read-only di Vercel Serverless:", e.message);
 }
 
 const app = express()
