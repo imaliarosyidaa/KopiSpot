@@ -1,6 +1,6 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom"
-import { MdAdd, MdFavorite, MdHome, MdLogout, MdNotifications, MdPerson, MdReceiptLong, MdShoppingCart, MdStorefront } from "react-icons/md"
+import { MdAdd, MdClose, MdFavorite, MdHome, MdLogout, MdMenu, MdNotifications, MdPerson, MdReceiptLong, MdShoppingCart, MdStorefront } from "react-icons/md"
 import { useNotifications } from "@/lib/notification-context"
 import { useAuth } from "@/lib/auth-context"
 import AuthModal from "@/components/ui/auth-modal"
@@ -41,9 +41,30 @@ export default function Navbar() {
   // (cart checkout bar / checkout page) to avoid overlap.
   const showBottomNav = !pathname.startsWith("/order/keranjang") && pathname !== "/order/checkout"
 
+  // Menus shown in the mobile hamburger: the main nav items that are NOT
+  // already reachable on mobile (Beranda lives in the bottom nav, and
+  // "Pesan Kopi"/"Pesanan" share the /order route), so we don't duplicate them.
+  const mobileMenuItems = navItems.filter(
+    (item) => !bottomNavItems.some((b) => b.to === item.to),
+  )
+
+  const [menuOpen, setMenuOpen] = useState(false)
+  useEffect(() => {
+    setMenuOpen(false)
+  }, [pathname])
+
   return (
     <>
       <nav className="fixed top-0 left-0 right-0 z-50 flex h-16 items-center justify-between border-b border-border bg-background/85 px-4 backdrop-blur-md sm:px-6 md:px-12">
+        <button
+          type="button"
+          onClick={() => setMenuOpen(!menuOpen)}
+          aria-label="Buka menu"
+          aria-expanded={menuOpen}
+          className="md:hidden flex h-9 w-9 items-center justify-center rounded-full mr-2 footer-glass-pill text-muted-foreground transition-colors hover:text-[#d1d5db]"
+        >
+          {menuOpen ? <MdClose className="h-5 w-5" /> : <MdMenu className="h-5 w-5" />}
+        </button>
         <Link to="/" className="flex min-w-0 shrink-0 items-center gap-2.5" aria-label="coffidoor beranda">
           <span className="flex h-9 w-[6.75rem] shrink-0 items-center text-[#d1d5db] sm:h-10 sm:w-[7.5rem]">
             {theme === "dark" ? <LogoDark width="100%" height="100%" /> : <LogoLight width="100%" height="100%" />}
@@ -144,7 +165,7 @@ export default function Navbar() {
           <Link
             to="/order/keranjang"
             title="Keranjang Pesanan"
-            className="relative w-9 h-9 rounded-full footer-glass-pill flex items-center justify-center text-muted-foreground hover:text-[#d1d5db] transition-colors"
+            className="relative hidden w-9 h-9 rounded-full footer-glass-pill md:flex items-center justify-center text-muted-foreground hover:text-[#d1d5db] transition-colors"
           >
             <MdShoppingCart className="w-5 h-5" />
             {cartCountTotal > 0 && (
@@ -161,6 +182,7 @@ export default function Navbar() {
             Buat Postingan
           </button>
 
+          <div className="hidden md:flex items-center gap-3">
           {loading ? (
             <div className="w-9 h-9 rounded-full footer-glass-pill animate-pulse" />
           ) : user ? (
@@ -200,8 +222,54 @@ export default function Navbar() {
               Masuk
             </button>
           )}
+          </div>
         </div>
       </nav>
+
+      {menuOpen && (
+        <div className="md:hidden">
+          <div className="fixed inset-0 z-[54]" onClick={() => setMenuOpen(false)} />
+          <div className="fixed left-3 right-3 top-16 z-[55] overflow-hidden rounded-2xl border border-border bg-card p-2 shadow-xl">
+            {mobileMenuItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.to === "/"}
+                onClick={() => setMenuOpen(false)}
+                className={({ isActive }) =>
+                  `block rounded-xl px-4 py-3 text-sm font-medium transition-colors ${
+                    isActive ? "bg-primary/10 text-[#d1d5db]" : "text-foreground hover:bg-primary/5"
+                  }`
+                }
+              >
+                {item.label}
+              </NavLink>
+            ))}
+            <button
+              type="button"
+              onClick={() => {
+                setMenuOpen(false)
+                navigate("/post/new")
+              }}
+              className="mt-1 w-full rounded-xl bg-[#d1d5db] px-4 py-3 text-center text-sm font-black text-[#111113] transition-colors hover:bg-[#f3f4f6]"
+            >
+              Buat Postingan
+            </button>
+            {!user && (
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuOpen(false)
+                  setAuthOpen(true)
+                }}
+                className="mt-1 w-full rounded-xl border border-border px-4 py-3 text-center text-sm font-black text-foreground transition-colors hover:bg-primary/5"
+              >
+                Masuk
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
 

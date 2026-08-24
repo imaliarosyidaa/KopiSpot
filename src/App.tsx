@@ -1,5 +1,7 @@
 import { Routes, Route } from "react-router-dom"
 import Navbar from "@/components/shared/Navbar"
+import ChatBot from "@/components/shared/ChatBot"
+import ScrollToTop from "@/components/shared/ScrollToTop"
 import AppFooter from "@/components/shared/AppFooter"
 import HomePage from "@/pages/HomePage"
 import PlaceDetailPage from "@/pages/PlaceDetailPage"
@@ -21,6 +23,8 @@ export default function App() {
           revealed once the user scrolls to the bottom. */}
         <div className="relative z-10 bg-background pb-16 md:pb-0">
         <Navbar />
+        <ChatBot />
+        <ScrollToTop />
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/places/:id" element={<PlaceDetailPage />} />

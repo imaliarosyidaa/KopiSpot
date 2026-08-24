@@ -77,7 +77,7 @@ export default function AppFooter() {
   }
 
   return (
-    <footer className="relative mt-16 w-full overflow-hidden bg-secondary dark:bg-secondary/20 pt-16 pb-8">
+    <footer className="relative md:mt-16 w-full overflow-hidden bg-secondary dark:bg-secondary/20 pt-16 pb-8">
       <div className="pointer-events-none absolute inset-0 z-0 footer-bg-grid" />
       <div className="pointer-events-none absolute top-1/4 left-1/4 z-0 h-72 w-72 rounded-full bg-[#d1d5db] opacity-10 blur-3xl" />
 

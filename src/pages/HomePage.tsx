@@ -271,7 +271,7 @@ export default function HomePage() {
       <CinematicHero onExplore={scrollToPlaces} />
 
         {/* ── MARQUEE DIVIDER (X) ── */}
-        <div className="w-full overflow-hidden absolute z-20 top-[750px] md:py-36">
+        <div className="w-full absolute z-20 top-[870px] lg:top-[750px] md:py-36">
           {/* Marquee 1 — Kanan ke Kiri (Default) */}
           <div className="absolute left-1/2 top-1/2 w-[160vw] -translate-x-1/2 -translate-y-1/2 rotate-5 border-y border-border bg-card/95 py-3 shadow-lg">
             <div className="flex w-max animate-marquee text-xs font-bold tracking-[0.25em] text-muted-foreground uppercase">
@@ -315,7 +315,7 @@ export default function HomePage() {
         <div className="rounded-3xl border border-border bg-card overflow-hidden relative footer-glass-pill">
           <div className="absolute top-0 right-1/4 w-96 h-96 rounded-full bg-[#d1d5db]/10 blur-3xl pointer-events-none" />
 
-          <div className="px-6 md:px-12 py-20 mx-auto flex flex-col md:flex-row items-center md:min-h-[520px]">
+          <div className="px-6 md:px-12 py-6 md:py-20 mx-auto flex flex-col md:flex-row items-center md:min-h-[520px]">
             <div className="flex-1 flex flex-col justify-center relative z-10">
               <div>
                 <span className="tag-pill mb-3 inline-block">
@@ -383,7 +383,7 @@ export default function HomePage() {
 
       <CinematicSection />
 
-      <section id="places" className="px-6 md:px-12 py-20 mx-auto">
+      <section id="places" className="px-6 md:px-12 py-6 md:py-20 mx-auto">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
           <div>
             <span className="tag-pill mb-3 inline-block">Pilihan Editor</span>
@@ -590,7 +590,7 @@ export default function HomePage() {
       </section>
 
       {/* ── REVIEWS ── */}
-      <section className="px-6 md:px-12 py-16 mx-auto">
+      <section className="px-6 md:px-12 py-6 md:py-16 mx-auto">
         <div className="mb-10">
           <span className="tag-pill mb-3 inline-block">Kata Mereka</span>
           <h2

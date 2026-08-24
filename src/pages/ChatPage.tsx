@@ -3,6 +3,7 @@ import { MdAutoAwesome, MdSend } from "react-icons/md"
 import { chatApi } from "@/lib/api"
 import { initials } from "@/lib/format"
 import { useAuth } from "@/lib/auth-context"
+import image from "./JACK 2.png"
 
 interface ChatMessage {
   role: "user" | "bot"
@@ -71,8 +72,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="pt-16">
-      <div className="grid grid-cols-1 lg:grid-cols-2 mx-auto px-6 md:px-12 py-10">
+      <div className="grid grid-cols-1 lg:grid-cols-2 mx-auto px-6 md:px-12 py-16">
         <div className="mb-6 text-center lg:text-left">
           <span className="tag-pill mb-3 inline-block">Tanya coffidoor</span>
           <h2
@@ -85,6 +85,9 @@ export default function ChatPage() {
             Chatbot sederhana Interaktif. Tanyakan pertanyaanmu seputar kopi
             dan cafe di sini.
           </p>
+          <div className="w-full flex justify-center items-center">
+          <img src={image} alt="Jack" className="w-auto h-32 lg:h-[440px]" />
+        </div>
         </div>
 
         <div className="glass-card rounded-3xl overflow-hidden flex flex-col">
@@ -178,6 +181,5 @@ export default function ChatPage() {
           </form>
         </div>
       </div>
-    </div>
   )
 }
