@@ -2,6 +2,7 @@ import { Router } from "express"
 import { prisma } from "../db.js"
 import { requireAuth, optionalAuth } from "../auth.js"
 import { recomputeGamification } from "../gamification.js"
+import { deleteImageByUrl } from "../lib/supabase.js"
 
 const router = Router()
 
@@ -218,7 +219,7 @@ router.put("/:id", requireAuth, async (req, res) => {
 router.delete("/:id", requireAuth, async (req, res) => {
   const existing = await prisma.post.findUnique({
     where: { id: req.params.id },
-    select: { id: true, authorId: true },
+    select: { id: true, authorId: true, imagesJson: true },
   })
   if (!existing) {
     return res.status(404).json({ error: "Postingan tidak ditemukan." })
@@ -228,6 +229,13 @@ router.delete("/:id", requireAuth, async (req, res) => {
   }
 
   await prisma.post.delete({ where: { id: req.params.id } })
+  // Clean up images stored in Supabase (legacy /uploads paths are ignored).
+  try {
+    const images = parseJsonList(existing.imagesJson)
+    await Promise.all(images.map((u) => deleteImageByUrl(u)))
+  } catch (e) {
+    console.error("[posts] gagal hapus gambar:", e)
+  }
   await recomputeGamification(req.userId)
   res.json({ ok: true })
 })

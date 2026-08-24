@@ -70,7 +70,7 @@ export default function ReviewModal({
     setUploading(true)
     setUploadError(null)
     try {
-      const { url } = await uploadFile(file)
+      const { url } = await uploadFile(file, "reviews")
       setImages((prev) => [...prev, url].slice(0, MAX_IMAGES))
     } catch (err) {
       setUploadError(err instanceof ApiError ? err.message : "Gagal mengunggah foto.")

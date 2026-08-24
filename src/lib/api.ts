@@ -35,10 +35,14 @@ export function clearToken(): void {
   localStorage.removeItem(TOKEN_KEY);
 }
 
-export async function uploadFile(file: File): Promise<{ url: string }> {
+export async function uploadFile(
+  file: File,
+  folder?: "profiles" | "posts" | "products" | "menus" | "stores" | "reviews" | "misc",
+): Promise<{ url: string }> {
   const token = getToken();
   const form = new FormData();
   form.append("file", file);
+  if (folder) form.append("folder", folder);
   const res = await fetch(`${API_BASE}/upload`, {
     method: "POST",
     headers: token ? { Authorization: `Bearer ${token}` } : {},

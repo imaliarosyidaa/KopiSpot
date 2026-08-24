@@ -425,7 +425,7 @@ export default function PagePartnerPage() {
   const uploadMenuImage = async (file: File) => {
     setUploadingMenuImage(true)
     try {
-      const { url } = await uploadFile(file)
+      const { url } = await uploadFile(file, "menus")
       setMenuForm((f) => ({ ...f, imageUrl: url }))
     } catch (e) {
       setMenuError(e instanceof Error ? e.message : "Gagal mengunggah gambar.")

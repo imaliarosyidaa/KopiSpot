@@ -342,7 +342,7 @@ function EditProfile({ onDone }: { onDone: () => void }) {
     if (!file) return;
     setUploading(true);
     try {
-      const r = await uploadFile(file);
+      const r = await uploadFile(file, "profiles");
       setImage(r.url);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Gagal mengunggah avatar.");

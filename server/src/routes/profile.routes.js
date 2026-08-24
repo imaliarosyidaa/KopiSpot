@@ -3,6 +3,7 @@ import { Router } from "express"
 import { prisma } from "../db.js"
 
 import { compare, hash, requireAuth } from "../auth.js"
+import { deleteImageByUrl } from "../lib/supabase.js"
 
 const router = Router()
 
@@ -182,6 +183,11 @@ router.put("/me", requireAuth, async (req, res) => {
 
   if (typeof body.image === "string") data.image = body.image.trim() || null
 
+  const existing = await prisma.user.findUnique({
+    where: { id: req.userId },
+    select: { image: true },
+  })
+
   const user = await prisma.user.update({
     where: { id: req.userId },
 
@@ -198,6 +204,15 @@ router.put("/me", requireAuth, async (req, res) => {
       level: true,
     },
   })
+
+  // Clean up previous avatar if it was replaced (legacy /uploads paths ignored).
+  if (data.image && data.image !== existing?.image) {
+    try {
+      await deleteImageByUrl(existing?.image)
+    } catch (e) {
+      console.error("[profile] gagal hapus avatar lama:", e)
+    }
+  }
 
   res.json(user)
 })

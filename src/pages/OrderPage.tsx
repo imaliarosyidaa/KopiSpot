@@ -292,7 +292,7 @@ export default function OrderPage() {
     setUploadingProof(true)
     setError(null)
     try {
-      const { url } = await uploadFile(file)
+      const { url } = await uploadFile(file, "reviews")
       setProofUrl(url)
       setProofName(file.name)
     } catch (err) {

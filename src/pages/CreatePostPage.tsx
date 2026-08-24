@@ -69,7 +69,7 @@ export default function CreatePostPage() {
     try {
       const uploaded: string[] = []
       for (const file of Array.from(files).slice(0, 4 - images.length)) {
-        const r = await uploadFile(file)
+        const r = await uploadFile(file, "posts")
         uploaded.push(r.url)
       }
       setImages((prev) => [...prev, ...uploaded])

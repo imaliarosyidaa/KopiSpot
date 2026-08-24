@@ -199,7 +199,7 @@ function ReviewModal({
     for (const file of list) {
       try {
         setUploading(true)
-        const { url } = await uploadFile(file)
+        const { url } = await uploadFile(file, "reviews")
         setImages((prev) => [...prev, url])
       } catch {
         setError("Gagal mengunggah gambar.")

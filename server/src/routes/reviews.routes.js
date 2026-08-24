@@ -1,6 +1,7 @@
 import { Router } from "express"
 import { prisma } from "../db.js"
 import { optionalAuth } from "../auth.js"
+import { deleteImageByUrl } from "../lib/supabase.js"
 
 const router = Router()
 
@@ -283,6 +284,13 @@ router.delete("/:id", optionalAuth, async (req, res) => {
     return res.status(403).json({ error: "Ulasan bukan milik Anda." })
   }
   await prisma.productReview.delete({ where: { id: review.id } })
+  // Clean up images stored in Supabase (legacy /uploads paths are ignored).
+  try {
+    const images = safeParseImages(review.imagesJson)
+    await Promise.all(images.map((u) => deleteImageByUrl(u)))
+  } catch (e) {
+    console.error("[reviews] gagal hapus gambar:", e)
+  }
   res.json({ ok: true })
 })
 

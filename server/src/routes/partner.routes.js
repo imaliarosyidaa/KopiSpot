@@ -4,6 +4,7 @@ import { prisma } from "../db.js"
 import { requireAuth } from "../auth.js"
 import { parseTags } from "../serialize.js"
 import { notifyOrderStatus, safe } from "../notifications.js"
+import { deleteImageByUrl } from "../lib/supabase.js"
 
 const router = Router()
 
@@ -269,7 +270,7 @@ router.put("/places/:placeId/menus/:menuId", requireAuth, async (req, res) => {
 
   const existing = await prisma.menuItem.findUnique({
     where: { id: req.params.menuId },
-    select: { id: true, placeId: true },
+    select: { id: true, placeId: true, imageUrl: true },
   })
   if (!existing || existing.placeId !== owned.id) {
     return res.status(404).json({ error: "Menu tidak ditemukan." })
@@ -279,6 +280,11 @@ router.put("/places/:placeId/menus/:menuId", requireAuth, async (req, res) => {
   if (errors.length) {
     return res.status(400).json({ error: errors.join(" ") })
   }
+
+  const newImageUrl =
+    typeof req.body.imageUrl === "string" && req.body.imageUrl.trim()
+      ? req.body.imageUrl.trim()
+      : null
 
   const menu = await prisma.menuItem.update({
     where: { id: existing.id },
@@ -300,13 +306,19 @@ router.put("/places/:placeId/menus/:menuId", requireAuth, async (req, res) => {
         typeof req.body.ingredients === "string" && req.body.ingredients.trim()
           ? req.body.ingredients.trim()
           : null,
-      imageUrl:
-        typeof req.body.imageUrl === "string" && req.body.imageUrl.trim()
-          ? req.body.imageUrl.trim()
-          : null,
+      imageUrl: newImageUrl,
       isAvailable: req.body.isAvailable !== false,
     },
   })
+
+  // Clean up previous image if it was replaced (legacy /uploads paths ignored).
+  if (newImageUrl && newImageUrl !== existing.imageUrl) {
+    try {
+      await deleteImageByUrl(existing.imageUrl)
+    } catch (e) {
+      console.error("[partner] gagal hapus gambar menu lama:", e)
+    }
+  }
 
   res.json(menu)
 })
@@ -320,13 +332,19 @@ router.delete(
 
     const existing = await prisma.menuItem.findUnique({
       where: { id: req.params.menuId },
-      select: { id: true, placeId: true },
+      select: { id: true, placeId: true, imageUrl: true },
     })
     if (!existing || existing.placeId !== owned.id) {
       return res.status(404).json({ error: "Menu tidak ditemukan." })
     }
 
     await prisma.menuItem.delete({ where: { id: existing.id } })
+    // Clean up image stored in Supabase (legacy /uploads paths are ignored).
+    try {
+      await deleteImageByUrl(existing.imageUrl)
+    } catch (e) {
+      console.error("[partner] gagal hapus gambar menu:", e)
+    }
     res.json({ ok: true })
   },
 )
