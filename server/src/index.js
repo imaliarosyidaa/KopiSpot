@@ -27,56 +27,44 @@ const allowedOrigins = [
   "https://www.coffidoor.store",
   "http://localhost:5173",
   "http://localhost:8443",
+  // Tambahkan regex jika ingin mengizinkan preview deployment Vercel:
+  // /\.vercel\.app$/
 ];
 
 const corsOptions = {
   origin: function (origin, callback) {
-    if (!origin) {
+    if (!origin) return callback(null, true);
+
+    const isAllowed = allowedOrigins.some((allowed) => {
+      if (allowed instanceof RegExp) return allowed.test(origin);
+      return allowed === origin;
+    });
+
+    if (isAllowed) {
       return callback(null, true);
     }
 
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-
-    console.log("❌ CORS blocked:", origin);
-    return callback(new Error(`CORS blocked: ${origin}`));
+    console.log("❌ CORS blocked for origin:", origin);
+    return callback(null, false);
   },
-
   credentials: true,
-
-  methods: [
-    "GET",
-    "HEAD",
-    "PUT",
-    "PATCH",
-    "POST",
-    "DELETE",
-    "OPTIONS",
-  ],
-
+  methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"],
   allowedHeaders: [
     "Content-Type",
     "Authorization",
+    "X-Requested-With",
+    "Accept",
+    "Origin",
   ],
-
   optionsSuccessStatus: 204,
 };
 
 app.use((req, res, next) => {
-  console.log(
-    "REQUEST:",
-    req.method,
-    req.path,
-    "ORIGIN:",
-    req.headers.origin
-  );
-
+  console.log("REQUEST:", req.method, req.path, "ORIGIN:", req.headers.origin);
   next();
 });
 
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
 
 app.use(express.json())
 app.use("/uploads", express.static(UPLOAD_DIR))
